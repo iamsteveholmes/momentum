@@ -1,8 +1,7 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
-    "status": "planning",
+  "active": {
+    "locked": true,
+    "status": "active",
     "stories": [
       "momentum-tools-feature-verify-human-verdict-recorder-and",
       "sprint-planning-goal-conditions-declaration-plan-gate-leads",
@@ -13,9 +12,223 @@
       "verification-routing-re-key-to-assembled-surface-dod",
       "impetus-session-greeting-leads-with-n-of-m-feature"
     ],
-    "waves": [],
-    "slug": "sprint-2026-08-03"
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "momentum-tools-feature-verify-human-verdict-recorder-and",
+          "sprint-planning-goal-conditions-declaration-plan-gate-leads",
+          "conduct-merge-gate-completes-by-executing-merge-push-story"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "sprint-closure-refusal-recorded-human-verdicts-per-goal",
+          "impetus-session-greeting-leads-with-n-of-m-feature"
+        ]
+      },
+      {
+        "wave": 3,
+        "stories": [
+          "conduct-resume-card-impetus-pending-gate-agenda-session",
+          "verification-routing-re-key-to-assembled-surface-dod"
+        ]
+      },
+      {
+        "wave": 4,
+        "stories": [
+          "daily-tasting-reminder-expected-vs-reality-brief-generator"
+        ]
+      }
+    ],
+    "slug": "sprint-2026-08-03",
+    "approvals": [
+      {
+        "story_slug": "momentum-tools-feature-verify-human-verdict-recorder-and",
+        "decision": "approved",
+        "approved_at": "2026-08-21T20:31:29Z",
+        "story_file_sha": "97356dd98237a3f4d553d12d30f4f2ebf007fa4ebad391997c3581b14ce365bb"
+      },
+      {
+        "story_slug": "sprint-planning-goal-conditions-declaration-plan-gate-leads",
+        "decision": "approved",
+        "approved_at": "2026-08-21T20:31:29Z",
+        "story_file_sha": "21f6460a8a46a9ddb0da6613d04df1465d1f45b22a3d56ab5ed8c4026c9840d5"
+      },
+      {
+        "story_slug": "conduct-merge-gate-completes-by-executing-merge-push-story",
+        "decision": "approved",
+        "approved_at": "2026-08-03T22:07:35Z",
+        "story_file_sha": "0a85bc7512126eab30cb7231c63ff7df6a3e412989e27658e1a2a69079eca01d"
+      },
+      {
+        "story_slug": "sprint-closure-refusal-recorded-human-verdicts-per-goal",
+        "decision": "approved",
+        "approved_at": "2026-08-03T22:08:05Z",
+        "story_file_sha": "a32948d8c51526bc5420b558f25001e5435350fa45e12ed6a51744d16ca942ef"
+      },
+      {
+        "story_slug": "conduct-resume-card-impetus-pending-gate-agenda-session",
+        "decision": "approved",
+        "approved_at": "2026-08-21T20:31:29Z",
+        "story_file_sha": "5851a03107c703b992a0b1260a6f122f174c462c196aeb1f9ae306aaf36419e7"
+      },
+      {
+        "story_slug": "daily-tasting-reminder-expected-vs-reality-brief-generator",
+        "decision": "approved",
+        "approved_at": "2026-08-03T22:09:55Z",
+        "story_file_sha": "688d03c790cc53c4d97c63173a6c2ac6f77783f2de1457dc52fefaef5b0e8e65"
+      },
+      {
+        "story_slug": "verification-routing-re-key-to-assembled-surface-dod",
+        "decision": "approved",
+        "approved_at": "2026-08-21T20:31:29Z",
+        "story_file_sha": "547b651b9161c8fdc07cf89ad7c96a65aa8f04c3627254798bceb8358742b7db"
+      },
+      {
+        "story_slug": "impetus-session-greeting-leads-with-n-of-m-feature",
+        "decision": "approved",
+        "approved_at": "2026-08-21T20:31:29Z",
+        "story_file_sha": "3da2c9ea373a4915a9cd7ad3ebb69e5eef857e11966899a573f713d5f7dc4f6e"
+      }
+    ],
+    "team": {
+      "story_assignments": {
+        "momentum-tools-feature-verify-human-verdict-recorder-and": {
+          "verification_method": "bash",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/momentum-tools-feature-verify-human-verdict-recorder-and.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "cde38f2ca5c3ede83063aa054d70d7353a756b267761f4bad650984dd47ef84b"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        },
+        "sprint-planning-goal-conditions-declaration-plan-gate-leads": {
+          "verification_method": "bash",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/sprint-planning-goal-conditions-declaration-plan-gate-leads.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "b70b3fc57b47c1277519fa70861da61be3e2684c6732e8029008767d98de24de"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        },
+        "conduct-merge-gate-completes-by-executing-merge-push-story": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/conduct-merge-gate-completes-by-executing-merge-push-story.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "915ddf8fa2fc5c76994541ddecc5e8f0dd9b8207081a659922c709b72db517ba"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        },
+        "sprint-closure-refusal-recorded-human-verdicts-per-goal": {
+          "verification_method": "bash",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/sprint-closure-refusal-recorded-human-verdicts-per-goal.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "8ba02e36829004786a5efe0fd8a8965550c6e7fc4f5b24e81149ef24ab247892"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        },
+        "conduct-resume-card-impetus-pending-gate-agenda-session": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/conduct-resume-card-impetus-pending-gate-agenda-session.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "fad36e8d8c93965cd3119d1f249ca8894c58d5c0960f6890afc517201206e582"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        },
+        "daily-tasting-reminder-expected-vs-reality-brief-generator": {
+          "verification_method": "bash",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/daily-tasting-reminder-expected-vs-reality-brief-generator.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "9b98a4ff5fa73717a268c61c544cd855719060251a9771efb5aa565d0a4f703a"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        },
+        "verification-routing-re-key-to-assembled-surface-dod": {
+          "verification_method": "bash",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/verification-routing-re-key-to-assembled-surface-dod.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "393cf44eaada6806d2cc125e7d1434ae05ac5692c4415408500ff8d70e91a135"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        },
+        "impetus-session-greeting-leads-with-n-of-m-feature": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-08-03/specs/impetus-session-greeting-leads-with-n-of-m-feature.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "cd01359619a35447fb5eccebdbe644bb77654615fa78165259f50a52c1c530b0"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "agent_path": "skills/momentum/agents/dev.md",
+          "guidelines_status": "n/a"
+        }
+      },
+      "roles": {
+        "dev": "all 8 stories — base Dev agent (skills/momentum/agents/dev.md); no project specialists (practice-repo work), guidelines n/a",
+        "qa-reviewer": "all 8 stories — routes on each frozen contract (verification_method/harness_profile)",
+        "e2e-validator": "sprint-wide behavioral validation",
+        "architecture-guard": "sprint-wide pattern-drift check"
+      }
+    },
+    "goal": "A sprint can no longer claim done without a human seeing it work.\nVerified fixes:\n- Sprint closure refuses done while any declared condition lacks a recorded human verdict, and closes FAILED honestly with a reason\n- The merge gate completes by executing merge, push, and story transitions verified by read-back, never a report\n- An interrupted or gated build leaves a resume card and the next session opens with its one pending question\n- momentum-tools feature verify records a human pass/fail verdict with paired build SHAs into .momentum/features.json\n- The session greeting leads with N of M feature conditions passing, honest when no registry exists\n- momentum-tools tasting produces the daily expected-vs-reality brief and a due signal with rising tiers\n- A backend-only story with a declared chat-ui surface routes to smoke verification, never curl",
+    "goal_conditions": [],
+    "planned": "2026-08-21",
+    "started": "2026-08-21"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,

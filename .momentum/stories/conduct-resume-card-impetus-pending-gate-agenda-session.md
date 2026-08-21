@@ -70,6 +70,8 @@ The card's shape is an explicit **seam contract** with a Canonical Output Shape,
 
 12. When no pending card exists, the session greeting behaves exactly as it does today — the pending-gate agenda adds nothing to a clean start.
 
+13. When sprint closure is refused or left pending awaiting recorded verdicts (the tier-2 gate), the card is emitted or refreshed with its one question being the closure question — naming which goal conditions still await a verdict and how to record one — so a closure decision that waits days re-surfaces at every session start exactly like a pending merge gate. (Added at the 2026-08-21 plan gate, Fork 5.)
+
 ## Tasks / Subtasks
 
 - [ ] **Task 1 — Write the EDD evals before any skill edit** (AC 1, 2, 7, 9, 10)
@@ -106,6 +108,14 @@ The card's shape is an explicit **seam contract** with a Canonical Output Shape,
 - [ ] **Task 7 — Two-sided seam check** (AC 5)
   - Verify every field the Conductor writes is a field Impetus reads, and every field Impetus reads is one the Conductor writes. Any orphan on either side is a finding, not a tolerated extra.
   - For the contract's declared shared-write fields (re-surface counter, waited-since), verify both sides' write semantics match the contract's declaration. Any field written by both sides without a shared-write declaration is a finding.
+
+- [ ] **Task 8 — Emit the closure-pending card** (AC 13)
+  - On the closure-refused / closure-pending path (the tier-2 gate delivered by the sibling
+    closure story), write or refresh the card — status `pending`, the one question being the
+    closure question with the unverified condition slugs and the recording command as its
+    options — citing `references/resume-card.md` for shape, same as every other emit site.
+  - The Impetus read side needs no change: the all-sprints pending scan (AC 6) already
+    surfaces this card.
 
 ## Dev Notes
 

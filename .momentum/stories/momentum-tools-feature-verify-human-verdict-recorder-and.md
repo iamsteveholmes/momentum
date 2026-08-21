@@ -2,7 +2,7 @@
 title: momentum-tools feature verify — human verdict recorder and sole writer of features.json
 story_key: momentum-tools-feature-verify-human-verdict-recorder-and
 status: ready-for-dev
-epic_slug: momentum-feature-taxonomy-maintenance
+epic_slug: momentum-quality-gates-enforced
 feature_slug:
 story_type: practice
 priority: high
@@ -142,9 +142,10 @@ Paired build SHAs trace to **DEC-040 D8** (SHA admissibility): nobody may review
 control cannot name, and every report cites the two SHAs. That is why `--build` is mandatory and
 strictly validated rather than optional metadata.
 
-**One flagged extension to D1.** D1's written schema for `last_verified` is `{date, build SHAs,
-verdict}` — three sub-fields, no evidence. This story persists a fourth, `evidence`, and that is a
-deliberate extension rather than an oversight. It is grounded: the `--evidence` flag appears in the
+**One flagged extension to D1 — CONFIRMED by the decision owner at the 2026-08-21 plan gate
+(Fork 3): `evidence` persists as the fourth stored sub-field.** D1's written schema for
+`last_verified` is `{date, build SHAs, verdict}` — three sub-fields, no evidence. This story
+persists a fourth, `evidence`, and that is a deliberate extension rather than an oversight. It is grounded: the `--evidence` flag appears in the
 underlying research recommendation the decision was built from
 (`docs/research/nornspun-delivery-discovery-2026-08-02/synthesis.md` — `momentum-tools feature
 verify --verdict --evidence --build <sha>:<sha>`) and in the developer's own captured CLI signature
@@ -294,7 +295,7 @@ representative inputs and observe that output and state match spec.
 - `skills/momentum/scripts/momentum-tools.py` — target file; `build_parser()`, `resolve_project_dir()`, `read_json`/`write_json`, `result`/`error_result` conventions
 - `skills/momentum/scripts/test-momentum-tools.py` — the existing 209-test fixture-driven suite for that script; `setup_project()` helper and subprocess-CLI pattern to follow
 - `docs/research/nornspun-delivery-discovery-2026-08-02/` — pain-context research (0 of 15 features done across 10 sprints)
-- Epic context: `momentum-feature-taxonomy-maintenance` (from _bmad-output/planning-artifacts/epics.json)
+- Epic context: `momentum-quality-gates-enforced` (reassigned from `momentum-feature-taxonomy-maintenance` at the 2026-08-21 plan gate, Fork 4 — that epic's acceptance condition names retired skills and can never pass as written)
 
 ## Momentum Implementation Guide
 

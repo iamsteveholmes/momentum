@@ -52,4 +52,16 @@ None — every edge with a named input resolves to a matching producer deliverab
 
 ## Override Decisions
 
-<empty until Step 8 records one — see coherence-gate.md §7>
+No open coherence failures existed at activation — nothing required an override. Recorded for
+the durable record (2026-08-21, activation):
+
+- Same-wave shared-file overlap (feature-verify ∩ goal-conditions on
+  `skills/momentum/scripts/momentum-tools.py`) accepted: edit regions ~2,700 lines apart
+  (new `feature` command group near line 3077 vs. `cmd_sprint_plan` at line 328), no shared
+  hunks; merges are serialized per story by the Conductor.
+- Plan-gate fork verdicts recorded by the developer's explicit instruction to adopt all
+  recommended defaults ("Just do it. Accept defaults."): Fork 1 capability statement +
+  verified-fix list signed as the sprint goal; Fork 2 all amended stories re-approved;
+  Fork 3 evidence sub-field extension to D1 confirmed; Fork 4 feature-verify reassigned to
+  momentum-quality-gates-enforced; Fork 5 resume-card story extended with the
+  closure-pending emit (AC 13 / Task 8).

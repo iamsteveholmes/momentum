@@ -6407,7 +6407,7 @@
   "momentum-tools-feature-verify-human-verdict-recorder-and": {
     "status": "ready-for-dev",
     "title": "momentum-tools feature verify — human verdict recorder and sole writer of features.json",
-    "epic_slug": "momentum-feature-taxonomy-maintenance",
+    "epic_slug": "momentum-quality-gates-enforced",
     "story_file": true,
     "depends_on": [],
     "touches": [

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pre-Sprint Plan Gate · sprint-2026-08-03</title>
+<style>
+  :root{
+    --bg:#faf7f0; --ink:#2c2417; --muted:#6b5e4a; --line:#e3dccb; --card:#fffdf8;
+    --amber:#7a5a1e; --green:#3f6b3a; --red:#9a3b2f; --blue:#3a5a7a;
+    --hi:#fdf3d8; --redbg:#f6ddd6; --amberbg:#fbeccf; --greenbg:#e5efe2; --bluebg:#dce8f2;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 90px}
+  h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:20px;margin:42px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:20px 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 8px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--amber);margin:0 0 8px}
+  .hero{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--amber);border-radius:12px;padding:22px 26px;margin:22px 0 8px}
+  .hero .big{font-size:23px;line-height:1.35;font-weight:600;margin:0 0 16px;letter-spacing:-.01em}
+  .hero .big b{color:var(--amber)}
+  .deliver{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}
+  .deliver li{position:relative;padding:3px 0 3px 24px;font-size:15px}
+  .deliver li:before{content:"\25B8";position:absolute;left:2px;color:var(--amber);font-weight:700}
+  .heroline{margin:16px 0 0;font-size:15px;color:var(--muted);border-top:1px dashed var(--line);padding-top:14px}
+  .heroline b{color:var(--ink)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .stat b{font-size:22px;display:block;line-height:1.1}
+  .stat span{color:var(--muted);font-size:12.5px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;vertical-align:middle;letter-spacing:.02em}
+  .ok{background:var(--greenbg);color:var(--green)} .warn{background:var(--amberbg);color:var(--amber)}
+  .hipill{background:var(--redbg);color:var(--red)} .info{background:var(--bluebg);color:var(--blue)}
+  .low{background:#efeadd;color:var(--muted)}
+  .call{background:#f4e4c0;color:var(--amber)} .batch{background:var(--greenbg);color:var(--green)}
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 10px 6px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .dlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);padding:6px 14px 10px}
+  .dlegend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  .scard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:13px 15px}
+  .scard.s-high{border-left-color:var(--red)} .scard.s-med{border-left-color:var(--amber)} .scard.s-low{border-left-color:#cdc6b4}
+  .scard .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .scard .id{font-weight:700;font-size:15px}
+  .scard .val{color:var(--muted);font-size:14px;margin:5px 0 0}
+  .scard .meta{margin:8px 0 0;font-size:12px;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .card.dec{border-left:5px solid var(--red)} .card.decmed{border-left:5px solid var(--amber)}
+  .card h3{margin-top:0;font-size:16.5px}
+  .field{margin:9px 0}
+  .field .lab{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
+  .ev{background:#f3eee1;border-radius:6px;padding:8px 11px;font-size:13px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .rec{background:var(--greenbg);border-radius:7px;padding:9px 12px;margin:12px 0 0;font-size:14.5px}
+  .rec.cond{background:var(--amberbg)}
+  .rec .lab{color:var(--green);font-weight:700} .rec.cond .lab{color:var(--amber)}
+  ol.risks{margin:10px 0;padding-left:0;list-style:none;counter-reset:r}
+  ol.risks li{position:relative;padding:9px 0 9px 34px;border-bottom:1px solid var(--line);font-size:14.5px;counter-increment:r}
+  ol.risks li:before{content:counter(r);position:absolute;left:0;top:9px;width:22px;height:22px;border-radius:50%;background:var(--hi);color:var(--amber);font-size:12px;font-weight:700;text-align:center;line-height:22px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:4px 16px;margin:12px 0}
+  details summary{cursor:pointer;font-weight:600;padding:10px 0}
+  details ul{margin:4px 0 14px}
+  .gate{background:#22307a0d;border:2px solid var(--blue);border-radius:12px;padding:20px 22px;margin:34px 0}
+  .gate h2{border:0;margin-top:0;color:var(--blue)}
+  .chk{margin:10px 0;padding-left:28px;position:relative;font-size:15px}
+  .chk:before{content:"\2610";position:absolute;left:0;top:-2px;font-size:20px}
+  .chk .blank{display:inline-block;min-width:200px;border-bottom:1px solid var(--muted);margin-left:4px}
+  code{font-size:13px;background:#f1ead9;padding:1px 5px;border-radius:4px}
+  .muted{color:var(--muted)}
+  .goalbox{background:var(--hi);border:1px dashed var(--amber);border-radius:8px;padding:10px 14px;font-size:14px;margin:8px 0}
+  .goalbox ol{margin:6px 0 2px;padding-left:22px}
+  .goalbox li{margin:2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Pre-Sprint Plan Gate — <code style="font-size:18px">sprint-2026-08-03</code></h1>
+<p class="sub">Pre-activation review. Your sign-off here activates the sprint and authorizes the build; nothing runs until then.</p>
+
+<div class="hero">
+  <p class="eyebrow">What this sprint does</p>
+  <p class="big">After this sprint, <b>a sprint can no longer claim done without you seeing it work</b> — closure refuses until you record a verdict, the merge gate <b>executes instead of reporting</b>, and every waiting decision <b>finds you at your next session</b>.</p>
+  <ul class="deliver">
+    <li><b>Closure that refuses</b> — "done" requires your recorded pass/fail per goal condition</li>
+    <li><b>A merge gate that acts</b> — merge + push + status changes, verified by read-back</li>
+    <li><b>Resume cards</b> — interrupted or waiting gates greet you with one question</li>
+    <li><b>A daily tasting brief</b> — what should work today, tested against reality</li>
+    <li><b>Honest headline</b> — sessions open with "N of M feature conditions passing"</li>
+  </ul>
+  <p class="heroline">8 stories · <b>5 decisions need a yes/no from you</b> · 3 build as-specified · ~12 min to review.</p>
+</div>
+
+<div class="grid">
+  <div class="stat"><b>8</b><span>stories selected, all approved &amp; contract-frozen</span></div>
+  <div class="stat"><b>4</b><span>execution waves ⚠ one critical-path story</span></div>
+  <div class="stat"><b>5</b><span>genuine decisions for you (★ CALL)</span></div>
+  <div class="stat"><b>1</b><span>irreversible op (git push + branch delete in the merge gate)</span></div>
+</div>
+
+<h2>How it builds — the order, and the one piece everything hangs off</h2>
+<div class="diagram">
+<svg viewBox="0 0 880 440" role="img" aria-label="Four execution waves. Wave 1 has the feature-verify CLI (critical path), goal-conditions, and merge-gate. Wave 2: closure-refusal and the Impetus greeting. Wave 3: resume-card and verification re-key. Wave 4: daily tasting. Arrows show closure depends on all three wave-1 stories; tasting and greeting depend on feature-verify.">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#b9ad95"/>
+    </marker>
+  </defs>
+  <text x="120" y="22" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 1 · START NOW</text>
+  <text x="340" y="22" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 2</text>
+  <text x="560" y="22" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 3</text>
+  <text x="770" y="22" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 4</text>
+
+  <!-- connectors -->
+  <path d="M220,80 C265,80 265,90 280,90" fill="none" stroke="#b9ad95" stroke-width="2" marker-end="url(#arr)"/>
+  <path d="M220,190 C255,190 255,110 280,105" fill="none" stroke="#b9ad95" stroke-width="2" marker-end="url(#arr)"/>
+  <path d="M220,300 C255,300 250,120 280,118" fill="none" stroke="#b9ad95" stroke-width="2" marker-end="url(#arr)"/>
+  <path d="M220,75 C420,40 620,45 720,368 L740,378" fill="none" stroke="#b9ad95" stroke-width="2" marker-end="url(#arr)"/>
+  <path d="M220,88 C250,140 250,196 280,200" fill="none" stroke="#b9ad95" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Wave 1 -->
+  <g>
+    <rect x="20" y="58" width="200" height="52" rx="8" fill="#f6ddd6" stroke="#9a3b2f" stroke-width="4"/>
+    <text x="32" y="80" font-size="13.5" font-weight="800" fill="#2c2417">momentum…order-and ⚠</text>
+    <text x="32" y="98" font-size="11.5" font-weight="600" fill="#9a3b2f">★ CALL · W1 · gates 3 stories</text>
+  </g>
+  <g>
+    <rect x="20" y="168" width="200" height="52" rx="8" fill="#fbeccf" stroke="#7a5a1e"/>
+    <text x="32" y="190" font-size="13.5" font-weight="800" fill="#2c2417">sprint-p…ate-leads</text>
+    <text x="32" y="208" font-size="11.5" font-weight="600" fill="#7a5a1e">★ CALL · W1 · medium</text>
+  </g>
+  <g>
+    <rect x="20" y="278" width="200" height="52" rx="8" fill="#fbeccf" stroke="#7a5a1e"/>
+    <text x="32" y="300" font-size="13.5" font-weight="800" fill="#2c2417">conduct-…ush-story</text>
+    <text x="32" y="318" font-size="11.5" font-weight="600" fill="#7a5a1e">✓ batch · W1 · medium</text>
+  </g>
+
+  <!-- Wave 2 -->
+  <g>
+    <rect x="280" y="72" width="200" height="52" rx="8" fill="#fbeccf" stroke="#7a5a1e"/>
+    <text x="292" y="94" font-size="13.5" font-weight="800" fill="#2c2417">sprint-c…-per-goal</text>
+    <text x="292" y="112" font-size="11.5" font-weight="600" fill="#7a5a1e">✓ batch · W2 · deps: 3 · medium</text>
+  </g>
+  <g>
+    <rect x="280" y="176" width="200" height="52" rx="8" fill="#fffdf8" stroke="#cdc6b4"/>
+    <text x="292" y="198" font-size="13.5" font-weight="800" fill="#2c2417">impetus-…-m-feature</text>
+    <text x="292" y="216" font-size="11.5" font-weight="600" fill="#6b5e4a">★ CALL · W2 · deps: 1 · low</text>
+  </g>
+
+  <!-- Wave 3 -->
+  <g>
+    <rect x="500" y="72" width="200" height="52" rx="8" fill="#fbeccf" stroke="#7a5a1e"/>
+    <text x="512" y="94" font-size="13.5" font-weight="800" fill="#2c2417">conduct-…a-session</text>
+    <text x="512" y="112" font-size="11.5" font-weight="600" fill="#7a5a1e">★ CALL · W3 · medium</text>
+  </g>
+  <g>
+    <rect x="500" y="176" width="200" height="52" rx="8" fill="#fbeccf" stroke="#7a5a1e"/>
+    <text x="512" y="198" font-size="13.5" font-weight="800" fill="#2c2417">verifica…rface-dod</text>
+    <text x="512" y="216" font-size="11.5" font-weight="600" fill="#7a5a1e">★ CALL · W3 · medium</text>
+  </g>
+
+  <!-- Wave 4 -->
+  <g>
+    <rect x="700" y="356" width="170" height="52" rx="8" fill="#fffdf8" stroke="#cdc6b4"/>
+    <text x="712" y="378" font-size="13.5" font-weight="800" fill="#2c2417">daily-ta…generator</text>
+    <text x="712" y="396" font-size="11.5" font-weight="600" fill="#6b5e4a">✓ batch · W4 · deps: 1 · low</text>
+  </g>
+</svg>
+<div class="dlegend">
+  <span><i class="sw" style="background:#f6ddd6;border-color:#9a3b2f"></i> HIGH / critical path</span>
+  <span><i class="sw" style="background:#fbeccf;border-color:#7a5a1e"></i> medium</span>
+  <span><i class="sw" style="background:#fffdf8;border-color:#cdc6b4"></i> low</span>
+  <span>★ CALL = needs your decision</span>
+  <span>✓ batch = build as-specified</span>
+  <span>⚠ = single point of failure</span>
+</div>
+</div>
+<p class="muted" style="font-size:14px">Read this as: <b>the feature-verify CLI must land first — three stories read the registry it writes; closure additionally waits on goal-conditions and the merge gate.</b></p>
+
+<h2>The 8 stories at a glance</h2>
+<div class="cards">
+  <div class="scard s-high">
+    <div class="top"><span class="id">momentum-tools-feature-verify… · feature verify CLI</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Records your pass/fail verdict per feature into the acceptance registry — sole writer.</p>
+    <p class="meta">Wave 1 · deps: none · critical path · <a href="file:///Users/steve/projects/momentum/.momentum/stories/momentum-tools-feature-verify-human-verdict-recorder-and.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/momentum-tools-feature-verify-human-verdict-recorder-and.smoke.sh">spec ↗</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">sprint-planning-goal-conditions… · goal declaration</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Every future plan gate opens by asking what you'll be able to see work.</p>
+    <p class="meta">Wave 1 · deps: none · medium · <a href="file:///Users/steve/projects/momentum/.momentum/stories/sprint-planning-goal-conditions-declaration-plan-gate-leads.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/sprint-planning-goal-conditions-declaration-plan-gate-leads.smoke.sh">spec ↗</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">conduct-merge-gate… · merge gate executes</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Approving a merge actually merges, pushes, and transitions stories — verified by read-back.</p>
+    <p class="meta">Wave 1 · deps: none · medium · irreversible (push) · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conduct-merge-gate-completes-by-executing-merge-push-story.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/conduct-merge-gate-completes-by-executing-merge-push-story.eval.yaml">spec ↗</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">sprint-closure-refusal… · closure refuses</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">"Done" becomes impossible without your recorded verdict per goal condition — or an honest FAILED.</p>
+    <p class="meta">Wave 2 · deps: 3 (all wave 1) · medium · <a href="file:///Users/steve/projects/momentum/.momentum/stories/sprint-closure-refusal-recorded-human-verdicts-per-goal.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/sprint-closure-refusal-recorded-human-verdicts-per-goal.smoke.sh">spec ↗</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">impetus-session-greeting… · N-of-M headline</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Sessions open with "N of M feature conditions passing" — the practice's honest headline.</p>
+    <p class="meta">Wave 2 · deps: feature-verify · low · <a href="file:///Users/steve/projects/momentum/.momentum/stories/impetus-session-greeting-leads-with-n-of-m-feature.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/impetus-session-greeting-leads-with-n-of-m-feature.eval.yaml">spec ↗</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">conduct-resume-card… · resume cards</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Any waiting gate greets your next session with one question — never a wall of text, never expires.</p>
+    <p class="meta">Wave 3 · deps: none · medium · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conduct-resume-card-impetus-pending-gate-agenda-session.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/conduct-resume-card-impetus-pending-gate-agenda-session.eval.yaml">spec ↗</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">verification-routing-re-key… · surface routing</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Stories verify where a user meets them — a chat feature is driven through chat, never curl.</p>
+    <p class="meta">Wave 3 · deps: none · medium · <a href="file:///Users/steve/projects/momentum/.momentum/stories/verification-routing-re-key-to-assembled-surface-dod.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/verification-routing-re-key-to-assembled-surface-dod.smoke.sh">spec ↗</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">daily-tasting-reminder… · tasting brief</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">A daily 10-minute brief: what should work, what changed, three things to try in the app.</p>
+    <p class="meta">Wave 4 · deps: feature-verify · low · <a href="file:///Users/steve/projects/momentum/.momentum/stories/daily-tasting-reminder-expected-vs-reality-brief-generator.md">story ↗</a> · <a href="file:///Users/steve/projects/momentum/.momentum/sprints/sprint-2026-08-03/specs/daily-tasting-reminder-expected-vs-reality-brief-generator.smoke.sh">spec ↗</a></p>
+  </div>
+</div>
+
+<h2>5 decisions need a yes/no from you</h2>
+<p class="muted" style="margin-top:-4px">Each is decidable from this card alone. My recommendation is in the green band; write a different call to override.</p>
+
+<div class="card dec" id="fork-1">
+<h3>Declare this sprint's goal: sign the capability statement? <span class="pill hipill">HIGH · capability</span></h3>
+<div class="field"><span class="lab">What</span>This sprint's declared goal, seeded onto the sprint record before activation: <b>"A sprint can no longer claim done without a human seeing it work."</b> Because no feature registry exists yet, the goal carries a verified-fix list — each entry something you can personally confirm once built:
+<div class="goalbox"><b>Verified-fix list:</b>
+<ol>
+<li>Sprint closure refuses "done" while any declared condition lacks a recorded human verdict, and closes FAILED honestly with a reason</li>
+<li>The merge gate completes by executing merge, push, and story transitions — verified by read-back, never a report</li>
+<li>An interrupted or gated build leaves a resume card, and the next session opens with its one pending question</li>
+<li>momentum-tools feature verify records a human pass/fail verdict with paired build SHAs into .momentum/features.json</li>
+<li>The session greeting leads with N of M feature conditions passing, honest when no registry exists</li>
+<li>momentum-tools tasting produces the daily expected-vs-reality brief and a due signal with rising tiers</li>
+<li>A backend-only story with a declared chat-ui surface routes to smoke verification, never curl</li>
+</ol></div></div>
+<div class="field"><span class="lab">Why it matters</span>The validation layer proved this sprint would otherwise trap itself: once activated, no existing command can add a goal to the sprint record — and the closure gate this sprint builds refuses to close any sprint with no declared outcome. Without this declaration, sprint-2026-08-03 becomes the first casualty of its own gate. It is also the practice this sprint installs: saying out loud, before building, what you'll be able to see work.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">Planning record keys today: locked, status, stories, waves, slug, approvals — no goal, no goal_conditions. All 16 sprint subcommands enumerated: none writes a goal after activation. Closure story AC9: a sprint with no declared outcome cannot close as done.</div></div>
+<div class="rec"><span class="lab">Recommend — Approve the declaration as drafted.</span> The list mirrors the 7 confirmable outcomes of the 8 stories; closure will ask you to confirm each, in the app, before this sprint may close done.</div>
+<div class="field"><span class="lab">Options</span><ul><li>Approve — seed goal + empty goal_conditions onto the record at activation</li><li>Edit — reword or trim the list (tell me what changes)</li><li>Reject — activate without a goal (accepts the unclosable-done trap)</li></ul></div>
+</div>
+
+<div class="card dec" id="fork-2">
+<h3>Re-approve the 4 stories amended after your approval? <span class="pill hipill">HIGH · approvals</span></h3>
+<div class="field"><span class="lab">What</span>Four story files changed after you approved them, so their recorded approval fingerprints are stale. All changes were seam-pinning and corrections — no scope changed: <b>feature-verify</b> gained the exact registry-entry shape consumers build fixtures against; <b>verification-routing</b> gained the declared-surface field name and the chat-ui/application-ui anchor tokens; <b>goal-conditions</b> had six stale architecture line citations corrected; <b>impetus-greeting</b> had its advisory token aligned to its own frozen contract, plus the agreed card-leads ordering.</div>
+<div class="field"><span class="lab">Why it matters</span>Activation verifies every approval against the current file and hard-blocks on mismatch. Re-approving records that you accept the amended content; reverting instead would undo the pins that made the producer/consumer seams coherent.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">Recorded SHA 90ed8494… vs current 17d73b15… (feature-verify); c8ebf61e… vs 547b651b… (verification-routing); goal-conditions + impetus-greeting edited by the validation fix pass after their approvals. Other 4 approvals match byte-for-byte.</div></div>
+<div class="rec"><span class="lab">Recommend — Re-approve all four as amended.</span> Every amendment tightened a seam the validators caught; none changed what gets built.</div>
+<div class="field"><span class="lab">Options</span><ul><li>Re-approve all four (I re-record each approval)</li><li>Show me the diffs first, story by story</li><li>Revert the amendments (re-opens 3 validated seam defects)</li></ul></div>
+</div>
+
+<div class="card dec" id="fork-3">
+<h3>Store the evidence text in the registry — extend the ratified schema? <span class="pill hipill">HIGH · schema</span></h3>
+<div class="field"><span class="lab">What</span>Your ratified registry design says each verdict stores three things: date, build SHAs, verdict. Your captured CLI command also includes <code>--evidence "&lt;what you saw&gt;"</code>. The story currently persists that evidence text as a fourth stored field — explicitly flagged as an extension awaiting your yes/no, with the fallback written (accept the flag, echo it, store nothing).</div>
+<div class="field"><span class="lab">Why it matters</span>Whatever is stored becomes the read contract for three consumers (closure, tasting brief, greeting). None of them reads evidence today, so the extension is additive and harmless to drop later — but the registry design has churned twice before, which is why the decision is yours, not defaulted.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">Ratified text: "last_verified {date, build SHAs, verdict}". Story AC3 stores verdict + date + both SHAs + evidence, with the extension flagged in its Dev Notes. Consumer fixtures treat evidence as present-but-not-asserted either way.</div></div>
+<div class="rec"><span class="lab">Recommend — Approve the extension.</span> Discarding what the human typed about what they saw is the lossier default; the tasting brief is its natural future reader.</div>
+<div class="field"><span class="lab">Options</span><ul><li>Approve — evidence persists as the fourth stored field</li><li>Ratified-literal — accept the flag but store only the three fields</li><li>Defer — build ratified-literal now, extension as a follow-up story</li></ul></div>
+</div>
+
+<div class="card decmed" id="fork-4">
+<h3>Move feature-verify to the quality-gates epic? <span class="pill warn">medium · epic</span></h3>
+<div class="field"><span class="lab">What</span>The feature-verify story is filed under an epic whose only acceptance condition is running two skills that no longer exist (they were renamed away last quarter) — so that epic can never pass as written. The sibling enforcement story from this same sprint lives in <b>momentum-quality-gates-enforced</b>. One command moves it; the permission system declined my attempt, so it awaits your word.</div>
+<div class="field"><span class="lab">Why it matters</span>Epic burndown and health views silently misfile the sprint's keystone story; leaving it parks real work under a dead epic until a grooming pass notices.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">Epic acceptance_condition names /momentum:feature-grooming and /momentum:feature-breakdown; neither skill directory exists (renamed to epic-grooming / epic-breakdown). All 7 sibling stories sit in topically-fitting epics. Fix: momentum-tools sprint epic-membership --story momentum-tools-feature-verify-human-verdict-recorder-and --epic momentum-quality-gates-enforced</div></div>
+<div class="rec"><span class="lab">Recommend — Reassign.</span> Evidence is unambiguous; the story file and its references get the same value in the same pass.</div>
+<div class="field"><span class="lab">Options</span><ul><li>Reassign (I run the command with your approval here)</li><li>Keep — flag for the next epic-grooming pass instead</li><li>Create a dedicated delivery-loop epic later; keep for now</li></ul></div>
+</div>
+
+<div class="card dec" id="fork-5">
+<h3>Close the gap: resume cards for waiting closure decisions? <span class="pill hipill">HIGH · scope</span></h3>
+<div class="field"><span class="lab">What</span>The resume card is currently emitted only when a build hits its merge gate or is interrupted. Nothing emits a card when <b>sprint closure</b> is refused or waiting for your verdicts — yet closure is, by this sprint's own design, the decision expected to wait days for a tasting session. The reading side already handles it (sessions scan every sprint for pending cards); missing is one emit point on the closure path. Proposed: one added acceptance criterion + task on the resume-card story — when closure is refused or left pending, the card's one question becomes the closure question.</div>
+<div class="field"><span class="lab">Why it matters</span>Without it, the exact multi-day silent-hang this sprint exists to kill survives on the gate most likely to hang. With it, the resume-card story grows slightly and joins the re-approval batch.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">Resume-card trigger: "when a conduct run presents its end-gate" (tier 1 only). Closure story: "This story does not build the resume card." Design rationale: "the merge question is small and quick; closure waits for a tasting session already on the calendar."</div></div>
+<div class="rec"><span class="lab">Recommend — Extend now.</span> One AC + one task, same writer (the build orchestrator), read side already built for it; a fast-follow story would re-open the same seam next sprint.</div>
+<div class="field"><span class="lab">Options</span><ul><li>Extend now (small diff to resume-card story; joins re-approval)</li><li>Fast-follow — capture as a new backlog story via intake</li><li>Accept as documented gap (recorded in the decision record)</li></ul></div>
+</div>
+
+<h2>Where to spend your skepticism — top risks</h2>
+<ol class="risks">
+<li><b>Validation flagged the plan at 51/100 before fixes <span class="pill warn">noted</span></b> — 4 of 7 findings fixed in-pass; the remaining 3 are Forks 1, 2, and 5 above. Nothing is outstanding beyond what these cards decide.</li>
+<li><b>One file, five stories <span class="pill warn">merge risk</span></b> — the CLI script is touched by five stories. Waves serialize four of them; the only same-wave pair edits regions ~2,700 lines apart with no shared hunks (verified), and merges happen one story at a time.</li>
+<li><b>The registry starts empty <span class="pill low">expected</span></b> — feature names and acceptance conditions arrive in a later reconciliation phase (project-side work, out of this sprint). Until then the greeting and brief degrade honestly by design ("no features tracked yet") — that is correct behavior, not a defect.</li>
+</ol>
+
+<details>
+<summary>Defaulted to standards — 10 choices handled, no decision needed (click to expand)</summary>
+<ul>
+<li>Wave assignment follows the computed dependency graph — DAG-valid, every dependency lands in an earlier wave</li>
+<li>Adversarial contract guard: GUARD_CLEAN after one rewrite pass (source-inspection clauses rewritten to observable CLI behavior)</li>
+<li>Coverage: one frozen contract per story, 8/8 dedicated-run; three composition candidates examined and declined with written rationale</li>
+<li>Cross-story seam coherence: 5 dependency edges examined, zero mismatches (uppercase-verdict and wrapper-array fixture variants caught and fixed during authoring)</li>
+<li>Same-wave overlap on the CLI script (feature-verify ∩ goal-conditions) accepted: edit regions ~2,700 lines apart, no shared hunks; rationale to be recorded at activation</li>
+<li>Team composition per the routing table: base Dev agent (no project specialists exist — expected for practice-repo work), QA per frozen contract, E2E + Architect Guard sprint-wide</li>
+<li>Verification methods computed from change types: 5 stories → bash (script contracts), 3 → skill-invoke (eval contracts); all Part-A headers match</li>
+<li>Spec impact landed: architecture (14 items — failed sprint state, merge-gate outcome enum, resume-card/tasting authority rows) and PRD (FR146–148 + Sprint Statuses table + 11 FR amendments)</li>
+<li>epics.json story rosters lag the new stubs across all DEC-040 stories — reconciles at the next epic-grooming pass, standard flow</li>
+<li>Validation fix pass applied: advisory token aligned, six stale architecture citations corrected, contract-section tense fixed, overlap wording corrected</li>
+</ul>
+</details>
+
+<div class="gate">
+<h2>Sign-off</h2>
+<p>Approve the <b>3 ✓ batch</b> items to build as-specified? <span style="font-size:20px">&#9744;</span></p>
+
+<p style="margin-top:16px"><b>For each fork, write a one-line verdict + reason</b> (the blank forces a real read — blanket approve-all is insufficient):</p>
+<div class="chk">
+  <b>Fork 1:</b> Sign the capability statement + verified-fix list as this sprint's goal?
+  <input id="verdict-1" type="text" class="blank" placeholder="your call + one-line reason" oninput="checkGate()" style="min-width:280px;border:1px solid #c8bfaa;border-radius:4px;padding:3px 7px">
+</div>
+<div class="chk">
+  <b>Fork 2:</b> Re-approve the 4 stories amended after approval?
+  <input id="verdict-2" type="text" class="blank" placeholder="your call + one-line reason" oninput="checkGate()" style="min-width:280px;border:1px solid #c8bfaa;border-radius:4px;padding:3px 7px">
+</div>
+<div class="chk">
+  <b>Fork 3:</b> Store evidence text in the registry (extend the ratified schema)?
+  <input id="verdict-3" type="text" class="blank" placeholder="your call + one-line reason" oninput="checkGate()" style="min-width:280px;border:1px solid #c8bfaa;border-radius:4px;padding:3px 7px">
+</div>
+<div class="chk">
+  <b>Fork 4:</b> Move feature-verify to the quality-gates epic?
+  <input id="verdict-4" type="text" class="blank" placeholder="your call + one-line reason" oninput="checkGate()" style="min-width:280px;border:1px solid #c8bfaa;border-radius:4px;padding:3px 7px">
+</div>
+<div class="chk">
+  <b>Fork 5:</b> Extend resume cards to waiting closure decisions?
+  <input id="verdict-5" type="text" class="blank" placeholder="your call + one-line reason" oninput="checkGate()" style="min-width:280px;border:1px solid #c8bfaa;border-radius:4px;padding:3px 7px">
+</div>
+
+<div style="margin-top:20px">
+  <label><input type="radio" name="decision" value="approve" onchange="checkGate()"> <b>A — Approve and activate</b></label><br>
+  <label><input type="radio" name="decision" value="modify" onchange="checkGate()"> M — Modify (re-render gate after changes)</label><br>
+  <label><input type="radio" name="decision" value="avfl" onchange="checkGate()"> R — Re-run AVFL before deciding</label>
+</div>
+
+<p id="gate-hint" style="margin-top:12px;color:#6b5e4a;font-size:14px">Write a one-line verdict for each fork above, then select Approve or Modify.</p>
+<button id="submit-btn" disabled style="margin-top:8px;padding:10px 22px;background:#3a5a7a;color:#fff;border:none;border-radius:7px;font-size:15px;cursor:pointer">
+  Copy decision → paste into chat
+</button>
+<script>
+  var FORK_COUNT = 5;
+  document.getElementById('submit-btn').addEventListener('click', function() {
+    var lines = ['Sprint plan decision — ' + 'sprint-2026-08-03'];
+    var dec = document.querySelector('input[name="decision"]:checked').value;
+    lines.push('Decision: ' + dec.toUpperCase());
+    for (var i = 1; i <= FORK_COUNT; i++) {
+      lines.push('Fork ' + i + ': ' + document.getElementById('verdict-' + i).value.trim());
+    }
+    navigator.clipboard.writeText(lines.join('\n'));
+  });
+  function checkGate() {
+    var allSigned = true;
+    for (var i = 1; i <= FORK_COUNT; i++) {
+      if (FORK_COUNT > 0 && !document.getElementById('verdict-' + i).value.trim()) {
+        allSigned = false; break;
+      }
+    }
+    var decision = document.querySelector('input[name="decision"]:checked');
+    document.getElementById('submit-btn').disabled = !(allSigned && decision);
+    document.getElementById('gate-hint').textContent = allSigned && decision
+      ? 'Ready — copy and paste the decision text back into the chat.'
+      : 'Write a one-line verdict for each fork above, then select a path.';
+  }
+</script>
+<p style="margin-top:16px" class="muted">Nothing is built until you sign off. The full machine-grade detail
+(tasks, dev notes, specs) lives in <code>.momentum/stories/</code> and
+<code>.momentum/sprints/sprint-2026-08-03/specs/</code> — one click away, deliberately not in this view.</p>
+</div>
+
+<p class="sub" style="margin-top:30px">Pre-sprint plan gate · generated from the sprint-2026-08-03 planning run · companion decision surface per decision-grade-presentation.md §5</p>
+
+</div>
+</body>
+</html>
