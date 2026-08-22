@@ -1,0 +1,413 @@
+---
+content_origin: claude-code-subagent
+date: 2026-08-21
+sub_question: "Gate mechanics hands-on: install gc, author a minimal v2 formula with a [steps.gate] step, and empirically verify the gate bead blocks downstream steps and manual closure releases the graph"
+topic: "Gas City HITL gates and cycle orchestration for Momentum"
+---
+
+## Headline
+
+**The `[steps.gate]` mechanism works exactly as advertised for blocking and release — and its notification story is broken in a way that matters for Momentum.** Cooking a v2 formula whose step carries `[steps.gate] {type="human", id="test-gate"}` synthesizes a real bead of `issue_type: gate` titled `Gate: human test-gate`, wires a blocking edge from the gated step to it, keeps the gated step out of `bd ready` **and** refuses `bd close` on it while the gate is open, and releases the whole downstream graph the instant the gate bead is closed. All of that was reproduced end-to-end on two independent throwaway cities and two bd versions. **[EMPIRICAL]**
+
+The defect: a formula-cooked gate persists `await_type: null`. Gas City's bundled human-gate notification reflexes filter on `await_type == "human"`, so they silently skip every gate a formula creates. A `[steps.gate] type="human"` blocks correctly and tells nobody. **[EMPIRICAL]** + **[OFFICIAL]** (code-read)
+
+---
+
+## Environment and versions
+
+| Component | Version | How obtained |
+|---|---|---|
+| `gc` (Gas City) | **1.4.1** (`gc version` → `1.4.1`) | `mise use -g github:gastownhall/gascity@latest` — succeeded first try, with GitHub artifact attestations verified |
+| `bd` (beads), pre-existing | **1.0.4** (`ce242a879`) | already installed via mise github backend |
+| `bd` (beads), gc-pinned | **1.2.2** (`6c124203e`) | downloaded to scratchpad only, never onto PATH globally |
+| mise | 2026.6.14 | pre-existing |
+| Platform | darwin arm64 (macOS 25.5.0) | — |
+
+Install command and result **[EMPIRICAL]**:
+
+```
+$ mise use -g github:gastownhall/gascity@latest
+mise github:gastownhall/gascity@1.4.1    [1/3] install
+mise github:gastownhall/gascity@1.4.1    [1/3] download gascity_1.4.1_darwin_arm64.tar.gz
+mise github:gastownhall/gascity@1.4.1    [2/3] checksum gascity_1.4.1_darwin_arm64.tar.gz
+mise github:gastownhall/gascity@1.4.1    [2/3] verify GitHub artifact attestations
+mise github:gastownhall/gascity@1.4.1    [2/3] ✓ GitHub artifact attestations verified
+mise github:gastownhall/gascity@1.4.1    [3/3] extract gascity_1.4.1_darwin_arm64.tar.gz
+mise github:gastownhall/gascity@1.4.1  ✓ installed
+```
+
+Binary lands at `~/.local/share/mise/installs/github-gastownhall-gascity/latest/gc` (88 MB). No brew, no ubi fallback, no `docs.gascity.com` installer needed — **the mise github backend is the clean install path for this machine** ([Installation docs](https://docs.gascity.com/getting-started/installation)). **[EMPIRICAL]**
+
+Note `gc --version` is **not** a valid flag; it is `gc version`. **[EMPIRICAL]**
+
+Relevant version-skew note: gc 1.4.1's CHANGELOG entry for 2026-08-15 states "**beads pinned to v1.2.2 everywhere** (go.mod library, `deps.env` `BD_VERSION`, CI matrix…)" — i.e. gc 1.4.1 embeds the beads v1.2.2 library, while Momentum's machine-wide `bd` CLI is v1.0.4. Every finding below was reproduced under **both** CLIs, so none of them is a skew artifact. **[OFFICIAL]** (shipped `CHANGELOG.md`) + **[EMPIRICAL]**
+
+---
+
+## City setup: what gc actually requires
+
+`gc init --template minimal --default-provider claude --no-start --name gatetest .` created the full scaffold (`.gc/`, `city.toml`, `pack.toml`, `agents/`, `formulas/`, `orders/`, …) then reported: **[EMPIRICAL]**
+
+```
+gc init: missing required dependencies:
+  - tmux
+  - dolt
+  - flock
+gc init: install the missing dependencies, then run 'gc start'
+```
+
+Two things matter here for Momentum:
+
+1. **`gc start` (the live orchestrator) requires tmux, an external `dolt` binary, and `flock`.** Running the *city* is a heavier dependency footprint than running the *graph*. The out-of-session cycle layer Momentum is evaluating would pull in tmux-managed agent sessions.
+2. **The graph layer does not.** Formula compilation, cooking, and all bead/readiness semantics ran fine with the city un-started, backed by a plain `bd init` store using **bd's own embedded Dolt** (`.beads/embeddeddolt/`) — no external dolt binary. That is the exact backing Momentum's dual-write spike already uses. **[EMPIRICAL]**
+
+There is no `GC_BEADS=file` escape hatch in 1.4.1 — `bd init --help` states "Dolt is the default (and only supported) storage backend. The legacy SQLite backend has been removed." Embedded Dolt is the low-ceremony option and it is sufficient. **[EMPIRICAL]** / **[OFFICIAL]** (bd CLI help)
+
+---
+
+## The formula
+
+Authored at `<city>/formulas/gatetest.toml`. Formula discovery is the well-known `formulas/` directory — city packs, then the city's own `formulas/`, then rig packs ([formula spec v2 §1.1](https://docs.gascity.com/reference/specs/formula-spec-v2)). **[EMPIRICAL]** + **[OFFICIAL]**
+
+```toml
+formula = "gatetest"
+description = "Minimal HITL gate probe: A -> B(gated) -> C"
+
+[requires]
+formula_compiler = ">=2.0.0"
+
+[[steps]]
+id = "a"
+title = "Step A: upstream work"
+description = "Trivial upstream step. No gate."
+
+[[steps]]
+id = "b"
+title = "Step B: gated on human approval"
+description = "Downstream of A, blocked by a human gate."
+needs = ["a"]
+
+[steps.gate]
+type = "human"
+id = "test-gate"
+
+[[steps]]
+id = "c"
+title = "Step C: after the gate"
+description = "Must not become ready until B closes."
+needs = ["b"]
+```
+
+No exec bodies, no agent, no provider — pure graph. `gc formula show gatetest`: **[EMPIRICAL]**
+
+```
+Formula: gatetest
+Description: Minimal HITL gate probe: A -> B(gated) -> C
+
+Steps (5):
+  ├── gatetest.a: Step A: upstream work
+  ├── gatetest.gate-b: Gate: human test-gate (gate)
+  ├── gatetest.b: Step B: gated on human approval [needs: gatetest.gate-b, gatetest.a]
+  ├── gatetest.c: Step C: after the gate [needs: gatetest.b]
+  └── gatetest.workflow-finalize: Finalize workflow [needs: gatetest.c]
+```
+
+Three authored steps compile to five: the compiler injects `gate-b` **before** `b` in topological order and rewrites `b`'s needs to include it, then appends the `workflow-finalize` control bead. `gc formula cook gatetest`: **[EMPIRICAL]**
+
+```
+Root: gt-iit
+Created: 6
+gatetest -> gt-iit
+gatetest.a -> gt-o86
+gatetest.b -> gt-b3e
+gatetest.c -> gt-h0c
+gatetest.gate-b -> gt-crp
+gatetest.workflow-finalize -> gt-d3m
+```
+
+---
+
+## Q1 — Does a gate bead materialize?
+
+**Yes.** `bd show gt-crp`: **[EMPIRICAL]**
+
+```
+○ gt-crp · Gate: human test-gate   [● P2 · OPEN]
+Type: gate
+DESCRIPTION
+Async gate for step b
+METADATA
+  gc.continuation_group: pool-workflow
+  gc.root_bead_id: gt-iit
+  gc.root_store_ref: city:gatetest
+  gc.routed_to:
+  gc.session_affinity: require
+  gc.step_ref: gatetest.gate-b
+DEPENDS ON
+  → ○ gt-iit: gatetest ● P2
+BLOCKS
+  ← ○ gt-b3e: Step B: gated on human approval ● P2
+```
+
+Title format is exactly `Gate: <type> <id>`, matching the compiler source: `gateTitle = fmt.Sprintf("Gate: %s %s", step.Gate.Type, step.Gate.ID)` in [`internal/formula/compile.go`](https://github.com/gastownhall/gascity/blob/main/internal/formula/compile.go) (lines ~523–560, which also set `Type: "gate"`, `Description: "Async gate for step %s"`, and the `DependsOnID: gateID` edge). **[OFFICIAL]** (code-read)
+
+Two behaviours worth recording:
+
+- **Gate beads are hidden from plain `bd list`.** `bd list` reported "Total: 5 issues" and omitted `gt-crp` entirely; `bd list --type gate` and `bd gate list` show it. A Momentum surface that enumerates work via `bd list` will not see its own gates. **[EMPIRICAL]**
+- **Gate beads are never in `bd ready`.** With everything open, `bd ready` returned only Step A. The gate is not offered to any agent as work — correct for HITL. **[EMPIRICAL]**
+
+---
+
+## Q2 — Is the gated step excluded from ready while the gate is open?
+
+**Yes, and the block is attributable solely to the gate.** After closing Step A: **[EMPIRICAL]**
+
+```
+$ bd close gt-o86 --reason "empirical probe: A done"
+✓ Closed gt-o86 — Step A: upstream work: empirical probe: A done
+
+$ bd ready
+✨ No ready work found (all issues have blocking dependencies)
+
+$ bd blocked
+[● P2] gt-b3e: Step B: gated on human approval
+  Blocked by 1 open dependencies: [gt-crp]
+```
+
+`bd show gt-b3e` lists three `DEPENDS ON` edges — the gate `gt-crp`, the workflow root `gt-iit`, and the (now closed) `gt-o86` — but `bd blocked` counts **one** blocking dependency, `gt-crp`. The root edge is structural, not readiness-blocking. **The gate is the exclusive blocker.** **[EMPIRICAL]**
+
+**Bonus finding — the gate also blocks *closure*, not just readiness.** Attempting to close a gated step out from under its gate: **[EMPIRICAL]**
+
+```
+$ bd close gt-bvw --reason "attempting bypass"
+cannot close gt-bvw: blocked by open issues [gt-2zt] (use --force to override)
+```
+
+This is stronger than a readiness filter: an agent cannot mark gated work done while the gate stands. `--force` is the documented, explicit override. For Momentum's mid-story tooling gates (type (c): developer must exercise nornspun/chorgi by hand before the story proceeds) this is precisely the property needed — an over-eager agent cannot self-certify past it without an audit-visible `--force`.
+
+---
+
+## Q3 — Does manual closure release the graph?
+
+**Yes, immediately.** **[EMPIRICAL]**
+
+```
+$ bd close gt-crp --reason "human approved: empirical probe"
+✓ Closed gt-crp — Gate: human test-gate: human approved: empirical probe
+
+$ bd ready
+○ gt-b3e ● P2 Step B: gated on human approval
+Ready: 1 issues with no active blockers
+```
+
+`bd gate resolve <id> --reason "..."` is the named equivalent (`bd gate resolve --help`: "This is equivalent to 'bd close <gate-id>' but with a more explicit name"). Reproduced on the second city under bd 1.2.2: **[EMPIRICAL]**
+
+```
+$ bd gate resolve g2-gea -r "developer verdict: fork-1 adopt; fork-2 change"
+✓ Gate resolved: g2-gea
+  Reason: developer verdict: fork-1 adopt; fork-2 change
+
+$ bd ready
+○ g2-uzx ● P2 Step B: gated on human approval
+```
+
+**The close reason is persisted on the gate bead** (`bd show g2-gea` → `Close reason: developer verdict: fork-1 adopt; fork-2 change`). This is a directly usable substrate for Momentum's anti-rubber-stamp requirement on the pre-sprint plan gate: the written per-fork verdict lands in the bead's audit trail, not just in a chat transcript. **[EMPIRICAL]**
+
+---
+
+## Q4 — Does the graph drive to completion?
+
+**Yes.** Closing each released step in turn walked the whole DAG: **[EMPIRICAL]**
+
+| Action | Next `bd ready` |
+|---|---|
+| close `gt-b3e` (Step B) | `gt-h0c` Step C |
+| close `gt-h0c` (Step C) | `gt-d3m` Finalize workflow |
+| close `gt-d3m` (finalize) | `gt-iit` gatetest (root) |
+
+Final `bd list --all`: 5 issues, 4 closed, root open-and-ready. This matches the spec's stated v2 shape: "The root blocks on `workflow-finalize` and only becomes Ready when the workflow completes." In a *started* city the orchestrator's control dispatcher executes `workflow-finalize` itself — "The orchestrator executes every control bead… No agent participates in control execution" ([formula spec v2 §0.2](https://docs.gascity.com/reference/specs/formula-spec-v2)). Here I closed it by hand because the city was never started. **[EMPIRICAL]** + **[OFFICIAL]**
+
+---
+
+## The defect: `type` and `timeout` are not persisted
+
+Spec §4 ("Accepted But Inert") warns that the gate `type` vocabulary "has no runtime consumer" and that "the parser never validates them and no bundled watcher acts on them. Zero bundled formulas use `gate`." **[OFFICIAL]** I measured what that actually costs.
+
+Formula-cooked gate vs. ad-hoc `bd gate create` gate, same store: **[EMPIRICAL]**
+
+```
+$ bd show gt-crp --json | jq -c '{id,issue_type,title,await_type,await_id,status}'
+{"id":"gt-crp","issue_type":"gate","title":"Gate: human test-gate","await_type":null,"await_id":null,"status":"open"}
+
+$ bd show gt-cvl --json | jq -c '{id,issue_type,title,await_type,await_id,status}'
+{"id":"gt-cvl","issue_type":"gate","title":"Gate: human","await_type":"human","await_id":null,"status":"open"}
+```
+
+`gt-cvl` came from `bd gate create --type=human --blocks gt-6xn --reason="Plan gate: developer must write per-fork verdicts"`. **The ad-hoc path persists `await_type`; the formula path does not.** The declared `type` survives only as decoration inside the title string. `bd show --json` on the formula gate has no `await_type` key at all in its `keys` list. Reproduced identically on a fresh city under bd 1.2.2 (`{"id":"g2-gea",…,"await_type":null}`), so it is not a CLI-version artifact. **[EMPIRICAL]**
+
+The compiler *does* carry the values into the recipe — `Gate: &RecipeGate{Type: step.Gate.Type, ID: step.Gate.ID, Timeout: step.Gate.Timeout}` in `internal/formula/compile.go` — so the loss happens on the cook/materialize path into the bead store, not at compile time. **[OFFICIAL]** (code-read)
+
+`timeout` is lost the same way. I cooked a second formula with `[steps.gate] type="timer" id="auto-5s" timeout="5s"`, waited 7 seconds, and ran the watcher: **[EMPIRICAL]**
+
+```
+$ bd gate show gt-2zt
+○ gt-2zt - Gate: timer auto-5s
+  Status: open
+  Await Type:
+  Description: Async gate for step t
+
+$ bd gate check
+Checked 0 gates: 0 resolved, 0 escalated, 0 errors
+```
+
+Contrast with an ad-hoc timer gate, which works perfectly: **[EMPIRICAL]**
+
+```
+$ bd gate create --type=timer --blocks gt-qa6 --timeout=5s --reason="timer probe"
+✓ Created gate gt-bj6 (type: timer)
+$ sleep 7 && bd gate check
+✓ gt-bj6: resolved - timer expired 2s ago
+Checked 1 gates: 1 resolved, 0 escalated, 0 errors
+$ bd ready
+○ gt-qa6 ● P2 timer gate probe target
+```
+
+**Net effect: every gate a formula creates is a permanently-manual gate, regardless of declared type.** For Momentum's four HITL points this is *fail-safe* — no plan gate or results gate can silently auto-expire — but it means `[steps.gate]` cannot today express "gate on this PR merging" or "gate on this CI run", and it breaks notification (next section).
+
+---
+
+## The notification gap — the finding with real teeth
+
+Gas City ships (on `main`) two core-pack orders that exist precisely to notify a human about an open human gate:
+
+- `internal/bootstrap/packs/core/orders/notify-on-human-gate-creation.toml` — `trigger = "event"`, `on = "bead.created"`
+- `internal/bootstrap/packs/core/orders/renudge-stale-human-gates.toml` — `trigger = "cooldown"`, `interval = "5m"`
+
+Their own header comments state the problem they solve: "creating a `type=human` gate produces ZERO notification — the gate bead is built, the blocks edge is added, a line prints to stdout, and the human who must resolve it is never told (proven ABSENT in gascity/beads: gate creation has no post-create notify hook; the only gate watcher skips human gates entirely)." **[OFFICIAL]** ([notify-on-human-gate-creation.toml](https://github.com/gastownhall/gascity/blob/main/internal/bootstrap/packs/core/orders/notify-on-human-gate-creation.toml))
+
+Both scripts gate on the same predicate. From [`notify-on-human-gate-creation.sh`](https://github.com/gastownhall/gascity/blob/main/internal/bootstrap/packs/core/assets/scripts/notify-on-human-gate-creation.sh): **[OFFICIAL]** (code-read)
+
+```bash
+AWAIT_TYPE="$(printf '%s' "$GATE_JSON" | jq -r '.await_type // ""' 2>/dev/null)"
+# Only OPEN human gates. …
+[ "$AWAIT_TYPE" = "human" ] || continue
+```
+
+`renudge-stale-human-gates.sh` applies the identical filter ("keeps only `await_type == \"human\"` gates").
+
+**Because formula-cooked gates carry `await_type: null`, both bundled reflexes skip them.** A `[steps.gate] type="human"` in a formula is the *one* construct that most needs the notify, and it is exactly the construct the notify cannot see. **[EMPIRICAL]** (the null) + **[OFFICIAL]** (the filter)
+
+Two aggravating details:
+
+1. **Neither order is in the 1.4.1 release.** `gc order list` on the freshly-initialized 1.4.1 city returned 20 orders including `gate-sweep`, `cascade-nudge-on-blocker-close`, `nudge-mail-sweep`, `orphan-sweep` — but **no** `notify-on-human-gate-creation` and **no** `renudge-stale-human-gates`. They exist only on `main` (repo `pushed_at` 2026-08-22). On the current release, a human gate notifies nobody by any path. **[EMPIRICAL]**
+2. **`gate-sweep`, the one gate watcher that does ship in 1.4.1, deliberately excludes human gates.** Its script body is exactly two lines: `gc bd gate check --type=timer --escalate` and `gc bd gate check --type=gh --escalate || true`. I confirmed empirically that `bd gate check` returns "Checked 0 gates" even against a properly-typed *ad-hoc* `human` gate. **[EMPIRICAL]** + **[OFFICIAL]** (`gate-sweep.sh` from the local pack cache)
+
+---
+
+## Addressee routing is also constrained
+
+I attempted to give a gated step a human assignee so the notify path (assignee → `gc.deferred_assignee` → `$GC_ESCALATION_RECIPIENT`) would have somewhere to land:
+
+```toml
+[[steps]]
+id = "p"
+title = "Assigned gated step"
+assignee = "human"
+[steps.gate]
+type = "human"
+id = "plan-gate"
+```
+
+Cook failed: **[EMPIRICAL]**
+
+```
+gc formula cook: decorate formulas v2 recipe: step gatetest3.p: assignee target "human"
+did not resolve to a concrete session; use gc.run_target for config routing
+```
+
+`assignee` must resolve to a concrete *session*; "human" is not one. So the addressee for a formula gate necessarily falls through to `$GC_ESCALATION_RECIPIENT` (default `"human"`), which the mail path treats specially: `gc mail send --notify` "deliberately skips the tmux-nudge for the 'human' recipient (humans have no session; cmd_mail.go `to != \"human\"`)". Momentum would need to supply its own out-of-band notification (macOS notification, cmux nudge, Slack) for any gate a developer is expected to answer. **[EMPIRICAL]** + **[OFFICIAL]**
+
+---
+
+## Reopen semantics (the rejection path)
+
+Reopening a gate after the gated step already closed does **not** claw the step back: **[EMPIRICAL]**
+
+```
+$ bd reopen gt-crp
+↻ Reopened gt-crp
+$ bd show gt-b3e
+✓ gt-b3e · Step B: gated on human approval   [● P2 · CLOSED]
+```
+
+The gate is one-shot in the forward direction; reopening only re-blocks a step that has not yet closed. A "developer rejects the plan, send it back" flow must therefore either (a) reopen the gate *and* the downstream steps explicitly, or (b) model rejection as a distinct branch rather than a gate reopen.
+
+---
+
+## What this means for Momentum's four HITL points
+
+| Momentum gate | Verdict | Basis |
+|---|---|---|
+| (a) triage approval | **Fits.** One gate bead blocking the "convert observations to work" step; batch approval = one `bd gate resolve`. | Q2/Q3 **[EMPIRICAL]** |
+| (b) pre-sprint plan gate | **Fits with a notify bolt-on.** Blocking works; `--reason` persists the written verdict (anti-rubber-stamp substrate). But nothing tells the developer the gate opened, and the visual companion surface is out of scope for gc — gc holds the *state*, Momentum still renders the *surface*. | Q3 + notification gap **[EMPIRICAL]** |
+| (c) mid-story tooling gates | **Best fit of the four.** The close-side enforcement (`cannot close … blocked by open issues`) is exactly "the agent may not declare done until a human exercised the tool," with `--force` as the audited override. | Q2 bonus **[EMPIRICAL]** |
+| (d) post-sprint results gate | **Fits**, same shape as (b), same notify caveat. | Q3 **[EMPIRICAL]** |
+
+Design consequence: **prefer `bd gate create` over `[steps.gate]`** for anything Momentum wants notified or auto-resolved. The ad-hoc path persists `await_type`, so it is visible to `bd gate check`, to `gate-sweep`, and to the (unreleased) notify/renudge orders. A formula step can shell out to `bd gate create --type=human --blocks <its own bead>` and get a first-class, watcher-visible gate; the declarative `[steps.gate]` gets a blocker that no watcher can classify.
+
+Dependency consequence for the open DEC-028 Dolt go/no-go: **the graph semantics tested here need only bd's embedded Dolt**, which Momentum already runs. Only `gc start` — the live out-of-session orchestrator — adds tmux + an external `dolt` binary + `flock`. Gate mechanics can therefore be adopted incrementally without resolving the full Dolt question, but the *cycle-orchestration* layer cannot.
+
+---
+
+## Reproduction script (condensed)
+
+```bash
+mise use -g github:gastownhall/gascity@latest        # → gc 1.4.1
+gc version
+mkdir -p /tmp/gc-city && cd /tmp/gc-city
+gc init --template minimal --default-provider claude --no-start --name gatetest .
+BD_NON_INTERACTIVE=1 bd init --prefix gt
+# author formulas/gatetest.toml as shown above
+gc formula show gatetest                              # 5 steps, gate-b injected
+gc formula cook gatetest                              # Created: 6
+bd ready                                              # only Step A
+bd close <A> --reason "A done"
+bd ready                                              # "No ready work found"
+bd blocked                                            # B blocked by [<gate>]
+bd show <gate> --json | jq '.[0].await_type'          # null   ← the defect
+bd gate check                                         # "Checked 0 gates"
+bd gate resolve <gate> -r "verdict text"
+bd ready                                              # Step B released
+```
+
+---
+
+## Confidence and limits
+
+- Blocking, release, close-side enforcement, completion walk, `await_type` loss, reopen semantics: **directly observed, twice, on two bd versions.** High confidence.
+- Orchestrator-side behavior with a **started** city (auto-execution of `workflow-finalize`, `gate-sweep` firing on its 30s cooldown, `gc mail send --notify` delivery) was **not** exercised — tmux/dolt/flock were absent by design (throwaway scratchpad, no system installs). Those claims rest on the shipped order definitions and spec text, tagged **[OFFICIAL]** code-read, not **[EMPIRICAL]**.
+- The `notify-on-human-gate-creation` / `renudge-stale-human-gates` orders were read from `main` and confirmed **absent** from the 1.4.1 city's order list. Their behavior against a *properly typed* human gate is inferred from source, not run.
+
+Cleanup: both throwaway cities live under the session scratchpad (`…/scratchpad/gc-city`, `…/scratchpad/gc-city2`) and the bd 1.2.2 binary under `…/scratchpad/bd122`. Nothing was written into any real project, and the global `bd` was never upgraded. `mise use -g github:gastownhall/gascity@1.4.1` did add a line to `~/.config/mise/config.toml`.
+
+---
+
+## Sources
+
+- [Gas City Docs — Installation](https://docs.gascity.com/getting-started/installation) — **[OFFICIAL]**
+- [Gas City Docs — Formula Specification v2](https://docs.gascity.com/reference/specs/formula-spec-v2) — **[OFFICIAL]**, "Last verified 2026-06-12"; §0.2 data model, §1.3 step field table (`gate` = "Async wait condition `{type, id, timeout}`"), §2 "Gates and waits_for", §4 "Accepted But Inert"
+- [formula-spec-v2.md raw source](https://raw.githubusercontent.com/gastownhall/gascity/main/docs/reference/specs/formula-spec-v2.md) — **[OFFICIAL]**
+- [Gas City Docs — How Gas City Works](https://docs.gascity.com/getting-started/how-gas-city-works) — **[OFFICIAL]**
+- [Gas City Docs — Understanding Formulas](https://docs.gascity.com/guides/understanding-formulas) — **[OFFICIAL]**
+- [Gas City Docs — Tutorial 06: Beads](https://docs.gascity.com/tutorials/06-beads) — **[OFFICIAL]**
+- [gastownhall/gascity — internal/formula/compile.go](https://github.com/gastownhall/gascity/blob/main/internal/formula/compile.go) — gate synthesis, lines ~506–560 — **[OFFICIAL]** code-read
+- [gastownhall/gascity — internal/formula/types.go](https://github.com/gastownhall/gascity/blob/main/internal/formula/types.go) — `type Gate struct { Type; ID; Timeout }`, doc-comment vocabulary `gh:run, gh:pr, timer, human, mail` — **[OFFICIAL]** code-read
+- [gastownhall/gascity — orders/notify-on-human-gate-creation.toml](https://github.com/gastownhall/gascity/blob/main/internal/bootstrap/packs/core/orders/notify-on-human-gate-creation.toml) — **[OFFICIAL]**
+- [gastownhall/gascity — assets/scripts/notify-on-human-gate-creation.sh](https://github.com/gastownhall/gascity/blob/main/internal/bootstrap/packs/core/assets/scripts/notify-on-human-gate-creation.sh) — the `[ "$AWAIT_TYPE" = "human" ] || continue` filter — **[OFFICIAL]** code-read
+- [gastownhall/gascity — orders/renudge-stale-human-gates.toml](https://github.com/gastownhall/gascity/blob/main/internal/bootstrap/packs/core/orders/renudge-stale-human-gates.toml) — **[OFFICIAL]**
+- [gastownhall/gascity — assets/scripts/renudge-stale-human-gates.sh](https://github.com/gastownhall/gascity/blob/main/internal/bootstrap/packs/core/assets/scripts/renudge-stale-human-gates.sh) — **[OFFICIAL]** code-read
+- [gastownhall/gascity — orders/gate-sweep.toml](https://github.com/gastownhall/gascity/blob/main/internal/bootstrap/packs/core/orders/gate-sweep.toml) — **[OFFICIAL]**
+- [gastownhall/beads — releases](https://github.com/gastownhall/beads/releases) — v1.2.2 (2026-08-15), v1.0.4 (2026-05-09) — **[OFFICIAL]**
+- Shipped `CHANGELOG.md` in the gc 1.4.1 tarball, `[1.4.1] - 2026-08-15` entry ("beads pinned to v1.2.2 everywhere") — **[OFFICIAL]**
+- Local CLI help output: `gc formula cook --help`, `gc init --help`, `bd init --help`, `bd gate --help`, `bd gate create --help`, `bd gate resolve --help` — **[EMPIRICAL]**
+- All command transcripts in this document, run 2026-08-21 on darwin arm64 — **[EMPIRICAL]**
