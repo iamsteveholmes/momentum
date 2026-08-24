@@ -179,7 +179,7 @@ The spec frames this as a gap, not a design commitment ("neither is a design com
 
 This is the finding most useful to Momentum, and it is better than the spec's own caveat makes it sound.
 
-The spec ([formula-spec-v2 §, and formula-spec-v1 §4](https://docs.gascity.com/reference/specs/formula-spec-v2)) **[OFFICIAL]**:
+The spec ([formula-spec-v2 §2 "Compilation" (section number filled in during AVFL fix pass — MIN-002/STRUCTURAL-A-010, where the gate-synthesis language lives), and formula-spec-v1 §4](https://docs.gascity.com/reference/specs/formula-spec-v2)) **[OFFICIAL]**:
 
 > A `[steps.gate]` table synthesizes a sibling gate bead (type `gate`, title `Gate: <type> <id>`) and a `blocks` edge from the gated step to it: **the step stays blocked until the gate bead is closed.**
 
@@ -187,7 +187,7 @@ And the caveat, stated as a known limitation:
 
 > **Gate `type` vocabulary.** `[steps.gate]` synthesizes a real gate bead that blocks its step until the gate bead is closed (manually or by an external watcher), but the `type` values `gh:run`, `gh:pr`, `timer`, `human`, and `mail` are doc-comment vocabulary in `internal/formula/types.go` — the parser never validates them and **no bundled watcher acts on them. Zero bundled formulas use `gate`.**
 
-**Read that carefully: the blocking is real; only the `type` *string* is inert.** For `gh:run` or `timer`, an inert type is fatal — nothing will ever close the gate. For `type = "human"`, it costs nothing: **closing the gate bead is the human's job by definition.** The one gate type that needs no watcher is the one Momentum needs.
+**Read that carefully: the blocking is real; only the `type` *string* is inert.** For `gh:run` or `timer`, an inert type is fatal — nothing will ever close the gate. **[Corrected during AVFL fix pass — MAJ-011 / DOMAIN-A-004.]** For `type = "human"`, resolution genuinely costs nothing — closing the gate bead is the human's job either way. But *notification* is a second, separate consumer of `type`, and it is not free: `research-gate-mechanics-handson.md` measures that a formula-cooked gate persists `await_type: null`, and both bundled human-gate notify reflexes filter on `await_type == "human"` — so they silently skip every gate a formula creates. A `[steps.gate] type="human"` blocks correctly and tells nobody. The gate type Momentum needs is the one that needs no watcher for *resolution*, but it is also the one that gets no notification for free.
 
 The primitive is exposed directly in `bd`, and — importantly — **`human` is the default type**:
 
@@ -198,6 +198,8 @@ Gate types:
   gh:run  - Waits for GitHub Actions workflow
   gh:pr   - Waits for PR merge
 ```
+
+**Standardization note (added during AVFL fix pass — MIN-004):** the four types above are `bd gate --help`'s **creatable** set (`bd gate create --type=`). `bd gate check --type=` evaluates a differently-shaped set — `gh`, `gh:run`, `gh:pr`, `timer`, `bead` — which adds a `bead` type not creatable via `bd gate create` at all, per `research-maturity-open-bugs.md`'s citation of #4399. Do not read the four-row list above as the complete gate-type vocabulary; it is the create-side subset.
 
 I exercised the full block/resolve cycle on Momentum's installed `bd 1.0.4 (ce242a879)` **[EMPIRICAL]**:
 
@@ -274,7 +276,7 @@ $ bd list --all --json --limit=0 | jq -r --arg attempt "0" '
 done
 ```
 
-This is the *exact* silent-starvation failure the pack scripts' own comments describe (*"this gate never saw `code_review.verdict` and looped until Ralph ran out of attempts"*). **Scope caveat:** I exercised the `bd`-direct write path, since `gc` is not installed here; `gc bd update` wraps `bd` and may or may not preserve string typing. Either way, **any Momentum-authored check or gate script must coerce with `|tostring` before comparing**, and must never rely on `2>/dev/null` to swallow a failed read — a swallowed error and a genuine "not approved" are the same empty string, and that is a gate that silently passes nobody.
+This is the *exact* silent-starvation failure the pack scripts' own comments describe (*"this gate never saw `code_review.verdict` and looped until Ralph ran out of attempts"*). **Scope caveat:** I exercised the `bd`-direct write path, since `gc` was not installed on this machine during this sub-question's own research session (2026-08-21); `gc bd update` wraps `bd` and may or may not preserve string typing. **Environment note (MIN-005, added during AVFL fix pass):** a later probe session (2026-08-24) installed `gc` 1.4.1 globally and exercised it live — see `research-verification-probes.md` — but did not specifically re-test `gc bd update --set-metadata` numeric-typing behavior on a Dolt-backed city (Probe 2 confirms `gc bd` is entirely blocked on file-backed cities, a different question from typing preservation on a bd-backed one). The "gc not installed" framing is stale as of 2026-08-24 for general availability; this specific typing question remains unverified through `gc`. Either way, **any Momentum-authored check or gate script must coerce with `|tostring` before comparing**, and must never rely on `2>/dev/null` to swallow a failed read — a swallowed error and a genuine "not approved" are the same empty string, and that is a gate that silently passes nobody.
 
 ---
 
@@ -282,7 +284,7 @@ This is the *exact* silent-starvation failure the pack scripts' own comments des
 
 Against Momentum's gates as specified:
 
-- **(b) Pre-sprint plan gate** and **(d) post-sprint results gate** — these are blocking human decisions with a written verdict per fork. Use **`[steps.gate]` / `bd gate create --type=human`**, not a check loop. The gate blocks indefinitely, resolves on explicit command with a `--reason`, and needs no watcher. Momentum's anti-rubber-stamp requirement (a blanket approve is insufficient) maps to writing one metadata key per fork (`verdict.fork.<slug>=adopt|change|reject` plus a reason) *before* `bd gate resolve` — and to a resolve-time script that refuses if any fork key is missing. **Nothing in Gas City enforces that for you**; it is Momentum-side policy, but it is expressible.
+- **(b) Pre-sprint plan gate** and **(d) post-sprint results gate** — these are blocking human decisions with a written verdict per fork. Use **`[steps.gate]` / `bd gate create --type=human`**, not a check loop. The gate blocks indefinitely, resolves on explicit command with a `--reason`, and needs no watcher. Momentum's anti-rubber-stamp requirement (a blanket approve is insufficient) maps to writing one metadata key per fork **[vocabulary corrected during AVFL fix pass — MIN-006, aligned to `plan-gate-renderer.md`'s actual per-fork options: "Approve as specified" / "Modify scope or sequencing" / "Remove from sprint"]** (`verdict.fork.<slug>=approve|modify|remove` plus a reason) *before* `bd gate resolve` — and to a resolve-time script that refuses if any fork key is missing. **Nothing in Gas City enforces that for you**; it is Momentum-side policy, but it is expressible.
 - **(c) Mid-story tooling gates** (developer must exercise nornspun/chorgi by hand) — the cleanest fit of all. A `human` gate bead per tool-exercise step is exactly "block this story until a person does a thing and says so."
 - **(a) Triage batch approval** — a single gate over the batch, with per-observation dispositions written as metadata before resolve.
 - **The check loop still has a role**, just not as the human gate: it is the right primitive for the *agent-side* review iteration that runs **before** the human is asked. Because `check` cannot be combined with `gate` on one step, the pattern is two steps: `review-loop` (check, agent verdicts) → `human-gate` (gate, blocks on the person).

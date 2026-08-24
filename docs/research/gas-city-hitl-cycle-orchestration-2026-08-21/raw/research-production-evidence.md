@@ -57,7 +57,7 @@ gate: competing_pr
 echo "[contributing-plan-implementation] BLOCKED — <gate>: <detail>"
 gc bd close "$ROOT_ID" --reason "<gate> for issue #{{issue}}"
 ```
-— `packs/pr-pipeline/formulas/mol-pr-start.formula.toml` L108, `packs/contributing/formulas/mol-contributing-plan-implementation.formula.toml` L88–91 **[EMPIRICAL]**
+— `pr-pipeline/formulas/mol-pr-start.formula.toml` L108, `contributing/formulas/mol-contributing-plan-implementation.formula.toml` L88–91 **[EMPIRICAL]** (`packs/` prefix stripped during AVFL fix pass — MAJ-005: the prefix does not exist in `gascity-packs`' repo layout, pack directories sit at repo root; both citations 404 as originally written and 200 with the prefix removed — the underlying evidence is sound, only the paths were wrong)
 
 That is an *agent-judgment* early exit, not a structural block awaiting a human. Nothing pauses; nothing waits for a person.
 
@@ -105,10 +105,10 @@ The `gascity-packs` README markets three packs on approval semantics: `superpowe
 The mechanism is a template variable. `interaction_mode` appears in 25 pack TOML files, declared as `["interactive", "autonomous", "headless"]`, and it is substituted into the agent's prompt markdown **[EMPIRICAL]**. What that prompt then says is the whole of the enforcement:
 
 > "Current interaction_mode is `{{interaction_mode}}`. In interactive mode, **use a human gate only for environment credentials, staging URLs, or destructive test choices.** In autonomous mode, test what is available and record what could not be reached."
-> — `packs/gstack/assets/workflows/gstack-build/qa.md` L11–14 **[EMPIRICAL]**
+> — `gstack/assets/workflows/gstack-build/qa.md` L11–14 **[EMPIRICAL]** (`packs/` prefix stripped during AVFL fix pass — MAJ-005)
 
 > "Current interaction_mode is `{{interaction_mode}}`. **Interactive gates should be handled by the child lanes through mail or passive wait metadata**; autonomous runs should record assumptions instead of blocking on missing preferences."
-> — `packs/gstack/assets/workflows/gstack-build/plan-review.md` L8–10 **[EMPIRICAL]**
+> — `gstack/assets/workflows/gstack-build/plan-review.md` L8–10 **[EMPIRICAL]** (`packs/` prefix stripped during AVFL fix pass — MAJ-005)
 
 "Through mail or passive wait metadata" is the closest any shipped pack comes to specifying a human-gate mechanism — and it is an instruction to an LLM, not a compiled graph edge. The README's own gloss confirms the softness: `interaction_mode` "**describes** human participation in planning and gates" **[OFFICIAL]**. Describes, not enforces.
 
@@ -182,7 +182,7 @@ GitHub Discussions is effectively dead: 4 discussions total, 0 comments on each,
 
 Two-thirds of the codebase is one person. The long tail is drive-by. `gascity-packs` is worse: `julianknutsen` 182, `sjarmak` 62, then a cliff to single-commit contributors **[EMPIRICAL]**. Bus factor is effectively 1–2.
 
-**Issue backlog.** 1,011 open vs 718 closed all-time — open issues exceed lifetime closures **[EMPIRICAL]**. Intake outpaces resolution.
+**Issue backlog.** 1,011 open vs 718 closed all-time — open issues exceed lifetime closures **[EMPIRICAL]**. Intake outpaces resolution. **(Query method annotated during AVFL fix pass — MAJ-004:** this 1,011 figure is the `repos/…/open_issues_count` repo-endpoint count, which bundles open PRs together with open issues. `research-maturity-open-bugs.md` separately reports **575** open issues via the search-API `is:issue is:open` query, which excludes PRs. The two are not in conflict — they count different populations — but this file's own "1,729 issues (1,011 open + 718 closed)" census below inherits the PR-inclusive figure without stating so.)
 
 **Adoption (Homebrew installs, the least gameable number available)** **[EMPIRICAL]**:
 
@@ -192,11 +192,11 @@ Two-thirds of the codebase is one person. The long tail is drive-by. `gascity-pa
 | 90 days | 962 | 7,695 |
 | 365 days | 1,022 | 22,632 |
 
-GitHub release-asset downloads corroborate the scale: gascity peaks around 1,800 per release (v1.4.0), ~9,500 across all v1.x **[EMPIRICAL]**. Beads by contrast: 175,961 downloads on v1.1.0 alone, 1,783 forks vs gascity's 371 **[EMPIRICAL]**.
+GitHub release-asset downloads corroborate the scale: gascity peaks around 1,800 per release (v1.4.0), ~9,500 across all v1.x **[EMPIRICAL]**. Beads by contrast: 175,961 downloads on v1.1.0 alone, 1,783 forks vs gascity's 371 **[EMPIRICAL]** — **(fork counts flagged during AVFL fix pass — LOW-002)** forks are a gameable metric, absent from this section's own stated methodology ("Per the research directive, GitHub stars are discarded entirely… Maturity is assessed on commit volume, contributor distribution, release cadence, Homebrew install analytics, and release asset download counts"), and are cited here only as secondary corroboration alongside downloads and contributor distribution — the directional read (beads more adopted than gascity) does not depend on the fork figures and holds without them.
 
 **The asymmetry matters for DEC-028.** Beads is roughly 5–20× more adopted than Gas City on every non-gameable metric. Momentum already depends on beads. Adopting Gas City means layering a ~700-installs-per-month orchestrator on top of a ~3,700-installs-per-month tracker, and inheriting the orchestrator's bus factor. The dependency is one-directional: beads does not need Gas City.
 
-Roughly 700 monthly macOS installs is also the ceiling on how large the population of possible human-gate users can be. Within that population, zero published a gated formula.
+**Reframed during AVFL fix pass — DOMAIN-A-012.** Roughly 700 monthly macOS installs is a **floor**, not a ceiling, on the population of possible human-gate users — this corpus itself documents at least three uncounted adoption channels the Homebrew figure misses: (1) the `mise`/GitHub-backend install path, which `research-gate-mechanics-handson.md`'s own hands-on researcher used ("No brew, no ubi fallback … the mise github backend is the clean install path for this machine"); (2) source builds from HEAD, which `research-cycle-orchestration-fit.md` §3 quotes the project's own docs recommending ("Best practice right now is to build your own `gc` binary from HEAD"); and (3) Linux, which Homebrew analytics exclude entirely. The release-asset download counts in this same section (~1,800/release, ~9,500 across v1.x) are a second, already-uncounted channel layered on top of the Homebrew figure. The *directional* conclusion survives fully — small user base, zero publicly discoverable gated formula — but "the ceiling" should read "a floor with named uncounted channels above it," and the numeric bound (700/month) should not be quoted as a hard population cap.
 
 ---
 

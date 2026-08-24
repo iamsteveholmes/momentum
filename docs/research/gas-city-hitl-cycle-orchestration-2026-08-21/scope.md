@@ -12,6 +12,7 @@ sub_questions:
   - "Beads coupling and DEC-028 implications: what Gas City requires of beads (Dolt vs GC_BEADS=file in current releases); what adoption forces on the open Dolt migration go/no-go"
   - "HITL alternative patterns: assignee-to-human steps, mail-to-human, converge gates — which fits Momentum's plan gate vs results gate vs mid-story tooling gates (human-facing tools like nornspun/chorgi)"
   - "Production evidence: who runs human-gated formulas in the wild; maintainer guidance on HITL today"
+  - "DEC-035 revisit-clause scoring: out-of-session and multi-Conductor triggers — assembled evidence and verdict (added post-AVFL to close the MAJ-012 coverage gap; goal #4)"
 ---
 
 # Research Scope: Gas City HITL gates and cycle orchestration for Momentum
@@ -30,8 +31,11 @@ sub_questions:
 6. Beads coupling and DEC-028 implications: what Gas City requires of beads (Dolt vs GC_BEADS=file in current releases); what adoption forces on the open Dolt migration go/no-go
 7. HITL alternative patterns: assignee-to-human steps, mail-to-human, converge gates — which fits Momentum's plan gate vs results gate vs mid-story tooling gates (human-facing tools like nornspun/chorgi)
 8. Production evidence: who runs human-gated formulas in the wild; maintainer guidance on HITL today
+9. DEC-035 revisit-clause scoring: out-of-session and multi-Conductor triggers — assembled evidence and verdict (`raw/research-dec035-revisit-triggers.md`, added 2026-08-24 to close the coverage gap flagged by AVFL finding MAJ-012 — the original 8 sub-questions covered the out-of-session trigger only incidentally and the multi-Conductor trigger not at all)
 
-## Prior Decisions (context for synthesis)
+## Evidence notation note (added during AVFL fix pass — STRUCTURAL-A-005)
+
+This corpus uses a fourth evidence tag beyond the standard three (`[OFFICIAL]` docs/source-grounded, `[PRAC]` practitioner-sourced, `[UNVERIFIED]` inference): **`[EMPIRICAL]`** — a claim established by first-hand reproduction (a command actually run, a probe actually executed, a file actually fetched and inspected during this research), as opposed to `[OFFICIAL]`'s reliance on documentation or source-code text describing intended behavior without confirming it was exercised. `[EMPIRICAL]` carries the **highest trust for behavioral claims** in this corpus — it is evidence that something was observed to actually happen, not merely documented to be intended. This tag is used extensively across all 9 raw research files and `research-verification-probes.md` but was not defined anywhere in the corpus prior to this note. **Process note for the practice:** the underlying `momentum:research` skill's evidence-tag template does not define a fourth tag either; this is a corpus-local fix, not a skill fix. A skill-level template update (adding `[EMPIRICAL]` as a first-class tag alongside `[OFFICIAL]`/`[PRAC]`/`[UNVERIFIED]`) should be routed through Momentum's `momentum:upstream-fix` process separately — recorded in `validation/fix-log-iter1.md` rather than applied here.
 
 - DEC-032 (2026-05-22): adopted Gas City as dispatcher; superseded by DEC-035
 - DEC-035 (2026-05-30): conduct adopted as execution engine; Gas City deferred with revisit clause = "out-of-session or multi-Conductor goal appears"

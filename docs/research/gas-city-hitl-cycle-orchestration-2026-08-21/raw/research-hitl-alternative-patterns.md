@@ -74,6 +74,8 @@ Tracked as [gascity#4399](https://github.com/gastownhall/gascity/issues/4399) �
 
 ([beads docs/workflows/gates.md](https://github.com/gastownhall/beads/blob/main/docs/workflows/gates.md)) **[OFFICIAL]**
 
+**Create-vs-check standardization (added during AVFL fix pass — MIN-004):** the row above lists all five types uniformly, but `bd gate create --type=` and `bd gate check --type=` accept different, non-symmetric sets — confirmed against `research-maturity-open-bugs.md`'s citation of #4399: **creatable** via `bd gate create --type=` is `human`, `timer`, `gh:run`, `gh:pr` (not `bead`); **evaluated** by `bd gate check --type=` is `gh`, `gh:run`, `gh:pr`, `timer`, `bead` (not `human`, by design — human gates require manual resolution). So `bead` in the table above is check-only: there is no `bd gate create --type=bead`; a `bead`-type gate is presumably created some other way and only *evaluated* by the checker. Do not read this table as "all five types are symmetric create+check pairs."
+
 The commands are real and reachable from Gas City via the `gc bd` passthrough (`gc bd` forwards all args to `bd` unchanged, per the [CLI reference](https://docs.gascity.com/reference/cli.md)):
 
 ```bash
@@ -88,7 +90,7 @@ bd blocked                      # what's waiting, on which gates
 
 And it is patrolled in production: the `gastown` pack's `deacon` agent prompt lists `gc bd gate check --type=timer --escalate`, `gc bd gate check --type=gh --escalate`, and `gc bd gate list --json` in its command table ([gascity-packs gastown/agents/deacon/prompt.template.md](https://github.com/gastownhall/gascity-packs/blob/main/gastown/agents/deacon/prompt.template.md)) **[OFFICIAL]**. Human gates are deliberately excluded from `bd gate check` — the beads guidance is "keep `human` gates for the decisions that should never auto-close" **[OFFICIAL]**.
 
-**Practical implication for Momentum:** author the human gate against `bd`, not against Gas City's `[steps.gate]`. In a Gas City v2 formula that means an ordinary `exec` step that shells `bd gate create --type=human --blocks <next-step-bead>` and exits, rather than a `[steps.gate]` block whose `type = "human"` is decoration.
+**Practical implication for Momentum:** author the human gate against `bd`, not against Gas City's `[steps.gate]`. **[Corrected during AVFL fix pass — CRIT-005; see `research-cycle-orchestration-fit.md` §1.]** This does *not* mean an `exec` step — Gas City v2 formulas have no `exec`, `command`, `run`, or `script` step key; steps are work beads that agents claim and execute inside sessions, and an unknown key like `exec` would compile clean and silently do nothing. The two constructs that actually exist: (1) a work step whose `description`/`description_file` instructs the claiming agent to run `bd gate create --type=human --blocks <downstream-step-bead-id>` as part of its work, or (2) an order-level `exec` script (orchestrator-hosted, no agent involved, capped at 300s by `[orders] max_timeout`). Either way, `--blocks` must resolve to the **downstream** step's bead id (not the gate-creating step's own id), and that id is only discoverable at cook time — via `gc.root_bead_id` + `gc.step_ref` metadata on the materialized beads — not at formula-authoring time.
 
 ---
 
@@ -133,17 +135,17 @@ The superpowers variant closes the loop back into the v2 check machinery: it set
 
 There is also a notification watchdog for exactly this: a pack order `renudge-stale-human-gates.sh` (introduced in gascity#4553) that periodically re-mails the human about stale open human gates, deduped by a state ledger with `GC_STALE_GATE_RENUDGE_INTERVAL` defaulting to **1h** and a sweep cadence of 5 minutes — evidenced by bug [#4770](https://github.com/gastownhall/gascity/issues/4770) (CLOSED 2026-08-04), which reproduced the ledger being lost on mid-sweep death **[OFFICIAL]**. Human gates therefore have a real, if young, escalation loop behind them.
 
-**Why Momentum probably can't use this pattern directly.** The pattern requires a *resumable, long-lived session* to hold the wait. Momentum's proposed Gas City layer runs each phase as `claude -p /momentum:<skill>` — a process that exits. Worse, the packs' own mode contract forbids it:
+**Why Momentum probably can't use this pattern directly.** The pattern requires a *resumable, long-lived session* to hold the wait. Momentum's proposed Gas City layer would run each phase as a work step claimed inside a session (not `claude -p /momentum:<skill>` as a subprocess — corrected per CRIT-005 above), but the session backing a `headless`-mode phase is still not meant to sit and wait. **[Downgraded during AVFL fix pass — MAJ-010.]** The table below is the packs' own **prompt convention**, read by the language model as instructions — it is not a compiled control-flow gate enforced by Gas City. Nothing in the runtime validates or blocks against these values; `interaction_mode` is stamped to `gc.var.interaction_mode` and read by agent prompts as text.
 
-| `interaction_mode` | Required behavior |
+| `interaction_mode` | Prompt convention (not mechanically enforced) |
 |---|---|
-| `interactive` | May ask questions and request approvals. **Asks one material question at a time and includes a recommendation.** |
-| `autonomous` | Does not block on ordinary planning questions; records assumptions; blocks only for unsafe actions or missing required evidence. |
-| `headless` | **Never asks questions.** Missing required input fails closed with machine-readable blocked reasons. |
+| `interactive` | Prose tells the agent it may ask questions and request approvals, one material question at a time with a recommendation. |
+| `autonomous` | Prose tells the agent not to block on ordinary planning questions; record assumptions; block only for unsafe actions or missing required evidence. |
+| `headless` | Prose tells the agent never to ask questions; missing required input should fail closed with machine-readable blocked reasons. |
 
 ([gascity-packs `gascity/REQUIREMENTS.md`](https://github.com/gastownhall/gascity-packs/blob/main/gascity/REQUIREMENTS.md), Mode Contracts) **[OFFICIAL]**
 
-The PR-review asset enforces it: "In `headless` interaction mode, never wait on a human … Stop blocked with a machine-readable `gc.blocked_reason` instead of waiting" **[OFFICIAL]**.
+The PR-review asset's prompt text follows this convention: "In `headless` interaction mode, never wait on a human … Stop blocked with a machine-readable `gc.blocked_reason` instead of waiting" **[OFFICIAL]** — again, instruction text a shipped pack's prompt happens to carry, not a mechanism Gas City enforces. A Momentum-authored pack sets its own mode prose and is not bound by another pack's convention.
 
 So a `claude -p` phase step is structurally `headless`. The correct adaptation for Momentum is to **invert the pattern**: rather than parking a live session, the phase step *creates the gate bead and exits successfully*. The gate blocks the next phase's step; the human resolves it out-of-band; the graph resumes. Session-parking is for always-on agents, not for one-shot phase runners.
 
@@ -205,7 +207,7 @@ This is the hardest fit, for three reasons:
 2. Momentum's surface is a **visual HTML companion decision surface**. Gas City has no rendering or presentation layer for gates; the mail body is plain text. The mail can only carry a `file://` path to the artifact.
 3. The pack contract's `interactive` mode mandates "one material question at a time," which is the opposite of a ≤7-fork single surface.
 
-**Concrete shape:** a `plan-gate` step writes the HTML surface, stamps `momentum.plan_gate.artifact_path` and `momentum.plan_gate.status=waiting-human` on the workflow root, creates `bd gate create --type=human --blocks <sprint-conduct-step> --reason "Plan gate: <sprint-slug>"`, mails the human the path + gate id, and exits. The developer fills verdicts into a sibling `plan-gate-verdicts.md`, sets `momentum.plan_gate.status=approved|revision_requested`, and resolves the gate. A `[steps.check]` exec script on the following phase reads the status and either proceeds or re-spawns planning. The **anti-rubber-stamp check belongs in Momentum's own script**, not in Gas City — the script should refuse to pass if the verdicts file has fewer written verdicts than declared forks. Gas City can carry the state; it cannot enforce the standard.
+**Concrete shape (corrected during AVFL fix pass — CRIT-005; the original text described the `plan-gate` step as directly "creating" the gate and "exiting," which implied a shell-subprocess exec step that does not exist):** a `plan-gate` work step, claimed and executed by an agent inside its session, writes the HTML surface, stamps `momentum.plan_gate.artifact_path` and `momentum.plan_gate.status=waiting-human` on the workflow root, then — as part of that same claimed work, not a separate exec — runs `bd gate create --type=human --blocks <downstream-conduct-step-bead-id> --reason "Plan gate: <sprint-slug>"` (the downstream bead id resolved at cook time via `gc.root_bead_id`/`gc.step_ref`), mails the human the path + gate id, and closes its own bead. The developer fills verdicts into a sibling `plan-gate-verdicts.md`, sets `momentum.plan_gate.status=approved|revision_requested`, and resolves the gate. A `[steps.check]` exec script (note: `check` cannot be combined with `gate` on the same step per `research-human-verdict-patterns.md` §1 — this must be a separate step from the one that created the gate) on the following phase reads the status and either proceeds or re-spawns planning. The **anti-rubber-stamp check belongs in Momentum's own script**, not in Gas City — the script should refuse to pass if the verdicts file has fewer written verdicts than declared forks. Gas City can carry the state; it cannot enforce the standard.
 
 ### (c) Mid-story tooling gate — human must exercise nornspun/chorgi
 
@@ -267,3 +269,5 @@ Structurally identical to the triage gate but higher-stakes, and it should be **
 *Empirical check performed 2026-08-21:* `gh api -X GET search/code -f q='repo:gastownhall/gascity-packs "steps.gate"'` → `total_count: 0`, corroborating the spec's "Zero bundled formulas use `gate`." **[EMPIRICAL]**
 
 *Source currency:* all Gas City docs pages carry recent verification stamps (formula-spec-v2: "Last verified 2026-06-12"); all cited issues were updated between 2026-07-19 and 2026-08-21. No source older than 12 months was used.
+
+**Corpus cross-references (added during AVFL fix pass):** `research-cycle-orchestration-fit.md` §1 (no `exec` step key in v2 formulas) — **[OFFICIAL]**; `research-human-verdict-patterns.md` §1 (`check` cannot combine with `gate` on one step) — **[OFFICIAL]**.

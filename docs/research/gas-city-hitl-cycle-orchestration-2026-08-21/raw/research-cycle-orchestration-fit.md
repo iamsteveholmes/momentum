@@ -178,9 +178,41 @@ The complementary posture var is `interaction_mode` — `interactive` / `autonom
 
 **The honest characterization of adoption cost:** this is not "wrap conduct in a formula." It is "re-express Momentum's phase orchestration as a pack," which is precisely what the bmad/superpowers/gstack packs are — each one a vendored methodology re-modeled as formula steps, expansions, drains, and fanout lanes. That is a real and proven path (five methodologies have walked it), and it is a rewrite of the orchestration layer, with Momentum's skills surviving as the pack's `skills/` payload.
 
+**Rewrite-scope estimate (added during AVFL fix pass — MAJ-014).** The corpus prices the *gate glue* (~6–9 days, `research-notification-watcher-layer.md` "Glue scope estimate") but had left the orchestration rewrite itself unpriced. Using the five methodologies that walked this exact path as a size proxy — their formula + asset file counts, from this document's own §6/§9 sources and the `gascity-packs` repository structure:
+
+| Methodology pack | Formula files | Notable asset scope |
+|---|---|---|
+| `bmad` | `bmad-build.formula.toml` `extends`-composed from `build-base` plus `bmad-planning`, `bmad-decomposition`, `bmad-implementation`, `bmad-review`, `bmad-fix-loop` — 6+ formula files | `skills/` tree with 10 pack skills (`bmad-prd`, `bmad-create-architecture`, `bmad-dev-story`, `bmad-code-review`, +6 more) plus workflow assets |
+| `gascity` (core methodology pack) | `build-basic-review.formula.toml`, `planning-base.formula.toml`, `build-basic.formula.toml`, plus the `build-from-*-base` family | `assets/workflows/` prose per phase; multiple `assets/scripts/checks/*.sh` |
+| `superpowers` | brainstorming/design-approval formula + workflow assets | `{target}.confirm-design-approval.md`-style per-target workflow prose |
+| `gstack` | `gstack-build` formula family | `qa.md`, `plan-review.md` prompt assets |
+| `pr-pipeline` / `contributing` | `mol-pr-start.formula.toml`, `mol-contributing-plan-implementation.formula.toml` | scorecard + gate prose assets |
+
+Momentum's own cycle has four phases (triage, planning, conduct, retro) plus four HITL gates — comparable in shape to `bmad`'s build-base chain (`prepare → requirements → plan → plan-review → decompose → implement → review → finalize → publish`), which is the closest existing analogue at ~6 formula files plus 10 pack skills and their workflow assets. **Combined estimate: the orchestration rewrite is materially larger than the gate glue** — on the order of **15–25 days** to re-express triage/planning/conduct/retro as formula steps with per-phase `gc.run_target` routing, migrate Momentum's skill bodies into a pack's `skills/` tree (working around the 4096-byte description-file pointer cliff, §4), and re-derive the fan-out/barrier shape for conduct→retro against the #3451 container-gate gap (§7) — **on top of**, not instead of, the ~6–9 day gate-glue estimate. This is a rough sizing from analogous pack scope, not a bottom-up estimate; treat it as an order-of-magnitude floor for the go/no-go, not a committed number.
+
+## 9a. What happens when a gate is never resolved (added during AVFL fix pass — DOMAIN-A-009)
+
+The corpus never composed this failure mode in one place, even though the pieces sit in three different files and, assembled, describe a cycle that stops **permanently and silently** — with one of those files calling part of the mechanism "a feature."
+
+**The composed sequence:** (1) §5 above: *"Before dispatching, the orchestrator checks whether the order already has open (non-closed) work. If it does, the order is skipped even when the trigger says it's due"* — glossed here as a feature for Momentum's single-in-flight-sprint case. (2) `research-gate-mechanics-handson.md`: a formula-cooked gate has no persisted `timeout`, so *"every gate a formula creates is a permanently-manual gate"* (framed there as *fail-safe*). (3) Per DOMAIN-A-005/notification findings elsewhere in this corpus, no tagged release notifies on a human gate, and even the vendored renudge order filters on `await_type == "human"`, which formula gates never set. **Composed:** an unresolved gate leaves its order's work open → the order that would chain to the next phase is skipped every tick, indefinitely → the cycle stops → nothing tells anyone. `research-maturity-open-bugs.md` names exactly this signature for the *wedge* bug class — *"the failure mode of this class is silence … cycle stalls will look identical to 'nothing was due.' Any adoption needs an external liveness check"* — but that prescription was never extended to the unresolved-gate case specifically, even though the mechanism is structurally the same (an order silently not firing).
+
+**Prescription:** the external-liveness-check recommendation from the wedge-bug finding should be read as covering unresolved gates too. Concretely, a Momentum-side sweep of `bd gate list --status open` with an age threshold, run independently of any `gc order` (so it survives even a fully-wedged dispatcher), closes this gap. This is a different mechanism from the notify/renudge orders (§ elsewhere in this corpus) — those tell the human a gate exists; this tells *Momentum's own tooling* that a cycle has stalled, which matters for an out-of-session goal where nobody is watching the clock.
+
+## 9b. Push/merge authority under out-of-session orchestration (added during AVFL fix pass — DOMAIN-A-011)
+
+The corpus proposes chaining triage→planning→conduct→retro out of session with human gates at four named points, and — corpus-wide, across all 9 original files — never addresses two binding Momentum rules that an unattended cycle collides with: `git push` always requires explicit approval (`~/.claude/rules/git-discipline.md`: *"`git push` always requires explicit user confirmation"*), and sprint completion mandates a version bump plus push (`.claude/rules/version-on-release.md`). Momentum's conduct phase performs worktree→sprint-branch merges autonomously already, but terminates at a step — pushing the merged sprint branch — that by rule cannot run unattended.
+
+**The gap concretely:** the corpus enumerates four HITL gates (triage, plan, mid-story tooling, results) where Momentum's own rules imply a **fifth** — a push/merge-authority gate — for any cycle that is meant to run without a human present to type `git push` and confirm it. This is not a Gas City limitation; it is a Momentum policy the corpus's out-of-session framing did not check against.
+
+**Resolution options, either of which closes the gap:**
+1. **A fifth gate** on the merge/push step, structurally identical to the other four `bd gate --type=human` gates this corpus recommends, blocking specifically on push confirmation.
+2. **An explicit statement that the cycle terminates before push** — i.e. an out-of-session run produces a merged-but-unpushed sprint branch and hands off to the developer for the push step alone, rather than attempting end-to-end autonomy through publish.
+
+Either is compatible with everything else in this corpus; neither was specified. Any synthesis or decision document built on this research should pick one explicitly rather than let it default silently.
+
 ## 10. Open questions for hands-on validation
 
-1. **Does a Claude Code session survive a multi-hour step without `idle_timeout` firing?** Docs say `idle_timeout` is empty by default, but `claim_holder_stall_timeout` (5m floor) exists specifically to recycle stalled claim-holders. Untested here — `gc` is not installed on this machine [[EMPIRICAL]] (`which gc` → not found).
+1. **Does a Claude Code session survive a multi-hour step without `idle_timeout` firing?** Docs say `idle_timeout` is empty by default, but `claim_holder_stall_timeout` (5m floor) exists specifically to recycle stalled claim-holders. Untested here — `gc` was not installed on this machine during this sub-question's own research session (2026-08-21) [[EMPIRICAL, at that time]] (`which gc` → not found). **Environment note (MIN-005, added during AVFL fix pass):** a later probe session (2026-08-24) installed `gc` 1.4.1 globally and exercised it live in a throwaway city (`GC_BEADS=file`, no live formula run) — see `research-verification-probes.md`. That session did not run a multi-hour step or exercise `idle_timeout`/`claim_holder_stall_timeout`, so this specific open question remains genuinely open; only the "gc is not installed at all" framing is stale.
 2. **Does `gc session wait --sleep` actually keep a Claude Code session parked**, and does an attach/nudge resume it into the same conversation? The packs' prose assumes yes; no doc states the guarantee.
 3. **Does a `condition`-triggered order reliably fire within its 10s `check_timeout`** against a rig store also serving a live sprint?
 4. **What does #3451 mean concretely for a drain-shaped conduct phase** feeding a results gate — does `needs = ["conduct"]` unblock early in practice?
@@ -209,3 +241,9 @@ The complementary posture var is `interaction_mode` — `interactive` / `autonom
 - [gascity issue #3451](https://github.com/gastownhall/gascity/issues/3451) — container dependencies do not gate on children (cited by the v2 spec)
 
 All sources current as of 2026-08-21; every doc page carries a sitemap `lastmod` within the past six weeks. No source older than two years was used.
+
+**Corpus cross-references (added during AVFL fix pass)**
+- `research-verification-probes.md` — live gc 1.4.1 probes, 2026-08-24 [[EMPIRICAL]]
+- `research-gate-mechanics-handson.md` — gate `timeout` persistence, notification filter [[EMPIRICAL]]
+- `research-maturity-open-bugs.md` — wedge-bug silence signature, #2311/#3451 barrier status [[OFFICIAL]]
+- `~/.claude/rules/git-discipline.md`, `.claude/rules/version-on-release.md` — Momentum push/version-bump rules (DOMAIN-A-011) [local project artifacts]
