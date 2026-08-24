@@ -1,0 +1,8 @@
+# Validator: coherence / Enumerator (sonnet) — 7 findings (0 critical, 6 major, 1 minor)
+COHERENCE-E-001 | major | cross_document_consistency | gemini Q1 vs handson+watcher | notify/renudge "folded into stable core pack" vs doubly-verified absent-from-tags (404s), gate-sweep excludes human gates. Resolve in favor of empirical; affects watcher glue estimate.
+COHERENCE-E-002 | major | cross_document_consistency | gemini ExecSummary vs 6 files | v1.4.0-as-current vs v1.4.1 (2026-08-15) in six files.
+COHERENCE-E-003 | major | cross_document_consistency | handson "Environment and versions" vs beads-coupling §6 | gc 1.4.1 CHANGELOG says beads pinned v1.2.2 everywhere (incl deps.env) vs beads-coupling quoting deps.env on MAIN: BD_VERSION=v1.1.0, BD_CURRENT_VERSION=v1.1.1-0.20260805... Re-fetch deps.env at v1.4.1 tag vs main HEAD; bears on DEC-028 version coupling.
+COHERENCE-E-004 | major | cross_document_consistency | gemini dashboard vs watcher-layer | port 8082 vs official 8372 / compiled-into-gc.
+COHERENCE-E-005 | major | cross_document_consistency | maturity vs watcher-layer vs production-evidence | open-issue counts 575 vs 1,011 unreconciled — different scopes (May-cohort vs all-time) must be labeled.
+COHERENCE-E-006 | major | clarity | gemini body | collapsed table structure, run-on wall of text ("PrimitiveDefinition and Operational FunctionAgent...") — reformat to Markdown before use as reference.
+COHERENCE-E-007 | minor | cross_document_consistency | gemini Q1 vs handson defect section | await_type attributed to beads#1467 "external truth" framing vs corpus root-cause in gascity compile.go cook/materialize path; beads#1467 uncited elsewhere. Verify or remove.
