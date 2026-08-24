@@ -169,7 +169,7 @@ Momentum's current plan gate is a rendered HTML page — `.momentum/handoffs/{sp
 - **Verdict capture + write-back:** ~3–5 days, and this is where the risk concentrates. It means re-targeting the plan-gate renderer from a `file://` clipboard page to a served page with two authenticated POSTs, deciding the metadata schema for per-fork verdicts, preserving the anti-rubber-stamp enable-gate, and defining Modify / Re-run semantics against a two-state bead.
 - **Cursor durability + idempotence + restart tests:** ~1 day.
 
-**Total ≈ 6–9 days** of glue for one gate type, most of it in the verdict path rather than the watcher. That estimate assumes `gc` is installed and a city is running — neither is true in Momentum today, and neither is costed here.
+**Total ≈ 6–9 days** of glue for one gate type, most of it in the verdict path rather than the watcher. **[Reworded during AVFL fix pass — ACCURACY2-A-010; the original "neither is true in Momentum today" framing is stale.]** That estimate assumes `gc` is installed globally and a live Momentum city is running: `gc` 1.4.1 is in fact now installed (via `mise`, per `research-verification-probes.md`), but no live Momentum city exists yet — the running-city half of that assumption still does not hold, and neither the install nor the city-standup effort is costed here.
 
 ---
 

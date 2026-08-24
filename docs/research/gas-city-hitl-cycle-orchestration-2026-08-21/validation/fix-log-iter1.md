@@ -81,5 +81,5 @@ These were called out explicitly in the fix-pass brief as required alongside the
 
 - **29/29 findings accounted for** — 28 fixed by direct edit, 1 (MAJ-012) resolved by a pre-existing new file plus a scope.md index update.
 - **0 findings could not be fixed.**
-- **9 files edited:** all 8 `research-*.md` files, `gemini-deep-research-output.md`, and `scope.md`.
+- **10 files edited:** all 8 `research-*.md` files (as they stood pre-fix-pass), `gemini-deep-research-output.md`, and `scope.md`.
 - **1 deferred item, explicitly scoped down-stream, not up to this fix pass:** the `[EMPIRICAL]` tag is corpus-documented (scope.md) but the underlying `momentum:research` skill template was not touched — that is a skill-level change requiring `momentum:upstream-fix`, out of scope for a corpus fix pass.
