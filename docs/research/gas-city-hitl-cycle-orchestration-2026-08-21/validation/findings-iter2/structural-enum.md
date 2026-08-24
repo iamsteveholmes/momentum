@@ -1,0 +1,3 @@
+# iter2 Validator: structural / Enumerator — 1 finding (minor)
+All iteration-1 structural fixes verified landed by direct inspection (Reliability Notice, packs/ paths, G2 row, DEC-035 file + 9th sub-question, [EMPIRICAL] definition, milestone URL, filled §2, Q3, Sources). No empty-heading or dangling-ID regressions.
+STRUCTURAL2-E-001 | minor | cross_reference_integrity | research-beads-coupling-dec028.md:22 | Fix-pass provenance citation truncated: "STRUCTURAL-A" with no numeric suffix (should be STRUCTURAL-A-011, the four-vs-five provider count finding). Unresolvable as written. Suggestion: append "-011".

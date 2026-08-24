@@ -1,0 +1,7 @@
+# iter2 Validator: domain / Enumerator — 3 findings (3 major)
+All 29 iter1 fixes verified where applied; new files high quality. Findings = partial application.
+DOMAIN2-E-001 | major | hitl-alternative:136,:198,:224 + production-evidence:75-101 | DOMAIN-A-005 availability caveat applied to only 2 of 4 named locations; these still present notify/renudge as shipped ("real, if young, escalation loop", spam warning, "existing precedent"). grep "tagged release|main/edge|not for production" → 0 hits in both files.
+DOMAIN2-E-002 | major | hitl-alternative §8:240 vs beads-coupling §7:182 | DOMAIN-A-008 reconciliation not done: §8 still overstates ("pulls directly on the open DEC-028 Dolt go/no-go") vs corrected sibling framing; no cross-reference. NOTE: this validator claims dec035 cites the corrected framing — contradicted by 4 other validators quoting dec035:47's stale line with mtime evidence; consolidator must adjudicate (likely this validator's "good news" note is wrong).
+DOMAIN2-E-003 | major | corpus-wide absence | DOMAIN-A-010 never added: failed-close semantics of drain+check barrier (does a failed close release dependents → results gate opens on unconfirmed phase?) — 0 hits corpus-wide; needs the §9a/§9b-style treatment the other two DOMAIN-A gaps got.
+CROSS-LENS NOTE | beads-coupling:22 "five implementations ... and the four backing stores" — possible residual half-fix, left to structural/accuracy.
+CLEAN: evidence tags, no gameable metrics, corrected recommendations use real v2 constructs, DEC-035 scoring goal served.

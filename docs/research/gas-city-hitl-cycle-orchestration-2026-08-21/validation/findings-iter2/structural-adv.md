@@ -1,0 +1,9 @@
+# iter2 Validator: structural / Adversary — 6 findings (3 major, 2 minor, 1 low), all fix-pass residue
+All 29 fix-log entries verified landed; both new files conform; 9 sub-questions map 1:1. Findings are outward-propagation residue.
+STRUCTURAL2-A-001 | major | dec035-revisit-triggers:47,:121 vs beads-coupling corrected Bottom Line/§7 | "one consolation: does NOT force DEC-028 — GC_BEADS=file" cites the pre-CRIT-004 framing; corrected position is "partial decoupling, not clean" (city store must be bd/Dolt for gate primitives). Written 14:29, correction 15:37; never re-reconciled.
+STRUCTURAL2-A-002 | major | beads-coupling §5:139 and §3:96 vs corrected §7/Bottom Line | §5 still prescribes "low-risk topology = GC_BEADS=file city" and §3 "fully Dolt-free city is expressible" with no gate caveat — prescribes exactly the config §7 says cannot host bd gate create. §3/§5 carry no fix markers (outside CRIT-004's enumerated scope).
+STRUCTURAL2-A-003 | major | human-verdict-patterns Headline:15 vs corrected §5:190 | Headline retains exact "costs nothing" claim MAJ-011 corrected in §5 ("blocks correctly and tells nobody"). Most-quotable passage states the refuted claim.
+STRUCTURAL2-A-004 | minor | scope.md index | verification-probes.md (the fix pass's own ground truth) missing from scope sub-questions index (9 listed, 10 files).
+STRUCTURAL2-A-005 | minor | fix-log Summary; gemini Notice/Sources; dec035 Verdict | stale corpus counts ("9 files"/"8 research files"/"Nine files") — corpus holds 10 research-*.md; fix-log enumeration internally 8+1+1≠9.
+STRUCTURAL2-A-006 | low | dec035-revisit-triggers:69 | "updated 2026-08-23 — two days before this file" — off by one (file dated 2026-08-24).
+PATTERN for fixer: for each conclusion-changing fix (CRIT-004, CRIT-005, MAJ-010, MAJ-011, MAJ-015) grep the WHOLE corpus for the old claim's phrasing, not just the finding's cited location.
