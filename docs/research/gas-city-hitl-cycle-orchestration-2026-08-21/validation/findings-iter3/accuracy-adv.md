@@ -1,0 +1,9 @@
+# iter3 Validator: accuracy / Adversary — 6 findings (2 major, 2 minor, 2 low)
+Clean: beads-coupling chain consistent; gc-bd blocking evidenced; §9c prescription; self-counts; MERGED-002 caveats accurately scoped; ACC-003; gemini #3451 row; scope markers.
+ACCURACY3-A-001 | major | dec035:47 + cycle-fit:191 vs notification-watcher:172 | "6–9 days" qualifier "FOR ONE GATE TYPE" stripped at both citation sites; verdict-path share (3–5d) is per-gate work; headline "15–25d + 6–9d" understates the four/five-gate floor and the iter2 note entrenches the wrong reading. Fix: restore scope; note multiplication.
+ACCURACY3-A-002 | major | production-evidence:66 | iter2 correction claims smaller denominator "makes the scarcity finding STRONGER" — logically inverted (1/1,293 > 1/1,729 incidence). Error inherited from consolidated report via fix log. Conclusion survives; direction claim must be fixed honestly.
+ACCURACY3-A-003 | minor | production-evidence:185 | "roughly 760 open PRs" impossible (1,011−575=436); unsourced, lifted from garbled validation-report arithmetic. (= STRUCTURAL3-A-003) Also: 718's query method never stated — annotate for "like-for-like" to be checkable.
+ACCURACY3-A-004 | minor | dec035:67 | "Three corroborating signals" now heads FOUR bullets (iter2 #4452 insertion without count update). Three→Four.
+ACCURACY3-A-005 | low | cycle-fit §9c citations | §3 cited for rejection-indistinguishability (lives at §2:112+§6:234); §2 cited for fail-closed attempt-scoped guard (lives at §7:279). Precision-of-provenance.
+ACCURACY3-A-006 | low | beads-coupling:12 | "gc start specifically" clause contradicts same sentence's "gc init's own dependency gate demands dolt+flock". Drop "specifically"; state init enforces up front because start needs binaries.
+Pattern: scope-and-direction failures (qualifiers dropped, one inverted argument), not transposition.

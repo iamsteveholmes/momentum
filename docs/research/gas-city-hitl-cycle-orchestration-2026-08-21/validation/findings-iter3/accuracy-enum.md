@@ -1,0 +1,2 @@
+# iter3 Validator: accuracy / Enumerator — NO FINDINGS
+All 5 assigned iter-2 corrections verified: dec035 cost paragraph matches corrected Bottom Line (three gaps + cost figures); 575/718/1,293 consistent corpus-wide, no stale residue; embedded-Dolt scoping verbatim-consistent across files; gate-mechanics :360 correctly scoped (grep 0 stale hits); Gemini #3451 row accurate. MERGED-002 barrier caveat in all recommendation files; MERGED-005 headline realigned; cost figures + fifth-gate cross-refs consistent. No regressions.
