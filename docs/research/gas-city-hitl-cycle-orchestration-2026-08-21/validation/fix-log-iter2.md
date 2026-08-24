@@ -56,6 +56,16 @@ $ grep -rn "does NOT force DEC-028" raw/*.md
 
 $ grep -rn "claude -p phase step\|claude -p runner\|claude -p subprocess" raw/*.md
 → 0 hits. Clean.
+  ⚠ RETRACTED AS EVIDENCE (COHERENCE3-A-011, iter3): this pattern is structurally
+    incapable of matching. Every corpus occurrence of the phrase is backticked
+    (`claude -p`), so a literal-space pattern can never hit; "0 hits" proved nothing.
+    The residue was re-verified by hand at iter2 and is genuinely clean — the claim
+    stands, the evidence did not. Backtick-tolerant replacement, used at iter3:
+      $ for f in raw/*.md scope.md; do sed 's/[`*_]//g' "$f" \
+          | awk -v F="$f" '{printf "%s:%d: %s\n", F, NR, $0}'; done \
+        | grep -niE "claude -p( |-)?(phase|runner|subprocess|exec)"
+    Strip the markdown emphasis characters first, then match. Iter3 re-run: 5 hits,
+    all inside premise-refutation or corrected-shape text. Clean.
 
 $ grep -rn "costs nothing" raw/*.md
 → 3 hits, all correctly scoped: human-verdict :15 (headline, immediately paired with the notification correction), human-verdict :190 (the original MAJ-011 correction text — "resolution costs nothing, notification is not free"), maturity :135 (de-duplicated correction text). All intentional/corrected uses, not stale claims.
