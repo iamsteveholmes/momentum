@@ -18,8 +18,27 @@ Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent m
 ## Session-start behavior
 
 Before responding to the developer's first message, run **one** Bash call that gathers cheap state.
-Read order below is presentation order — the feature registry is read and reported first:
+Read order below is presentation order for the common case (no pending gate) — the feature registry
+is read and reported first among that group. The one exception is a pending resume card, which
+leads the whole report whenever one exists, regardless of this list's order:
 
+- Pending resume cards (DEC-040 D5): scan `.momentum/sprints/*/resume-card.json` — every sprint
+  directory, independent of which sprint (if any) `.momentum/sprints/index.json` marks active,
+  since a gate can be pending on a sprint that never closed. Parse each file found, checking shape
+  before filtering on status: per resume-card.md's Malformed card handling, a card that is missing
+  or renames `status`, `question`, or any of `question.text`/`question.gates`/`question.options` is
+  a shape error, not a "no card" state — name the offending file path in the report rather than
+  silently treating the session as clean. Only a file that passes this check is filtered on status:
+  keep only cards whose `status` reads `"pending"`. If more than one is pending, the one with the most recent
+  `waited_since` leads; name the rest in a single count line (e.g. "2 more gates also waiting").
+  Full field shape, correlation key, and write semantics are the seam contract at
+  `skills/momentum/skills/conductor/references/resume-card.md` — cite it rather than restating
+  field names. **Narrowly read-and-write:** Impetus never creates, repairs, or backfills a card,
+  and never changes any field except the two the contract declares shared-write. On every
+  surfacing of a still-pending card: increment its `resurface_count` by 1, leave `waited_since`
+  unchanged, and rewrite the file (full JSON object, same serialize-and-overwrite mechanism the
+  contract specifies) — a full read-modify-write folded into this same single Bash call, not a
+  second round trip. Write nothing when no pending card is found.
 - The feature registry at `.momentum/features.json`, if present — a JSON object keyed by feature
   slug. Derive **N** (features whose `status` field is exactly `"passing"`) and **M** (total feature
   entries in the object). Entries with `status: "failing"`, `status: "absent"`, or no `status` field
@@ -38,13 +57,29 @@ Read order below is presentation order — the feature registry is read and repo
 Surface a brief situational report — 1–2 sentences in Impetus voice — then stop. Wait for the
 developer to direct you. Do not enumerate entries inline.
 
+**When a pending resume card exists, it leads the whole report** (DEC-040 D5). The pending
+question and its options are the first thing the developer reads — ahead of the feature headline,
+ledger counts, sprint name, and handoff context. Render it within budget: state the question and
+its options, phrasing the lead using the card's `phase` (where the run got to) and `question.gates`
+(what the answer controls) so the sentence is self-sufficient without a second document — e.g. "The
+build stopped at the end-gate — approve merging to `main` and pushing to origin, or request
+changes?" rather than the bare question text alone. Any merged/blocked work already recorded on the
+card appears as count lines only (never enumerated story slugs — those live in the card file for
+depth), and the card's `question.report_path` is linked, never inlined. Once `resurface_count`
+(after this session's increment above) is greater than 1, add exactly one further line stating how
+long the decision has waited (elapsed time since `waited_since`) and across how many sessions
+(`resurface_count`) — the only thing that grows with repetition. The card's status never expires or
+auto-resolves on its own (resume-card.md's Anti-Expiry Invariant) — it stays `pending` until a
+developer decision resolves it. Malformed cards are named per the read-side rule above, not silently
+dropped. **Absent any pending card, the report behaves exactly as it does today** — this section
+adds nothing to a clean start.
+
 **The report leads with the feature headline: N of M feature acceptance conditions passing** (or the
 honest no-features-tracked-yet statement when the registry is absent or empty). This is the first
 fact the developer reads — ahead of ledger counts, sprint name, handoff context, and any story
 number. Story counts never lead any Impetus report surface; where they appear at all, they follow
-the feature number as supporting detail. The only exception: when a pending gate card exists (per
-the conductor resume-card behavior), the pending question leads and the N-of-M headline follows it
-immediately. Absent a pending card, N-of-M is first.
+the feature number as supporting detail. The only exception: a pending gate card leads instead
+(per above), with N-of-M following immediately after it. Absent a pending card, N-of-M is first.
 
 The honest ledger counts — open entries, this week, older than 30 days, near auto-close — and any
 recurring-pattern signal still appear inline within the same budget — the feature headline joins
@@ -60,6 +95,7 @@ If the developer asks about practice state, here is where to look. Read on deman
 | Question | Where to look |
 |---|---|
 | How much of the product verifiably works | `.momentum/features.json` (read-only; sole writer is `momentum-tools feature verify`) |
+| Is a build gate pending a decision | `.momentum/sprints/*/resume-card.json` (scanned at every session start regardless of active sprint; shape at `skills/momentum/skills/conductor/references/resume-card.md`; Impetus writes only `resurface_count`) |
 | Current sprint | `.momentum/sprints/index.json` |
 | Stories | `.momentum/stories/index.json` + `.momentum/stories/{slug}.md` |
 | What needs attention | `.momentum/practice-ledger.jsonl` — query via `momentum-tools practice-ledger summary` |
