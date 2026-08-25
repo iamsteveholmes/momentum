@@ -17,25 +17,37 @@ Read these silently at session open. No narration. The owner sees only the synth
 - `{project-root}/.momentum/sprints/index.json` — sprint lifecycle: check `active`, `planning`, `completed` (last entry), and `quickfixes`
 - `{project-root}/.momentum/stories/index.json` — story status across the backlog: in-progress, ready-for-dev, done
 - `{project-root}/.momentum/signals/` — pending work flags (retro-derived). Iterate the directory; if empty or absent, no narration. For each `*.json` signal file, read `signal_type`, `origin`, `payload` and surface as part of orientation context.
+- `{project-root}/.momentum/features.json` — feature registry (DEC-040 D1), read-only. A JSON
+  object keyed by feature slug; derive N (entries with `status == "passing"`) and M (total entries).
+  `failing`, `absent`, and no-status entries all count toward M, never toward N. Absent file, zero
+  entries, or a malformed/unexpected-shape file (invalid JSON, not an object, entries missing the
+  expected structure) is the same honest "no features tracked yet" state, reported the same way as
+  any other missing source below — never an error, never a fabricated count. This source is never written by Impetus;
+  `momentum-tools feature verify` is the sole writer.
 
 There is no fallback to `_bmad-output/implementation-artifacts/`. If a source is missing, report state honestly (e.g., "no sprints recorded") rather than substituting old paths.
 
 ## Situational States
 
-Derive which state the project is in and orient accordingly:
+Derive which state the project is in and orient accordingly. In every state below, the **feature
+headline (N of M feature acceptance conditions passing, or the honest no-features-tracked-yet
+statement) leads** — every "Lead with" cell in this table is supporting context that comes
+**after** the feature headline, never the opening fact of the report:
 
-| State | Signal | Lead with |
+| State | Signal | Lead with (after the feature headline, never before it) |
 |---|---|---|
-| Active sprint | `sprints.active` is non-null | Sprint name, stories in-progress, what's near done |
-| Sprint planning ready | `sprints.planning` is non-null | What's been selected, invite to activate |
-| Between sprints | Both null, last sprint has `completed` date | When last sprint closed, retro status, suggest next move |
-| Clean slate | No sprints at all | Fresh start — suggest sprint planning |
-| Stories in-progress, no sprint | `stories/index.json` has `in-progress` items | Surface the active work, note the gap |
-| Pending signals present | `.momentum/signals/` has uncleared `*.json` files | Surface the outstanding signals alongside sprint/story state |
+| Active sprint | `sprints.active` is non-null | *After the feature headline:* sprint name, stories in-progress, what's near done |
+| Sprint planning ready | `sprints.planning` is non-null | *After the feature headline:* what's been selected, invite to activate |
+| Between sprints | Both null, last sprint has `completed` date | *After the feature headline:* when last sprint closed, retro status, suggest next move |
+| Clean slate | No sprints at all | *After the feature headline:* fresh start — suggest sprint planning |
+| Stories in-progress, no sprint | `stories/index.json` has `in-progress` items | *After the feature headline:* surface the active work, note the gap |
+| Pending signals present | `.momentum/signals/` has uncleared `*.json` files | *After the feature headline:* surface the outstanding signals alongside sprint/story state |
 
 ## Delivery Principles
 
 - One grounded situation statement, then suggestions — not the other way around
+- The feature headline (N of M) leads the situation statement; story counts never lead. Where a
+  story count still appears, it appears after the feature number as supporting detail.
 - Suggestions must follow from data: "Sprint closed April 15, retro done, no active sprint — ready to plan the next push?" not "Things are looking good!"
 - If genuinely nothing is outstanding: "Clean slate — no active sprint, backlog is healthy. Want to explore what's next?"
 - 2-3 suggestions maximum — more is noise
