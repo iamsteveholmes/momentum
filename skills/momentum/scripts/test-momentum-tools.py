@@ -85,6 +85,43 @@ def read_sprints(project_dir: Path) -> dict:
     return json.loads(path.read_text())
 
 
+def features_path_of(project_dir: Path) -> Path:
+    return project_dir / ".momentum" / "features.json"
+
+
+def read_features(project_dir: Path) -> dict:
+    return json.loads(features_path_of(project_dir).read_text())
+
+
+def setup_features_project(features: dict | None = None) -> Path:
+    """Create a temp project (with .momentum/stories, .momentum/sprints, and git init
+    via setup_project()) and seed .momentum/features.json with a fixture registry.
+
+    Default fixture carries two entries — one plain, one carrying the optional
+    epic_slugs/design_ref links — matching the frozen smoke contract's fixture shape.
+    """
+    proj = setup_project()
+    if features is None:
+        features = {
+            "gate-crossing": {
+                "slug": "gate-crossing",
+                "name": "Gate Crossing",
+                "acceptance_condition": "A user crosses the gate end to end without manual intervention.",
+                "status": "absent"
+            },
+            "loom-export": {
+                "slug": "loom-export",
+                "name": "Loom Export",
+                "acceptance_condition": "A woven piece exports to a shareable file that opens elsewhere.",
+                "status": "failing",
+                "epic_slugs": ["weaving-epic-that-does-not-exist"],
+                "design_ref": "docs/design/loom-export.md"
+            }
+        }
+    features_path_of(proj).write_text(json.dumps(features, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return proj
+
+
 def assert_eq(test_name: str, actual, expected):
     global PASS_COUNT, FAIL_COUNT
     if actual == expected:
@@ -3239,6 +3276,31 @@ def main():
     test_practice_ledger_e2e_migration_boundary()
     test_practice_ledger_e2e_close_stale_idempotency()
 
+    # feature verify (DEC-040 D1)
+    test_feature_verify_help_registered()
+    test_feature_verify_pass_sets_passing()
+    test_feature_verify_fail_sets_failing()
+    test_feature_verify_last_verified_complete_shape()
+    test_feature_verify_persists_evidence_as_supplied()
+    test_feature_verify_rejects_malformed_build_single_sha()
+    test_feature_verify_rejects_malformed_build_empty_side()
+    test_feature_verify_rejects_malformed_build_extra_colon()
+    test_feature_verify_rejects_malformed_build_non_hex()
+    test_feature_verify_rejects_empty_evidence()
+    test_feature_verify_rejects_missing_evidence_flag()
+    test_feature_verify_rejects_unknown_slug()
+    test_feature_verify_rejects_missing_registry()
+    test_feature_verify_rejects_corrupt_json_registry()
+    test_feature_verify_rejects_non_dict_registry_top_level()
+    test_feature_verify_rejects_non_dict_entry()
+    test_feature_verify_never_passing_without_recorded_pass()
+    test_feature_verify_fail_then_pass_then_fail_flips_status()
+    test_feature_verify_surgical_write_neighbor_untouched()
+    test_feature_verify_surgical_write_only_two_fields_changed()
+    test_feature_verify_epic_slugs_never_validated()
+    test_feature_verify_no_fourth_seam()
+    test_feature_verify_failure_envelope_matches_success_shape()
+
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
 
@@ -4579,6 +4641,338 @@ def test_practice_ledger_e2e_close_stale_idempotency():
     code2, out2 = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
     assert_eq("second run exit 0", code2, 0)
     assert_eq("second run 0 closed", out2.get("closed_count"), 0)
+
+
+# --- Feature Verify Tests (DEC-040 D1) ---
+
+FV_BACKEND_SHA = "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567"
+FV_CLIENT_SHA = "fedcba9876543210fedcba9876543210fedcba98"
+FV_BUILD_PAIR = f"{FV_BACKEND_SHA}:{FV_CLIENT_SHA}"
+FV_EVIDENCE = "Wove and exported a tapestry; the export opened cleanly on a second machine."
+FV_TARGET = "loom-export"
+FV_OTHER = "gate-crossing"
+
+
+def test_feature_verify_help_registered():
+    """AC1: the subcommand exists, is invocable, and --help documents its flags."""
+    print("\n[feature verify] Subcommand registered (AC1)")
+    proj = setup_features_project()
+    code, out = run_tool(proj, "feature", "verify", "--help")
+    # --help output is not JSON; run_tool falls back to {"raw_stdout", "raw_stderr"}.
+    help_text = out.get("raw_stdout", "") if isinstance(out, dict) else ""
+    assert_eq("exit code 0", code, 0)
+    for flag in ("--verdict", "--evidence", "--build"):
+        assert_eq(f"help documents {flag}", flag in help_text, True)
+
+
+def test_feature_verify_pass_sets_passing():
+    """AC2, AC10: a pass verdict sets status=passing, exit 0, JSON envelope."""
+    print("\n[feature verify] Pass verdict sets passing (AC2, AC10)")
+    proj = setup_features_project()
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE,
+                          "--build", FV_BUILD_PAIR)
+    assert_eq("exit code 0", code, 0)
+    assert_eq("envelope action", out.get("action"), "feature_verify")
+    assert_eq("envelope success", out.get("success"), True)
+    entry = read_features(proj)[FV_TARGET]
+    assert_eq("status passing", entry["status"], "passing")
+
+
+def test_feature_verify_fail_sets_failing():
+    """AC2: a fail verdict sets status=failing."""
+    print("\n[feature verify] Fail verdict sets failing (AC2)")
+    proj = setup_features_project()
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "fail", "--evidence", "Export produced an empty file.",
+                          "--build", FV_BUILD_PAIR)
+    assert_eq("exit code 0", code, 0)
+    entry = read_features(proj)[FV_TARGET]
+    assert_eq("status failing", entry["status"], "failing")
+
+
+def test_feature_verify_last_verified_complete_shape():
+    """AC3: last_verified carries exactly date, verdict, backend_sha, client_sha, evidence."""
+    print("\n[feature verify] last_verified complete shape (AC3)")
+    proj = setup_features_project()
+    run_tool(proj, "feature", "verify", FV_TARGET,
+             "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    lv = read_features(proj)[FV_TARGET]["last_verified"]
+    assert_eq("keys match exactly", set(lv.keys()),
+              {"date", "verdict", "backend_sha", "client_sha", "evidence"})
+    assert_eq("verdict lowercase pass", lv["verdict"], "pass")
+    assert_eq("backend_sha", lv["backend_sha"], FV_BACKEND_SHA)
+    assert_eq("client_sha", lv["client_sha"], FV_CLIENT_SHA)
+    assert_eq("evidence text", lv["evidence"], FV_EVIDENCE)
+    assert_eq("date is ISO YYYY-MM-DD", len(lv["date"]) == 10 and lv["date"][4] == "-" and lv["date"][7] == "-", True)
+
+
+def test_feature_verify_persists_evidence_as_supplied():
+    """AC3: evidence persists as the text as supplied, not a stripped variant —
+    padding around otherwise-valid evidence is not trimmed on write."""
+    print("\n[feature verify] Evidence persists as supplied, unstripped (AC3)")
+    proj = setup_features_project()
+    padded = f"  {FV_EVIDENCE}  "
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", padded, "--build", FV_BUILD_PAIR)
+    assert_eq("exit code 0", code, 0)
+    lv = read_features(proj)[FV_TARGET]["last_verified"]
+    assert_eq("evidence persisted unstripped", lv["evidence"], padded)
+
+
+def test_feature_verify_rejects_malformed_build_single_sha():
+    """AC4: a single SHA with no colon is rejected before any write."""
+    print("\n[feature verify] Rejects single-SHA build value (AC4)")
+    proj = setup_features_project()
+    before = features_path_of(proj).read_text()
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BACKEND_SHA)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("error names 'build'", "build" in json.dumps(out).lower(), True)
+    assert_eq("registry unchanged", features_path_of(proj).read_text(), before)
+
+
+def test_feature_verify_rejects_malformed_build_empty_side():
+    """AC4: an empty side of the build pair is rejected."""
+    print("\n[feature verify] Rejects empty side of build pair (AC4)")
+    proj = setup_features_project()
+    before = features_path_of(proj).read_text()
+    for bad_build in (f"{FV_BACKEND_SHA}:", f":{FV_CLIENT_SHA}"):
+        code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                              "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", bad_build)
+        assert_eq(f"non-zero exit for '{bad_build}'", code != 0, True)
+        assert_eq("registry unchanged", features_path_of(proj).read_text(), before)
+
+
+def test_feature_verify_rejects_malformed_build_extra_colon():
+    """AC4: extra colons in the build pair are rejected."""
+    print("\n[feature verify] Rejects extra colon in build pair (AC4)")
+    proj = setup_features_project()
+    before = features_path_of(proj).read_text()
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE,
+                          "--build", f"{FV_BACKEND_SHA}:{FV_CLIENT_SHA}:deadbeef")
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("registry unchanged", features_path_of(proj).read_text(), before)
+
+
+def test_feature_verify_rejects_malformed_build_non_hex():
+    """AC4: a non-hex value in the build pair is rejected."""
+    print("\n[feature verify] Rejects non-hex build value (AC4)")
+    proj = setup_features_project()
+    before = features_path_of(proj).read_text()
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE,
+                          "--build", f"zz99zz:{FV_CLIENT_SHA}")
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("registry unchanged", features_path_of(proj).read_text(), before)
+
+
+def test_feature_verify_rejects_empty_evidence():
+    """AC5: empty or whitespace-only evidence is rejected before any write."""
+    print("\n[feature verify] Rejects empty/whitespace evidence (AC5)")
+    proj = setup_features_project()
+    before = features_path_of(proj).read_text()
+    for bad_evidence in ("", "   "):
+        code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                              "--verdict", "pass", "--evidence", bad_evidence, "--build", FV_BUILD_PAIR)
+        assert_eq(f"non-zero exit for evidence={bad_evidence!r}", code != 0, True)
+        assert_eq("registry unchanged", features_path_of(proj).read_text(), before)
+
+
+def test_feature_verify_rejects_missing_evidence_flag():
+    """AC5: omitting --evidence entirely is rejected (argparse required-flag enforcement)."""
+    print("\n[feature verify] Rejects missing --evidence flag (AC5)")
+    proj = setup_features_project()
+    before = features_path_of(proj).read_text()
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("registry unchanged", features_path_of(proj).read_text(), before)
+
+
+def test_feature_verify_rejects_unknown_slug():
+    """AC6: an unknown feature slug is rejected by name, registry path named, no entry invented."""
+    print("\n[feature verify] Rejects unknown slug (AC6)")
+    proj = setup_features_project()
+    before = features_path_of(proj).read_text()
+    code, out = run_tool(proj, "feature", "verify", "no-such-feature",
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("exit code 1", code, 1)
+    assert_eq("envelope success false", out.get("success"), False)
+    assert_eq("envelope has action", "action" in out, True)
+    assert_eq("error names the slug", "no-such-feature" in out.get("error", ""), True)
+    assert_eq("error names the registry path", "features.json" in out.get("error", ""), True)
+    assert_eq("registry unchanged", features_path_of(proj).read_text(), before)
+    assert_eq("no entry invented", "no-such-feature" in read_features(proj), False)
+
+
+def test_feature_verify_rejects_missing_registry():
+    """AC7: a missing registry is a clear error and is never silently created."""
+    print("\n[feature verify] Rejects missing registry (AC7)")
+    proj = setup_project()  # no features.json seeded
+    reg_path = features_path_of(proj)
+    assert_eq("registry absent before run", reg_path.exists(), False)
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("error names the expected path", "features.json" in json.dumps(out), True)
+    assert_eq("registry still absent", reg_path.exists(), False)
+
+
+def test_feature_verify_rejects_corrupt_json_registry():
+    """AC10: a registry file that isn't valid JSON produces an error envelope
+    (not an uncaught traceback), naming the path, and exits non-zero."""
+    print("\n[feature verify] Rejects corrupt-JSON registry (AC10)")
+    proj = setup_features_project()
+    reg_path = features_path_of(proj)
+    corrupt = "{ this is not valid json "
+    reg_path.write_text(corrupt)
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("envelope has action", "action" in out, True)
+    assert_eq("envelope success false", out.get("success"), False)
+    assert_eq("error names the registry path", "features.json" in out.get("error", ""), True)
+    assert_eq("registry left unchanged", reg_path.read_text(), corrupt)
+
+
+def test_feature_verify_rejects_non_dict_registry_top_level():
+    """AC10: a registry whose top-level JSON value isn't an object produces an
+    error envelope instead of crashing, and leaves the file unchanged."""
+    print("\n[feature verify] Rejects non-dict registry top level (AC10)")
+    proj = setup_features_project()
+    reg_path = features_path_of(proj)
+    before = json.dumps(["not", "a", "dict"])
+    reg_path.write_text(before)
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("envelope success false", out.get("success"), False)
+    assert_eq("registry left unchanged", reg_path.read_text(), before)
+
+
+def test_feature_verify_rejects_non_dict_entry():
+    """AC10: a registry entry that isn't a JSON object produces an error
+    envelope instead of crashing on attribute-style mutation."""
+    print("\n[feature verify] Rejects non-dict feature entry (AC10)")
+    proj = setup_features_project()
+    reg_path = features_path_of(proj)
+    features = read_features(proj)
+    features[FV_TARGET] = "not-an-object"
+    before = json.dumps(features, indent=2) + "\n"
+    reg_path.write_text(before)
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("envelope success false", out.get("success"), False)
+    assert_eq("error names the slug", FV_TARGET in out.get("error", ""), True)
+    assert_eq("registry left unchanged", reg_path.read_text(), before)
+
+
+def test_feature_verify_never_passing_without_recorded_pass():
+    """AC8: failing-by-default — a feature with no last_verified is never passing, and a
+    fail verdict on one feature never flips an unrelated, never-verified feature."""
+    print("\n[feature verify] Failing-by-default holds (AC8)")
+    proj = setup_features_project()
+    # Untouched neighbor starts absent and has no last_verified.
+    neighbor_before = read_features(proj)[FV_OTHER]
+    assert_eq("neighbor has no last_verified", "last_verified" in neighbor_before, False)
+    assert_eq("neighbor not passing", neighbor_before["status"] != "passing", True)
+    run_tool(proj, "feature", "verify", FV_TARGET,
+             "--verdict", "fail", "--evidence", "Export produced an empty file.",
+             "--build", FV_BUILD_PAIR)
+    neighbor_after = read_features(proj)[FV_OTHER]
+    assert_eq("neighbor still not passing", neighbor_after["status"] != "passing", True)
+    assert_eq("neighbor still has no last_verified", "last_verified" in neighbor_after, False)
+
+
+def test_feature_verify_fail_then_pass_then_fail_flips_status():
+    """AC2, AC8: verdicts flip status back and forth; last_verified reflects the latest one."""
+    print("\n[feature verify] Verdict flips flip status both ways (AC2, AC8)")
+    proj = setup_features_project()
+    run_tool(proj, "feature", "verify", FV_TARGET,
+             "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("passing after pass", read_features(proj)[FV_TARGET]["status"], "passing")
+    run_tool(proj, "feature", "verify", FV_TARGET,
+             "--verdict", "fail", "--evidence", "Regressed on the next build.", "--build", FV_BUILD_PAIR)
+    entry = read_features(proj)[FV_TARGET]
+    assert_eq("failing after fail", entry["status"], "failing")
+    assert_eq("last_verified reflects the fail", entry["last_verified"]["verdict"], "fail")
+    assert_eq("last_verified reflects new evidence", entry["last_verified"]["evidence"], "Regressed on the next build.")
+
+
+def test_feature_verify_surgical_write_neighbor_untouched():
+    """AC9: a run against one feature never modifies a different entry in the registry."""
+    print("\n[feature verify] Neighbor entry untouched (AC9)")
+    proj = setup_features_project()
+    before = read_features(proj)[FV_OTHER]
+    run_tool(proj, "feature", "verify", FV_TARGET,
+             "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    after = read_features(proj)[FV_OTHER]
+    assert_eq("neighbor entry byte-identical", after, before)
+
+
+def test_feature_verify_surgical_write_only_two_fields_changed():
+    """AC9: only status and last_verified change on the target entry; every other field
+    (slug, name, acceptance_condition, epic_slugs, design_ref) survives unchanged."""
+    print("\n[feature verify] Only status/last_verified change on target (AC9)")
+    proj = setup_features_project()
+    before = dict(read_features(proj)[FV_TARGET])
+    run_tool(proj, "feature", "verify", FV_TARGET,
+             "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    after = read_features(proj)[FV_TARGET]
+    for field in ("slug", "name", "acceptance_condition", "epic_slugs", "design_ref"):
+        assert_eq(f"{field} unchanged", after.get(field), before.get(field))
+    changed = sorted(k for k in set(before) | set(after) if before.get(k) != after.get(k))
+    assert_eq("only status + last_verified changed", changed, ["last_verified", "status"])
+
+
+def test_feature_verify_epic_slugs_never_validated():
+    """Dev Notes: epic_slugs listing a nonexistent epic is never validated or blocking."""
+    print("\n[feature verify] epic_slugs never validated (Dev Notes)")
+    proj = setup_features_project()
+    # Fixture's loom-export.epic_slugs names an epic that does not exist anywhere.
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("succeeds despite nonexistent epic_slugs entry", code, 0)
+
+
+def test_feature_verify_no_fourth_seam():
+    """AC11: a run touches only .momentum/features.json — no other state file is
+    created or modified (no ledger append, no stories/sprints index write)."""
+    print("\n[feature verify] No fourth seam touched (AC11)")
+    proj = setup_features_project()
+    momentum_dir = proj / ".momentum"
+    before_files = {
+        p.relative_to(momentum_dir): p.read_bytes()
+        for p in momentum_dir.rglob("*") if p.is_file()
+    }
+    run_tool(proj, "feature", "verify", FV_TARGET,
+             "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    after_files = {
+        p.relative_to(momentum_dir): p.read_bytes()
+        for p in momentum_dir.rglob("*") if p.is_file()
+    }
+    unexpected_new = set(after_files) - set(before_files)
+    assert_eq("no new files under .momentum", unexpected_new, set())
+    changed_files = {
+        f for f in (set(before_files) & set(after_files))
+        if before_files[f] != after_files[f] and f != Path("features.json")
+    }
+    assert_eq("no other file modified", changed_files, set())
+
+
+def test_feature_verify_failure_envelope_matches_success_shape():
+    """AC10: failure output uses the same JSON envelope shape as success (action, success)."""
+    print("\n[feature verify] Failure output matches envelope contract (AC10)")
+    proj = setup_features_project()
+    code, out = run_tool(proj, "feature", "verify", "no-such-feature",
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("exit code 1", code, 1)
+    assert_eq("has action field", "action" in out, True)
+    assert_eq("has success field", "success" in out, True)
+    assert_eq("success is False", out.get("success"), False)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,8 @@
 """
 momentum-tools — Deterministic CLI for Momentum sprint and story operations.
 
-Sole writer of stories/index.json and sprints/index.json.
+Sole writer of stories/index.json and sprints/index.json. Also the sole writer of
+feature status and last_verified in features.json (DEC-040 D1 — `feature verify`).
 All operations are deterministic state machine validations + JSON mutations.
 
 Usage:
@@ -31,11 +32,13 @@ Usage:
     momentum-tools.py practice-ledger by-source SOURCE
     momentum-tools.py practice-ledger close-stale [--age-days N]
     momentum-tools.py version check
+    momentum-tools.py feature verify FEATURE_SLUG --verdict pass|fail --evidence TEXT --build BACKEND_SHA:CLIENT_SHA
 """
 
 import argparse
 import hashlib
 import json
+import re
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -93,6 +96,10 @@ def stories_path(project_dir: Path) -> Path:
 
 def sprints_path(project_dir: Path) -> Path:
     return project_dir / ".momentum" / "sprints" / "index.json"
+
+
+def features_path(project_dir: Path) -> Path:
+    return project_dir / ".momentum" / "features.json"
 
 
 def read_json(path: Path) -> dict:
@@ -1900,6 +1907,110 @@ def cmd_feature_status_hash(args: argparse.Namespace) -> None:
            hash_result={"hash": digest, "features_present": True})
 
 
+# --- Feature Verify Command (DEC-040 D1) ---
+#
+# Sole write path for `status` and `last_verified` in .momentum/features.json.
+# Failing-by-default: a feature only reaches `passing` through a recorded human
+# `pass` verdict against a named build. No agent, skill, or workflow may write
+# feature status by any other route (architecture.md Read/Write Authority).
+
+_BUILD_SHA_RE = re.compile(r"^[0-9a-fA-F]+$")
+
+
+def _parse_build_pair(build_value: str):
+    """Parse a --build backendSha:clientSha value.
+
+    Returns (backend_sha, client_sha, None) on success, or (None, None, message)
+    when the value is not exactly two non-empty hex SHAs separated by one colon.
+    """
+    if build_value.count(":") != 1:
+        return None, None, (
+            f"Invalid --build value '{build_value}': expected exactly two commit SHAs "
+            "separated by a single colon (backendSha:clientSha)"
+        )
+    backend_sha, client_sha = build_value.split(":", 1)
+    if not backend_sha or not client_sha:
+        return None, None, (
+            f"Invalid --build value '{build_value}': both the backend and client SHA "
+            "must be non-empty"
+        )
+    if not _BUILD_SHA_RE.match(backend_sha) or not _BUILD_SHA_RE.match(client_sha):
+        return None, None, (
+            f"Invalid --build value '{build_value}': SHAs must be hexadecimal commit SHAs"
+        )
+    return backend_sha, client_sha, None
+
+
+def cmd_feature_verify(args: argparse.Namespace) -> None:
+    """Record a human PASS/FAIL verdict against a feature's acceptance_condition.
+
+    Sole writer of status/last_verified in .momentum/features.json (DEC-040 D1).
+    Validates every input before touching the file; any rejection leaves the
+    registry byte-identical.
+    """
+    project_dir = resolve_project_dir()
+    path = features_path(project_dir)
+
+    backend_sha, client_sha, build_error = _parse_build_pair(args.build)
+    if build_error:
+        error_result("feature_verify", build_error)
+
+    evidence = args.evidence
+    if not evidence.strip():
+        error_result(
+            "feature_verify",
+            "Missing or empty --evidence: a verdict with no observation behind it "
+            "is not recordable"
+        )
+
+    if not path.exists():
+        error_result("feature_verify", f"Feature registry not found: {path}")
+
+    try:
+        registry = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        error_result(
+            "feature_verify",
+            f"Feature registry at {path} is not valid JSON: {exc}"
+        )
+
+    if not isinstance(registry, dict):
+        error_result(
+            "feature_verify",
+            f"Feature registry at {path} must be a JSON object keyed by feature slug"
+        )
+
+    slug = args.feature_slug
+    if slug not in registry:
+        error_result(
+            "feature_verify",
+            f"Unknown feature slug '{slug}': not present in {path}"
+        )
+
+    entry = registry[slug]
+    if not isinstance(entry, dict):
+        error_result(
+            "feature_verify",
+            f"Feature entry '{slug}' in {path} must be a JSON object"
+        )
+
+    verdict = args.verdict  # argparse choices restrict this to "pass" or "fail"
+    status = "passing" if verdict == "pass" else "failing"
+
+    entry["status"] = status
+    entry["last_verified"] = {
+        "date": date.today().isoformat(),
+        "verdict": verdict,
+        "backend_sha": backend_sha,
+        "client_sha": client_sha,
+        "evidence": evidence,
+    }
+
+    write_json(path, registry)
+
+    result("feature_verify", success=True, slug=slug, status=status, path=str(path))
+
+
 # --- Specialist Classify Command (retired — Decision 55 / DEC-023) ---
 #
 # This command formerly mapped touched paths to a pre-shipped dev specialist
@@ -3073,7 +3184,26 @@ def build_parser() -> argparse.ArgumentParser:
     vc = version_sub.add_parser("check", help="Check version hash")
     vc.set_defaults(func=cmd_version_check)
 
-    # feature-status-hash command
+    # feature command group (DEC-040 D1) — sole writer of feature status/last_verified
+    feature = subparsers.add_parser("feature", help="Feature acceptance-registry operations (DEC-040 D1)")
+    feature_sub = feature.add_subparsers(dest="feature_action", required=True)
+
+    # feature verify
+    fv = feature_sub.add_parser(
+        "verify",
+        help="Record a human PASS/FAIL verdict against a feature in .momentum/features.json"
+    )
+    fv.add_argument("feature_slug", metavar="feature-slug",
+                    help="Feature slug to record a verdict against (must already exist in the registry)")
+    fv.add_argument("--verdict", required=True, choices=["pass", "fail"],
+                    help="Human verdict: pass or fail")
+    fv.add_argument("--evidence", required=True,
+                    help="What the human actually observed (non-empty, non-whitespace)")
+    fv.add_argument("--build", required=True,
+                    help="Paired build SHAs the verdict was observed against: backendSha:clientSha")
+    fv.set_defaults(func=cmd_feature_verify)
+
+    # feature-status-hash command (older, separate artifact — not part of the feature group)
     fsh = subparsers.add_parser("feature-status-hash",
                                 help="Compute SHA-256 hash of features.json + stories/index.json")
     fsh.set_defaults(func=cmd_feature_status_hash)
