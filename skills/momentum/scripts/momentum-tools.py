@@ -302,11 +302,9 @@ _UNVERIFIED_REASONS = ("missing-entry", "no-verdict", "no-build-shas")
 _DECISIONS_DIR_REL = "_bmad-output/planning-artifacts/decisions"
 
 
-def _load_features_registry(project_dir: Path) -> dict | None:
-    """Read .momentum/features.json. Returns None (never an implicit pass) when the
-    registry is absent, unreadable, or not a JSON object. Read-only — `feature verify`
-    is the sole writer (DEC-040 D1)."""
-    path = features_path(project_dir)
+def _read_json_object(path: Path) -> dict | None:
+    """Read a JSON file as a dict. Returns None (never raises) when the file is absent,
+    unreadable, or not a JSON object."""
     if not path.exists():
         return None
     try:
@@ -318,6 +316,21 @@ def _load_features_registry(project_dir: Path) -> dict | None:
     return data
 
 
+def _load_features_registry(project_dir: Path) -> dict | None:
+    """Read .momentum/features.json. Returns None (never an implicit pass) when the
+    registry is absent, unreadable, or not a JSON object. Read-only — `feature verify`
+    is the sole writer (DEC-040 D1)."""
+    return _read_json_object(features_path(project_dir))
+
+
+def _condition_result(slug: str, state: str, *, reason=None, status=None, verdict=None,
+                       backend_sha=None, client_sha=None) -> dict:
+    """Shared shape for a goal_conditions classification result."""
+    return {"slug": slug, "state": state, "reason": reason,
+            "status": status, "verdict": verdict,
+            "backend_sha": backend_sha, "client_sha": client_sha}
+
+
 def _unverified_condition(slug: str, reason: str, *, status=None, verdict=None,
                            backend_sha=None, client_sha=None) -> dict:
     """Build an unverified classification result. Guardrail: `reason` must be one of
@@ -325,9 +338,8 @@ def _unverified_condition(slug: str, reason: str, *, status=None, verdict=None,
     bug in this module, not a data problem, so it fails loudly rather than emitting a
     fourth reason token silently."""
     assert reason in _UNVERIFIED_REASONS, f"invalid unverified reason token: {reason!r}"
-    return {"slug": slug, "state": "unverified", "reason": reason,
-            "status": status, "verdict": verdict,
-            "backend_sha": backend_sha, "client_sha": client_sha}
+    return _condition_result(slug, "unverified", reason=reason, status=status, verdict=verdict,
+                              backend_sha=backend_sha, client_sha=client_sha)
 
 
 def _classify_goal_condition(registry: dict | None, slug: str) -> dict:
@@ -355,14 +367,12 @@ def _classify_goal_condition(registry: dict | None, slug: str) -> dict:
                                       backend_sha=backend_sha, client_sha=client_sha)
 
     if verdict == "fail":
-        return {"slug": slug, "state": "recorded-fail", "reason": None,
-                "status": status, "verdict": verdict,
-                "backend_sha": backend_sha, "client_sha": client_sha}
+        return _condition_result(slug, "recorded-fail", status=status, verdict=verdict,
+                                  backend_sha=backend_sha, client_sha=client_sha)
 
     if verdict == "pass" and status == "passing":
-        return {"slug": slug, "state": "verified-pass", "reason": None,
-                "status": status, "verdict": verdict,
-                "backend_sha": backend_sha, "client_sha": client_sha}
+        return _condition_result(slug, "verified-pass", status=status, verdict=verdict,
+                                  backend_sha=backend_sha, client_sha=client_sha)
 
     # A complete last_verified block (verdict + both SHAs) in a shape `feature verify`
     # never produces (e.g. verdict "pass" without status "passing"). Never an implicit
@@ -428,12 +438,8 @@ def _punt_decision_required(project_dir: Path, active: dict, condition_results: 
     story_slugs = active.get("stories", [])
     if not story_slugs:
         return False
-    idx_path = stories_path(project_dir)
-    if not idx_path.exists():
-        return False
-    try:
-        stories_idx = json.loads(idx_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    stories_idx = _read_json_object(stories_path(project_dir))
+    if stories_idx is None:
         return False
     for slug in story_slugs:
         entry = stories_idx.get(slug)
@@ -529,6 +535,10 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
             if build_error:
                 error_result("sprint_complete", build_error, fix_list=fix_list_entries, slug=slug)
 
+            text_to_index: dict[str, int] = {}
+            for i, entry_text in enumerate(fix_list_entries):
+                text_to_index.setdefault(entry_text, i)
+
             confirmed_indexes: set[int] = set()
             for raw in fix_confirmed_args:
                 token = raw.strip()
@@ -538,10 +548,7 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                     if 0 <= candidate < len(fix_list_entries):
                         idx = candidate
                 if idx is None:
-                    for i, entry_text in enumerate(fix_list_entries):
-                        if entry_text == token:
-                            idx = i
-                            break
+                    idx = text_to_index.get(token)
                 if idx is not None:
                     confirmed_indexes.add(idx)
 
