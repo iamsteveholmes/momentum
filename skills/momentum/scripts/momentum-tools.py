@@ -864,9 +864,10 @@ CHANGE_TYPE_TO_SURFACE_INFERENCE: dict[str, str] = {
 
 # Back-compat derived view: change_type -> verification method, computed through the
 # surface re-key above. The six-token *method* enum is unchanged by the re-key — only
-# change_type's routing ROLE changed (routing key -> inference fallback) — so any call
-# site enumerating the closed method-token set off this constant's values still gets the
-# correct six tokens.
+# change_type's routing ROLE changed (routing key -> inference fallback). Named
+# constant retained per verification-standard.md §1 AC10 (must stay a re-key'd,
+# consistent copy alongside compute_verification_method), independent of whether any
+# call site currently reads its values.
 CHANGE_TYPE_TO_VERIFICATION_METHOD: dict[str, str] = {
     ct: SURFACE_TO_VERIFICATION_METHOD[surface]
     for ct, surface in CHANGE_TYPE_TO_SURFACE_INFERENCE.items()
@@ -932,8 +933,8 @@ def infer_surface_from_change_type(change_type_raw) -> str | None:
     return CHANGE_TYPE_TO_SURFACE_INFERENCE[known[0]]
 
 
-def compute_verification_method(change_type_raw=None, surface=None) -> str:
-    """Compute the closed-enum verification_method — surface-primary, change_type fallback.
+def resolve_verification_routing(change_type_raw=None, surface=None) -> tuple[str, str | None, str]:
+    """Resolve verification_method plus routing provenance in a single pass.
 
     Routing key is the declared assembled `surface` (verification-standard.md §1,
     DEC-040 D7). When `surface` is a valid token in the closed enum, its mapped method
@@ -945,15 +946,28 @@ def compute_verification_method(change_type_raw=None, surface=None) -> str:
     list-valued change_type input still returns a valid method token ('document-review')
     rather than raising — load-bearing for in-flight sprints (verification-standard.md
     §1 AC11).
+
+    Returns (verification_method, governing_surface, routed_by) so callers needing only
+    the method and callers needing full routing visibility (§1 Visibility) share one
+    resolution instead of maintaining two independent copies of the same branching.
     """
     if surface and surface in SURFACE_TO_VERIFICATION_METHOD:
-        return SURFACE_TO_VERIFICATION_METHOD[surface]
+        return SURFACE_TO_VERIFICATION_METHOD[surface], surface, "surface"
 
     inferred_surface = infer_surface_from_change_type(change_type_raw)
     if inferred_surface is not None:
-        return SURFACE_TO_VERIFICATION_METHOD[inferred_surface]
+        return SURFACE_TO_VERIFICATION_METHOD[inferred_surface], inferred_surface, "change_type_inference"
 
-    return "document-review"
+    return "document-review", None, "default_fallback"
+
+
+def compute_verification_method(change_type_raw=None, surface=None) -> str:
+    """Compute the closed-enum verification_method — surface-primary, change_type fallback.
+
+    Thin wrapper over `resolve_verification_routing` for callers that only need the
+    method token, not the routing provenance.
+    """
+    return resolve_verification_routing(change_type_raw, surface)[0]
 
 
 def cmd_sprint_compute_verification_method(args: argparse.Namespace) -> None:
@@ -978,22 +992,7 @@ def cmd_sprint_compute_verification_method(args: argparse.Namespace) -> None:
     change_type = story.get("change_type", "")
     surface = story.get("surface") or None
 
-    vm = compute_verification_method(change_type, surface)
-
-    surface_declared_valid = bool(surface) and surface in SURFACE_TO_VERIFICATION_METHOD
-    if surface_declared_valid:
-        routed_by = "surface"
-        governing_surface = surface
-    else:
-        governing_surface = infer_surface_from_change_type(change_type)
-        if governing_surface is not None:
-            routed_by = "change_type_inference"
-        else:
-            # Fully degraded: no declared surface AND no resolvable change_type
-            # inference (empty/unrecognized). vm has fallen back to the
-            # 'document-review' default in compute_verification_method — no
-            # inference actually occurred, so routed_by must not claim one.
-            routed_by = "default_fallback"
+    vm, governing_surface, routed_by = resolve_verification_routing(change_type, surface)
 
     result("sprint_compute_verification_method", success=True,
            story=slug,
