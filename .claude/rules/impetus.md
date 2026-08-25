@@ -50,6 +50,15 @@ leads the whole report whenever one exists, regardless of this list's order:
   `.momentum/features.json` under any condition, including when it is missing — `momentum-tools
   feature verify` is the sole writer.
 - Honest ledger counts via `momentum-tools practice-ledger summary` — returns "N open entries (X this week, Y older than 30 days, Z near auto-close)" and any recurring-pattern signals (e.g., a topic closed_stale 4 times in 60 days)
+- Tasting due-ness via `momentum-tools tasting status --json` (DEC-040 D4) — a **read-only** signal
+  reporting whether a daily tasting walkthrough is due, the days-since count, and a prominence tier
+  (`quiet` at 1–3 days, `insistent` at 4–7, `leading` at 8+ — always `leading` when the registry
+  holds no recorded verdict at all). Fold this into the same single Bash call; never a second round
+  trip. This command never fails, blocks, or errors under any input, including an absent or
+  malformed `.momentum/features.json` or a repository with no git history — treat any non-zero
+  exit or unparseable output the same as "not due" and surface nothing, rather than escalating a
+  tool failure into the report. Impetus never invokes `momentum-tools tasting brief` on session
+  start — generating the brief is the developer's call, made after reading the nudge.
 - Active sprint summary from `.momentum/sprints/index.json`
 - Auto-close safety net: invoke `momentum-tools practice-ledger close-stale --age-days 15` (idempotent — the CLI checks last-run timestamp; no harm if the routine already ran today)
 - The 3 most recent files in `.momentum/handoffs/`
@@ -86,6 +95,26 @@ recurring-pattern signal still appear inline within the same budget — the feat
 the floor, it does not replace it. All four sub-counts are floor elements; none may be dropped to
 fit the sentence budget.
 
+**The tasting nudge (DEC-040 D4) is a self-contained addition within the existing two-sentence
+budget** — it never replaces the pending-card lead or the N-of-M headline, and it never appears at
+all when `tasting status` reports not due. When a session is due, its placement follows the
+prominence tier `tasting status` reports:
+
+- `quiet` — append the nudge inside the report's second sentence, e.g. "...; a tasting walkthrough
+  is also due whenever you have ten spare minutes."
+- `insistent` — open the second sentence with the nudge, e.g. "A tasting walkthrough is now several
+  days overdue — worth ten minutes today."
+- `leading` — the nudge becomes the report's first sentence, ahead of the N-of-M headline and
+  ledger counts — but never ahead of a pending resume card, which still leads the whole report per
+  DEC-040 D5 regardless of tasting prominence. When both a pending card and a `leading` tasting
+  nudge are present in the same session, the nudge instead opens the report's second sentence (the
+  same placement as `insistent`), so the precedence order holds and the pending decision keeps
+  its place first. This placement rule does not by itself guarantee the two-sentence budget stays
+  intact — the card's own resurfacing line (added once `resurface_count` is greater than 1, per
+  the pending-card section above) can still extend the report beyond two sentences; when it does,
+  the floor from the Decision-Grade Presentation Standard governs (precedence and completeness win
+  over the sentence count).
+
 **Do not** dump menus. **Do not** narrate the read. **Do not** run heavy orientation workflows. Quick in, voice-aware out, then yield.
 
 ## Where state lives
@@ -95,6 +124,8 @@ If the developer asks about practice state, here is where to look. Read on deman
 | Question | Where to look |
 |---|---|
 | How much of the product verifiably works | `.momentum/features.json` (read-only; sole writer is `momentum-tools feature verify`) |
+| Whether a tasting walkthrough is due, and how urgently | `momentum-tools tasting status --json` (DEC-040 D4; read-only) |
+| Today's expected-vs-reality tasting brief | Generate with `momentum-tools tasting brief`; writes `.momentum/tasting/brief-<date>.md` (read-only against the feature registry) |
 | Is a build gate pending a decision | `.momentum/sprints/*/resume-card.json` (scanned at every session start regardless of active sprint; shape at `skills/momentum/skills/conductor/references/resume-card.md`; Impetus writes only `resurface_count`) |
 | Current sprint | `.momentum/sprints/index.json` |
 | Stories | `.momentum/stories/index.json` + `.momentum/stories/{slug}.md` |

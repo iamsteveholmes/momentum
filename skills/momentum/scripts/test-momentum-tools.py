@@ -3856,6 +3856,36 @@ def main():
     test_feature_verify_no_fourth_seam()
     test_feature_verify_failure_envelope_matches_success_shape()
 
+    # tasting brief + status (DEC-040 D4)
+    test_tasting_brief_help_registered()
+    test_tasting_status_help_registered()
+    test_tasting_brief_populated_registry_quotes_claims()
+    test_tasting_brief_no_verdicts_falls_back_to_default_window()
+    test_tasting_brief_absent_registry_degrades_honestly()
+    test_tasting_brief_absent_registry_json_zero_probes()
+    test_tasting_brief_malformed_registry_degrades_never_repairs()
+    test_tasting_brief_empty_registry_degrades()
+    test_tasting_brief_same_day_rerun_regenerates_in_place()
+    test_tasting_brief_claims_capped_at_seven_remainder_collapsed()
+    test_tasting_brief_probes_between_two_and_three()
+    test_tasting_brief_json_flag_prints_machine_readable_summary()
+    test_tasting_brief_routing_footer_present()
+    test_tasting_brief_presentation_caps_purpose_leads()
+    test_tasting_status_no_verdict_always_due()
+    test_tasting_status_tier_quiet_at_two_days()
+    test_tasting_status_tier_insistent_at_five_days()
+    test_tasting_status_tier_leading_at_eight_days()
+    test_tasting_status_not_due_same_day()
+    test_tasting_status_read_only_registry_unchanged()
+    test_tasting_status_malformed_registry_never_errors()
+    test_tasting_status_degraded_field_shapes_never_crash()
+    test_tasting_status_future_dated_verdict_routes_to_leading_never_quiet()
+    test_tasting_brief_future_dated_verdict_explains_anomaly_not_reassurance()
+    test_tasting_status_non_utf8_registry_never_crashes()
+    test_tasting_brief_non_utf8_registry_never_crashes()
+    test_tasting_brief_merged_commits_truncated_uses_open_ended_phrasing()
+    test_tasting_brief_write_failure_degrades_to_error_result()
+
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
 
@@ -5635,6 +5665,436 @@ def test_feature_verify_failure_envelope_matches_success_shape():
     assert_eq("has action field", "action" in out, True)
     assert_eq("has success field", "success" in out, True)
     assert_eq("success is False", out.get("success"), False)
+
+
+# --- Tasting Tests (DEC-040 D4) ---
+#
+# `tasting brief` and `tasting status` are read-only consumers of
+# .momentum/features.json. Fixtures here use plain setup_project() (a bare
+# temp dir with git init, no features.json) rather than setup_features_project()
+# so each test controls the exact registry shape, including its absence.
+
+def _tasting_write_registry(proj: Path, features: dict) -> None:
+    features_path_of(proj).write_text(
+        json.dumps(features, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
+
+def _tasting_single_claim_registry(last_verified_date: str | None = None) -> dict:
+    """The single-feature ("tide-chart-overlay") registry shape most tasting
+    tests seed, varying only the last_verified date (or omitting
+    last_verified entirely when None)."""
+    entry = {
+        "name": "Tide chart overlay",
+        "acceptance_condition": "Owner sees the tide chart render.",
+        "status": "passing",
+    }
+    if last_verified_date is not None:
+        entry["last_verified"] = {
+            "date": last_verified_date, "verdict": "pass",
+            "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b",
+        }
+    return {"tide-chart-overlay": entry}
+
+
+def tasting_brief_path(proj: Path, day: str | None = None) -> Path:
+    from datetime import date
+    day = day or date.today().isoformat()
+    return proj / ".momentum" / "tasting" / f"brief-{day}.md"
+
+
+def test_tasting_brief_help_registered():
+    """AC1: `tasting brief` exists as an invocable subcommand."""
+    print("\n[tasting brief] Subcommand registered (AC1)")
+    proj = setup_project()
+    code, out = run_tool(proj, "tasting", "brief", "--help")
+    help_text = out.get("raw_stdout", "") if isinstance(out, dict) else ""
+    assert_eq("exit code 0", code, 0)
+    assert_eq("help documents --json", "--json" in help_text, True)
+
+
+def test_tasting_status_help_registered():
+    """AC9: `tasting status` exists as an invocable subcommand."""
+    print("\n[tasting status] Subcommand registered (AC9)")
+    proj = setup_project()
+    code, out = run_tool(proj, "tasting", "status", "--help")
+    assert_eq("exit code 0", code, 0)
+
+
+def test_tasting_brief_populated_registry_quotes_claims():
+    """AC3: passing features' acceptance conditions are quoted verbatim; failing ones are not."""
+    print("\n[tasting brief] Populated registry quotes passing claims verbatim (AC3)")
+    proj = setup_project()
+    _tasting_write_registry(proj, {
+        "tide-chart-overlay": {
+            "name": "Tide chart overlay",
+            "acceptance_condition": "Owner sees the tide chart render.",
+            "status": "passing",
+            "last_verified": {"date": "2026-01-05", "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
+        },
+        "route-replay": {
+            "name": "Route replay",
+            "acceptance_condition": "Owner replays yesterday's route.",
+            "status": "failing",
+        },
+    })
+    before = features_path_of(proj).read_bytes()
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("quotes passing claim", "Owner sees the tide chart render." in brief, True)
+    assert_eq("omits failing claim", "Owner replays yesterday's route." in brief, False)
+    after = features_path_of(proj).read_bytes()
+    assert_eq("registry byte-identical after brief", after, before)
+
+
+def test_tasting_brief_no_verdicts_falls_back_to_default_window():
+    """AC4, AC6: features present with no last_verified anywhere falls back to the 14-day default window."""
+    print("\n[tasting brief] No verdicts anywhere -> 14-day default window (AC4)")
+    proj = setup_project()
+    _tasting_write_registry(proj, {
+        "fog-horn-alerts": {
+            "name": "Fog horn alerts",
+            "acceptance_condition": "Owner hears the fog horn alert fire.",
+            "status": "passing",
+        }
+    })
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8").lower()
+    assert_eq("states 14-day default window", ("14-day" in brief) or ("14 day" in brief), True)
+    assert_eq("still quotes the well-formed claim", "owner hears the fog horn alert fire." in brief, True)
+
+
+def test_tasting_brief_absent_registry_degrades_honestly():
+    """AC6: absent registry -> brief still produced, states no recorded claims, never creates the registry."""
+    print("\n[tasting brief] Absent registry degrades honestly (AC6)")
+    proj = setup_project()
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("states no recorded claims", "no recorded claims" in brief.lower(), True)
+    assert_eq("registry not created", features_path_of(proj).exists(), False)
+
+
+def test_tasting_brief_absent_registry_json_zero_probes():
+    """AC6: absent registry -> --json reports zero probes and zero claims shown."""
+    print("\n[tasting brief] Absent registry --json reports zero probes (AC6)")
+    proj = setup_project()
+    code, out = run_tool(proj, "tasting", "brief", "--json")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("zero probes", out["probes"], 0)
+    assert_eq("zero claims shown", out["claims_shown"], 0)
+
+
+def test_tasting_brief_malformed_registry_degrades_never_repairs():
+    """AC2, AC6: malformed JSON registry degrades honestly and is never rewritten."""
+    print("\n[tasting brief] Malformed registry degrades, never repaired (AC2, AC6)")
+    proj = setup_project()
+    reg_path = features_path_of(proj)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_text("{ this is not json", encoding="utf-8")
+    before = reg_path.read_bytes()
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("states no recorded claims", "no recorded claims" in brief.lower(), True)
+    after = reg_path.read_bytes()
+    assert_eq("malformed registry byte-identical", after, before)
+
+
+def test_tasting_brief_empty_registry_degrades():
+    """AC6: an empty (zero-byte) registry file degrades honestly and is left untouched."""
+    print("\n[tasting brief] Empty registry file degrades honestly (AC6)")
+    proj = setup_project()
+    reg_path = features_path_of(proj)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_text("", encoding="utf-8")
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("states no recorded claims", "no recorded claims" in brief.lower(), True)
+    assert_eq("empty registry left empty", reg_path.read_text(encoding="utf-8"), "")
+
+
+def test_tasting_brief_same_day_rerun_regenerates_in_place():
+    """AC12: running brief twice the same day regenerates one file, never duplicates."""
+    print("\n[tasting brief] Same-day rerun regenerates in place (AC12)")
+    proj = setup_project()
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
+    run_tool(proj, "tasting", "brief")
+    run_tool(proj, "tasting", "brief")
+    tasting_files = list((proj / ".momentum" / "tasting").glob("brief-*.md"))
+    assert_eq("exactly one brief file", len(tasting_files), 1)
+
+
+def test_tasting_brief_claims_capped_at_seven_remainder_collapsed():
+    """AC3: more than 7 passing features -> 7 most recently verified shown, remainder collapsed to a count line."""
+    print("\n[tasting brief] Claims capped at 7, remainder collapsed (AC3)")
+    proj = setup_project()
+    features = {}
+    for i in range(1, 10):
+        features[f"cap-feature-{i:02d}"] = {
+            "name": f"Cap feature {i:02d}",
+            "acceptance_condition": f"Owner verifies claim number {i:02d}.",
+            "status": "passing",
+            "last_verified": {"date": f"2026-07-{i:02d}", "verdict": "pass", "backend_sha": "abc1234", "client_sha": "def5678"},
+        }
+    _tasting_write_registry(proj, features)
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("most recently verified (09) shown", "Owner verifies claim number 09." in brief, True)
+    assert_eq("7th most recently verified (03) shown", "Owner verifies claim number 03." in brief, True)
+    assert_eq("8th-oldest (02) collapsed", "Owner verifies claim number 02." in brief, False)
+    assert_eq("9th-oldest (01) collapsed", "Owner verifies claim number 01." in brief, False)
+    assert_eq("collapse count line present", "2 more passing feature" in brief, True)
+
+
+def test_tasting_brief_probes_between_two_and_three():
+    """AC5: with a single claim, 2 probes are generated, each naming the feature slug and an app action."""
+    print("\n[tasting brief] Probes generated within 2-3 cap (AC5)")
+    proj = setup_project()
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
+    code, out = run_tool(proj, "tasting", "brief", "--json")
+    assert_eq("exit code 0", code, 0)
+    probes = out["brief"]["probes"]
+    assert_eq("probe count is 2 with a single claim", len(probes), 2)
+    for probe in probes:
+        assert_eq("probe names the feature slug", probe["slug"], "tide-chart-overlay")
+        no_code_inspection = "code" not in probe["action"].lower() and "test suite" not in probe["action"].lower()
+        assert_eq("probe names an app action, not code inspection", no_code_inspection, True)
+
+
+def test_tasting_brief_json_flag_prints_machine_readable_summary():
+    """AC1: --json prints a valid, structured JSON summary of the same content to stdout."""
+    print("\n[tasting brief] --json prints machine-readable summary (AC1)")
+    proj = setup_project()
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
+    code, out = run_tool(proj, "tasting", "brief", "--json")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("has success field", out.get("success"), True)
+    assert_eq("has brief.claims field", "claims" in out.get("brief", {}), True)
+    assert_eq("claims include the passing feature", out["brief"]["claims"][0]["slug"], "tide-chart-overlay")
+
+
+def test_tasting_brief_routing_footer_present():
+    """AC7: findings routing footer states critical priority and intake routing (DEC-040 D6)."""
+    print("\n[tasting brief] Findings routing footer present (AC7)")
+    proj = setup_project()
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("mentions intake", "intake" in brief.lower(), True)
+    assert_eq("mentions critical priority", "critical" in brief.lower(), True)
+
+
+def test_tasting_brief_presentation_caps_purpose_leads():
+    """AC8: the brief opens with its plain-language purpose before any section."""
+    print("\n[tasting brief] Purpose leads the brief (AC8)")
+    proj = setup_project()
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    purpose_idx = brief.lower().find("purpose:")
+    first_section_idx = brief.find("## What should work today")
+    assert_eq("purpose appears before the first section", 0 <= purpose_idx < first_section_idx, True)
+
+
+def test_tasting_status_no_verdict_always_due():
+    """AC9, AC10: absent registry -> status is always due, tier leading, exit 0."""
+    print("\n[tasting status] No verdict at all is always due (AC9, AC10)")
+    proj = setup_project()
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("due is True", out["due"], True)
+    assert_eq("tier is leading", out["tier"], "leading")
+    assert_eq("days_since is null", out["days_since"], None)
+
+
+def test_tasting_status_tier_quiet_at_two_days():
+    """AC9: 1-3 days since the last recorded verdict -> quiet tier."""
+    print("\n[tasting status] 2 days -> quiet tier (AC9)")
+    from datetime import date, timedelta
+    proj = setup_project()
+    d2 = (date.today() - timedelta(days=2)).isoformat()
+    _tasting_write_registry(proj, _tasting_single_claim_registry(d2))
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("tier is quiet", out["tier"], "quiet")
+    assert_eq("days_since is 2", out["days_since"], 2)
+    assert_eq("due is True", out["due"], True)
+
+
+def test_tasting_status_tier_insistent_at_five_days():
+    """AC9: 4-7 days since the last recorded verdict -> insistent tier."""
+    print("\n[tasting status] 5 days -> insistent tier (AC9)")
+    from datetime import date, timedelta
+    proj = setup_project()
+    d5 = (date.today() - timedelta(days=5)).isoformat()
+    _tasting_write_registry(proj, _tasting_single_claim_registry(d5))
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("tier is insistent", out["tier"], "insistent")
+
+
+def test_tasting_status_tier_leading_at_eight_days():
+    """AC9: 8 or more days since the last recorded verdict -> leading tier."""
+    print("\n[tasting status] 8 days -> leading tier (AC9)")
+    from datetime import date, timedelta
+    proj = setup_project()
+    d8 = (date.today() - timedelta(days=8)).isoformat()
+    _tasting_write_registry(proj, _tasting_single_claim_registry(d8))
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("tier is leading", out["tier"], "leading")
+
+
+def test_tasting_status_not_due_same_day():
+    """AC9: verified today -> not yet due, days_since 0."""
+    print("\n[tasting status] Verified today -> not due (AC9)")
+    from datetime import date
+    proj = setup_project()
+    today = date.today().isoformat()
+    _tasting_write_registry(proj, _tasting_single_claim_registry(today))
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("due is False", out["due"], False)
+    assert_eq("days_since is 0", out["days_since"], 0)
+    assert_eq("tier is quiet (deliberate not-due default; bmad-code-review-6)", out["tier"], "quiet")
+
+
+def test_tasting_status_read_only_registry_unchanged():
+    """AC2: `tasting status` never writes a byte back to the registry."""
+    print("\n[tasting status] Read-only against registry (AC2)")
+    proj = setup_project()
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
+    before = features_path_of(proj).read_bytes()
+    run_tool(proj, "tasting", "status")
+    after = features_path_of(proj).read_bytes()
+    assert_eq("registry byte-identical after status", after, before)
+
+
+def test_tasting_status_malformed_registry_never_errors():
+    """AC10: malformed registry -> status never fails, blocks, or errors."""
+    print("\n[tasting status] Malformed registry never errors (AC10)")
+    proj = setup_project()
+    reg_path = features_path_of(proj)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_text("{ this is not json", encoding="utf-8")
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("due is True (degrades to no-verdict state)", out["due"], True)
+
+
+def test_tasting_status_degraded_field_shapes_never_crash():
+    """AC10: an entry missing last_verified.date degrades rather than crashing status."""
+    print("\n[tasting status] Degraded field shapes never crash status (AC10)")
+    proj = setup_project()
+    _tasting_write_registry(proj, {
+        "fog-horn-alerts": {
+            "name": "Fog horn alerts",
+            "status": "passing",
+            "last_verified": {"verdict": "pass", "backend_sha": "f0f0f0f", "client_sha": "0a0a0a0"},
+        }
+    })
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("degrades to no-verdict state", out["due"], True)
+
+
+def test_tasting_status_future_dated_verdict_routes_to_leading_never_quiet():
+    """bmad-code-review-0: a future-dated last_verified.date (negative days_since) is an
+    anomalous registry state — it must route to the leading tier with a distinct
+    explanation and never leak a negative days-since into a reassuring quiet default."""
+    print("\n[tasting status] Future-dated verdict routes to leading, never quiet (bmad-code-review-0)")
+    from datetime import date, timedelta
+    proj = setup_project()
+    future = (date.today() + timedelta(days=5)).isoformat()
+    _tasting_write_registry(proj, _tasting_single_claim_registry(future))
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("tier is leading, not quiet", out["tier"], "leading")
+    assert_eq("due is True", out["due"], True)
+    assert_eq("raw negative days_since surfaced, not masked", out["days_since"], -5)
+
+
+def test_tasting_brief_future_dated_verdict_explains_anomaly_not_reassurance():
+    """bmad-code-review-0: the brief's 'What changed' explanation must name the future
+    date as anomalous rather than presenting it as a normal recent verification."""
+    print("\n[tasting brief] Future-dated verdict explanation is honest, not reassuring (bmad-code-review-0)")
+    from datetime import date, timedelta
+    proj = setup_project()
+    future = (date.today() + timedelta(days=5)).isoformat()
+    _tasting_write_registry(proj, _tasting_single_claim_registry(future))
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8").lower()
+    assert_eq("names the future date as anomalous", "future" in brief and "anomalous" in brief, True)
+
+
+def test_tasting_status_non_utf8_registry_never_crashes():
+    """bmad-code-review-1: a registry file that is not valid UTF-8 must degrade like any
+    other unparseable registry (UnicodeDecodeError was previously uncaught, violating AC10)."""
+    print("\n[tasting status] Non-UTF-8 registry never crashes (bmad-code-review-1, AC10)")
+    proj = setup_project()
+    reg_path = features_path_of(proj)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_bytes(b"\xff\xfe\x00\x01not valid utf-8 \xd8\x00")
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("degrades to no-verdict state", out["due"], True)
+
+
+def test_tasting_brief_non_utf8_registry_never_crashes():
+    """bmad-code-review-1: `tasting brief` must also tolerate a non-UTF-8 registry, not
+    just `tasting status` — both commands share the same unsafe loader."""
+    print("\n[tasting brief] Non-UTF-8 registry never crashes (bmad-code-review-1, AC10)")
+    proj = setup_project()
+    reg_path = features_path_of(proj)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    before = b"\xff\xfe\x00\x01not valid utf-8 \xd8\x00"
+    reg_path.write_bytes(before)
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("states no recorded claims", "no recorded claims" in brief.lower(), True)
+    assert_eq("non-UTF-8 registry byte-identical", reg_path.read_bytes(), before)
+
+
+def test_tasting_brief_merged_commits_truncated_uses_open_ended_phrasing():
+    """bmad-code-review-4: when the git log fetch hits its cap, the remainder is stated
+    with open-ended phrasing ("50+ more") rather than an exact count computed from a
+    list that was itself already truncated at the old hard `-n 50` cap."""
+    print("\n[tasting brief] Truncated merge history uses open-ended phrasing (bmad-code-review-4)")
+    proj = setup_project()
+    for i in range(60):
+        subprocess.run(
+            ["git", "-C", str(proj), "commit", "--allow-empty", "-q", "-m", f"tasting-fill {i}"],
+            check=True,
+        )
+    _tasting_write_registry(proj, _tasting_single_claim_registry())
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("uses open-ended 50+ phrasing", "50+ more" in brief, True)
+    assert_eq("does not claim an exact truncated remainder", "43 more commit" in brief, False)
+
+
+def test_tasting_brief_write_failure_degrades_to_error_result():
+    """bmad-code-review-5: if `.momentum/tasting` exists as a plain file (blocking mkdir),
+    the brief command must fail loudly via error_result rather than crashing with an
+    unguarded traceback."""
+    print("\n[tasting brief] Write-path collision degrades to a clean error_result (bmad-code-review-5)")
+    proj = setup_project()
+    tasting_path = proj / ".momentum" / "tasting"
+    tasting_path.parent.mkdir(parents=True, exist_ok=True)
+    tasting_path.write_text("blocking file, not a directory", encoding="utf-8")
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 1", code, 1)
+    assert_eq("has success field", "success" in out, True)
+    assert_eq("success is False", out.get("success"), False)
+    assert_eq("has error field", "error" in out, True)
 
 
 if __name__ == "__main__":
