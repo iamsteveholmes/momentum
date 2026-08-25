@@ -691,11 +691,38 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 
     <!-- ─── END SPRINT SUMMARY PRODUCTION ─── -->
 
-    <action>Call sprint closure:
+    <action>Call sprint closure (tier-2 gate, DEC-040 D2/D3 — a safety net here, not the primary
+      closure path; Step 1 above only proceeds on a sprint already in `completed[]`, so this
+      sprint is normally already closed by the time retro reaches this point):
       `momentum-tools sprint complete`
+      This refuses (non-zero exit) unless every declared `goal_conditions` entry carries a
+      recorded human verdict, or, for a maintenance sprint, its verified-fix list is confirmed —
+      it is a gate, not an unconditional closer.
+      Bind {{sprint_closure_gate_refused}} = true when this call exits non-zero with an `error`
+      message other than exactly "No active sprint to complete"; false otherwise (success, or
+      that exact no-op message). Bind {{sprint_closure_gate_refusal_message}} = the call's JSON
+      `error` field verbatim when {{sprint_closure_gate_refused}} is true; leave both unbound
+      otherwise.
     </action>
 
-    <note>sprint complete transitions the active sprint to the completed list. If this sprint was already moved to completed by sprint-dev Phase 7, this command will report no active sprint — that is expected and safe to ignore.</note>
+    <note>Because Step 1 only selects a sprint already present in `completed[]`, this call's usual
+    return is exactly `"No active sprint to complete"` (non-zero exit) — treat that specific
+    message as an expected no-op; the sprint was already closed by the Conductor's tier-2 closure
+    step or by sprint-dev Phase 7. A refusal with any OTHER message means the gate found an
+    unverified condition, a recorded FAIL, or an unconfirmed maintenance fix on a sprint that was
+    unexpectedly still active at retro time — but that active sprint is not necessarily THIS
+    retro's sprint. Before surfacing it, compare the refusal's JSON `slug` field to
+    {{sprint_slug}} (the sprint this retro is running for):
+    - **Slugs match:** the refusal genuinely concerns this retro's sprint. Keep
+      {{sprint_closure_gate_refused}} = true and surface {{sprint_closure_gate_refusal_message}}
+      in the retro output below rather than silently swallowing it.
+    - **Slugs differ:** the refusal concerns a DIFFERENT sprint that happens to be active right
+      now — report it as such ("a different sprint, {{refusal's `slug`}}, is currently blocked
+      on closure — unrelated to this retro's sprint {{sprint_slug}}") and treat
+      {{sprint_closure_gate_refused}} as false for THIS sprint's output banner, since this
+      sprint's own closure is not actually in question.
+    Either way, continue to `sprint retro-complete` regardless: retro's transcript audit above is
+    already complete and is not gated by the sprint's own goal verdict.</note>
 
     <action>Call retro completion:
       `momentum-tools sprint retro-complete`
@@ -728,6 +755,9 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 **Findings handed off:** {{handoff_items | length}} events written to practice-ledger.jsonl (source: retro, event_type: created, intent: handoff)
 
 **Sprint status:** closed (retro_run_at set to {{today}})
+{{#if sprint_closure_gate_refused}}
+**Note:** this sprint's own closure gate refused when re-checked during retro ({{sprint_closure_gate_refusal_message}}) — it was unexpectedly still `active`. The retro above is complete regardless; close the sprint separately with `momentum-tools sprint complete` once the named condition(s) are resolved, or record an honest FAILED verdict.
+{{/if}}
 
 **Sprint summary:** `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`
 

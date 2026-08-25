@@ -746,7 +746,6 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
 
   <step n="7" goal="Archive sprint, merge to main, and surface summary">
     <action>Update task 7 (Sprint Completion) to in_progress</action>
-    <action>Run: `momentum-tools sprint complete`</action>
 
     <action>Merge sprint branch to main:
       1. `git checkout main`
@@ -772,7 +771,32 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
       <action>Run: `git push`</action>
     </check>
 
-    <output>## Sprint {{sprint_slug}} — Complete
+    <action>Sprint closure gate (tier 2, DEC-040 D2/D3 — separate from the merge/push above): run
+      `momentum-tools sprint complete`. This refuses (non-zero exit) unless every declared
+      `goal_conditions` entry carries a recorded human verdict in `.momentum/features.json`, or,
+      for a maintenance sprint declaring no conditions, its verified-fix list is confirmed via
+      `--fix-confirmed`/`--build` — it is a gate, not an unconditional closer. The merge and push
+      above already succeeded regardless of this call's outcome.
+    </action>
+
+    <check if="the call returned exactly &quot;No active sprint to complete&quot;">
+      <note>Expected no-op — this sprint was already closed by a prior pass. Continue.</note>
+    </check>
+
+    <check if="the call refused for any other reason">
+      <output>Sprint `{{sprint_slug}}` merged and pushed, but closure is pending: the gate named
+      an unverified or recorded-FAIL condition (or an unconfirmed maintenance fix). The sprint
+      stays `active` — not `done` — until closure succeeds (`momentum-tools sprint complete`) or
+      you record an honest FAILED verdict (`momentum-tools sprint complete --verdict failed
+      --reason "..."`). Retrospective pickup keys on `completed[]`, so it will not find this
+      sprint until closure resolves one way or the other.</output>
+      <action>Update task 7 (Sprint Completion) to completed. The merge and push this phase owns
+      are done; sprint closure is a separate tier-2 concern left pending, not a defect in this
+      phase.</action>
+    </check>
+
+    <check if="the sprint closure gate succeeded (fresh close, or the idempotent no-op above)">
+      <output>## Sprint {{sprint_slug}} — Complete
 
 **Stories done:** {{done_count}} / {{total_count}}
 **Merge order:** {{merge_sequence}}
@@ -790,11 +814,12 @@ Sprint branch `sprint/{{sprint_slug}}` merged to main. Orphaned worktree-agent-*
 ---
 Run **retrospective** to surface practice improvements?</output>
 
-    <ask>Run retrospective now?</ask>
-    <action>Update task 7 (Sprint Completion) to completed</action>
+      <ask>Run retrospective now?</ask>
+      <action>Update task 7 (Sprint Completion) to completed</action>
 
-    <check if="developer says yes">
-      <action>Return to Impetus session menu and surface the retrospective option.</action>
+      <check if="developer says yes">
+        <action>Return to Impetus session menu and surface the retrospective option.</action>
+      </check>
     </check>
   </step>
 

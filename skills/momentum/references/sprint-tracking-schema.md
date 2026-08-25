@@ -78,13 +78,16 @@ Sprint lifecycle index. Tracks active, planning, and completed sprints.
 |-------|------|-------------|
 | `slug` | string | Sprint identifier (e.g., `sprint-2026-04-05-2`) |
 | `locked` | boolean | Whether the sprint is locked (immutable once activated) |
-| `status` | string | `planning`, `active`, `done` |
+| `status` | string | `planning`, `active`, `done`, `failed` (DEC-040 D3 — `failed` is an honest terminal state, not an error; see Sprint Closure Gate below) |
 | `stories` | string[] | Story slugs in this sprint |
 | `waves` | object[] | Execution wave plan (see below) |
 | `team_composition` | object | Per-story role assignments (see below) |
+| `goal` | string | Plain-language sprint purpose, declared at planning (`sprint plan --goal`). For a maintenance sprint (no `goal_conditions`), this string also carries the verified-fix list as `- ` bullet lines following a `Verified fixes:` lead-in line — there is no separate structured fix-list field. |
+| `goal_conditions` | string[] | Feature slugs (keys into `.momentum/features.json`) whose acceptance conditions this sprint intends to flip to passing, declared at planning (`sprint plan --goal-conditions`). `[]` (or the key absent) means a maintenance sprint — its equivalent gate is the verified-fix list inside `goal` instead. Missing key and `null` are both treated as `[]` everywhere this field is read. |
 | `started` | string | ISO date sprint started |
 | `completed` | string or null | ISO date sprint completed |
 | `retro_run_at` | string or null | ISO date retrospective was run |
+| `closure` | object | Present only on a closed sprint record (in `completed[]`); written once by the sprint closure gate. See Sprint Closure Gate below. |
 
 ### Wave Object
 
@@ -111,6 +114,59 @@ Per-story entry keyed by story slug:
 | `dependencies` | string[] | Story slugs this story depends on within the sprint |
 | `specialist` | string | Resolved agent slug from `momentum-tools agent resolve` against `agents.json`: `dev` (base body) or a composed project slug (e.g., `dev-kotlin-compose`) |
 | `guidelines_status` | string | `present`, `missing`, `skipped`, or `n/a` |
+
+### Sprint Closure Gate (DEC-040 D2/D3, tier 2)
+
+`momentum-tools sprint complete` is a **gate**, not an unconditional closer. It refuses (non-zero
+exit, `active` left untouched, nothing appended to `completed[]`) unless every entry in the
+sprint's `goal_conditions` carries a recorded human verdict in `.momentum/features.json` — or, for
+a maintenance sprint declaring no conditions, its verified-fix list (parsed from `goal`) is
+confirmed via repeatable `--fix-confirmed` plus `--build`. This is tier 2 of the two-tier gate;
+tier 1 (`conduct-merge-gate-completes-by-executing-merge-push-story`) is the separate question of
+whether the code is safe to keep on trunk, and completes independently via merge + push + story
+status transitions — a successful merge never implies the sprint is closed.
+
+`--verdict {done,failed}` (default `done`) selects the terminal state. `failed` requires a
+non-empty `--reason` and bypasses the verdict requirement above — an honest FAILED closure records
+which conditions were unverified rather than pretending the goal was met. Both `done` and `failed`
+require `--punt-decision <ref>` (a document under `_bmad-output/planning-artifacts/decisions/`)
+whenever the sprint closes with a story at `closed-incomplete`/`dropped` while a declared condition
+is not verified-pass.
+
+Every successful closure — `done` or `failed` — writes a `closure` block onto the record appended
+to `completed[]`:
+
+```json
+{
+  "closure": {
+    "verdict": "done",
+    "conditions": [
+      {
+        "slug": "demo-feature",
+        "state": "verified-pass",
+        "reason": null,
+        "status": "passing",
+        "verdict": "pass",
+        "backend_sha": "aaaa111",
+        "client_sha": "bbbb222",
+        "summary": "pass — build aaaa111:bbbb222"
+      }
+    ],
+    "fix_confirmations": [],
+    "reason": null,
+    "punt_decision": null
+  }
+}
+```
+
+`conditions[].state` is one of `verified-pass`, `recorded-fail`, or `unverified` (with `reason`
+one of the closed set `missing-entry` | `no-verdict` | `no-build-shas`). `fix_confirmations` is
+populated only for a maintenance closure (one entry per confirmed verified-fix line, with the
+`--build` pair). `reason` carries the FAILED reason text when `verdict == "failed"`, else `null`.
+`punt_decision` carries the `--punt-decision` ref when supplied, else `null`.
+
+`retro_run_at: null` is set identically for `done` and `failed` closures — `momentum:retro` Step 1
+discovers a FAILED sprint exactly as readily as a `done` one.
 
 ### Example (no active sprint)
 

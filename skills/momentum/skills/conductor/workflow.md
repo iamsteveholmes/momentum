@@ -492,19 +492,21 @@ Ready to begin?</output>
             — If a row with event == "e2e-phase-complete" exists: skip Phase 4 (E2E) on resume.
             — If a row with event == "end-gate-phase-complete" exists: skip the Phase 5 approve-side
               mutations on resume — the sprint→main merge, the `git branch -d {{sprint_slug}}` branch
-              delete, the per-story `verify`→`done` / `closed-incomplete` terminal transitions, and the
-              `momentum-tools sprint complete` sprint-completion call are
+              delete, and the per-story `verify`→`done` / `closed-incomplete` terminal transitions are
               NOT re-attempted (they would error against already-mutated real state: a re-merge of an
-              already-merged/deleted branch, a re-transition of an already-terminal story — the
-              state machine rejects any transition FROM a terminal state without --force — or a
-              `momentum-tools sprint complete` call reporting no active sprint). Phase 5
+              already-merged/deleted branch, or a re-transition of an already-terminal story — the
+              state machine rejects any transition FROM a terminal state without --force). Phase 5
               instead re-renders the end-gate report from the ledger (per the AUTHORITATIVE SOURCE note
               at step 5) and presents the same completion summary an uninterrupted run would have shown.
+              The tier-2 sprint closure gate (`momentum-tools sprint complete`) is NOT covered by this
+              checkpoint — it is a separate step reached only once `merge-gate-outcome == "merged"`,
+              and it is always (re-)attempted on resume regardless of this row's presence, per its own
+              idempotency note (see the SPRINT CLOSURE GATE step below).
               The existing per-finding `scorecard-revert-reconciliation` idempotency guard is
               unaffected and is not duplicated by this phase-level checkpoint — the two guards operate
               at different granularities (per-finding vs. per-phase).
             — MERGE-GATE OUTCOME CHECKPOINT (AC 8; independent of the `end-gate-phase-complete` row
-              above — that row covers merge/transitions/sprint-complete only, while this one covers
+              above — that row covers merge/branch-delete/transitions only, while this one covers
               the gate's overall verified outcome including push): read the latest `merge-gate-outcome`
               row for the sprint (by `ts`), if any. If its `outcome` is `"merged"`: on reaching Phase 5,
               the approve branch's execution sequence is skipped entirely and the recorded merge commit
@@ -2658,11 +2660,6 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               The same REJECTED-TRANSITION COLLECTION above applies to this call — append to {{rejected_transitions}} and continue; do not stop.
           AFTER all stories in {{sprint_stories}} have been attempted: if {{rejected_transitions}} is non-empty, do NOT proceed to sprint-complete, the MAJOR-RESIDUAL guard, push, or verification. Invoke MERGE-GATE-FAILED HANDLING ONCE with failing_step: "story-transition", error_text: the full list of {{rejected_transitions}} (every rejected slug and its captured error, not just the first). This ends the execution sequence for this pass. If {{rejected_transitions}} is empty, every story reached its terminal status — proceed to sprint-complete below.
         </action>
-        <action>Complete the sprint:
-          Run: `momentum-tools sprint complete`
-          This moves {{sprint_slug}} from `active` into `sprints/index.json` `completed[]`, with `status: "done"` and `retro_run_at: null` — the shape `momentum:retro` Step 1 keys on. No manual completion step is required for a conduct-built sprint after this.
-        </action>
-        <note>Idempotency: if this approve branch re-runs against a sprint already completed by a prior pass (a resumed or re-approved end-gate), `momentum-tools sprint complete` returns `"No active sprint to complete"` (non-zero exit). Treat this as an expected, non-fatal no-op — do not surface it as an error or abort the sequence; continue to the MAJOR-RESIDUAL guard and push below. This mirrors the idempotency convention `momentum:retro` already documents for its own equivalent call (`retro/workflow.md:698`). Per AC 6, a `sprint complete` success (or no-op) never masks a merge-gate failure that occurs later in this same sequence — the tiers stay independent.</note>
         <action>END-GATE PHASE-COMPLETE CHECKPOINT: append { event: "end-gate-phase-complete", phase: "end-gate-approve", stories_merged: count of {{merged}}, stories_closed_incomplete: count of stories transitioned to closed-incomplete above, ts: NOW() } to {{build_log}} and the build ledger, per references/build-ledger.md (Conductor-level, sprint-scoped row — story_slug omitted, see Conductor-Level Events). Its presence durably marks that the merge, branch delete, per-story terminal transitions, and sprint completion above are done; from this point forward, a resume skips re-attempting them (PHASE CHECKPOINT RULE, step 2.0). Push and the post-execution read-back verification below are NOT covered by this checkpoint — they always still run next in this same sequence, gated by the `merge-gate-outcome` row, not by this one.</action>
       </check>
       <check if="a row with event == 'end-gate-phase-complete' already exists in the build ledger for this sprint (resume after the approve-side mutations already completed in a prior session or attempt)">
@@ -2711,7 +2708,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       </action>
 
       <action>MERGE-GATE OUTCOME: MERGED — reached only after every check above holds. Bind {{story_transitions}} from the verified end state read in read-back check 3 above, not from what this pass itself executed — on a resume where the transitions ran in a prior pass (RESUME PAST APPROVAL-SIDE MUTATIONS above), this pass performs no transitions at all, but the outcome row must still carry them: {story_slug, target_status: "done"} for every story in {{merged}} (confirmed `"done"` by check 3), plus {story_slug, target_status: "closed-incomplete"} for every story transitioned to that status (read fresh from `.momentum/stories/index.json` — this status is not covered by check 3, which verifies only {{merged}}). Append { event: "merge-gate-outcome", outcome: "merged", merge_commit_sha: {{main_sha}}, pushed_head_sha: {{origin_main_sha}}, story_transitions: {{story_transitions}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted, see Conductor-Level Events).</action>
-      <output>Sprint `{{sprint_slug}}` merged to `main` and pushed to origin — verified: `main` contains the sprint tip, `origin/main` matches local `main`, and every merged story reads `done` in `.momentum/stories/index.json`. The sprint's goals verdict (tier-2 closure — whether its goals were met) remains open as a separate decision ahead; its `sprints/index.json` entry already shows `completed`/`done` from the `sprint complete` call above, but that index status is not the closure verdict.</output>
+      <output>Sprint `{{sprint_slug}}` merged to `main` and pushed to origin — verified: `main` contains the sprint tip, `origin/main` matches local `main`, and every merged story reads `done` in `.momentum/stories/index.json`. The sprint's own goal verdict (tier-2 closure — whether the sprint's goal was actually verified) is a separate decision, attempted next by the closure step below; the merge succeeding here does not close the sprint by itself.</output>
 
       <action>MERGE-GATE-FAILED HANDLING (a named procedure invoked only from the STOP points above — it is never entered independently): given a `failing_step` and `error_text`, append { event: "merge-gate-outcome", outcome: "merge-gate-failed", failing_step: {{failing_step}}, error_text: {{error_text}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted). Then emit the failure output below in place of any completion claim, and end the execution sequence for this pass — do not continue to any step after the one that invoked this handling, and do not emit the MERGED output above.</action>
       <output>MERGE GATE FAILED at step `{{failing_step}}`: {{error_text}}. Nothing in this run claims the sprint merged or completed. What's stranded: a plain-language statement of exactly where things stand right now — e.g. "the merge to local `main` and the story transitions to `done` completed, but `origin/main` does not yet have them — the work is stranded on this machine's local `main` until the push can be retried," or "the merge conflict could not be resolved within {{MAX_FIX_ATTEMPTS}} attempts — `git merge --abort` already restored local `main` to its pre-merge state; nothing merged; the sprint branch is untouched," or "story `{slug}` could not transition to `done` ({{error_text}}) — `main` already has the merge, but that story's status still needs manual attention before the gate can complete." If {{stubs_created_this_pass}} > 0 (the MAJOR-RESIDUAL GOVERNANCE GUARD above already ran before this failure): "{{stubs_created_this_pass}} MAJOR-severity residual(s) from this build already have linked backlog stubs — review via momentum:refine before next sprint; approving again does not re-create them." Approving again at this gate re-attempts the execution sequence from the last completed checkpoint: if `end-gate-phase-complete` is already recorded for this sprint, only push and the post-execution read-back verification are retried; otherwise the merge and per-story transitions are retried from the start of the execution sequence.</output>
@@ -2733,7 +2730,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
       <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merged'">
         <note>ALREADY-MERGED GUARD. The sprint is already merged to `main` and pushed — the sprint branch this change-workflow pass would operate on may already be deleted (per the merge action's `git branch -d` step), and even if it still existed, editing it now would not reach a gate that has already reached its terminal outcome. A "request changes" submission at this point is not a valid input to this gate; route it as a new unit of work instead.</note>
-        <output>Sprint `{{sprint_slug}}` is already merged to `main` and pushed to origin — this gate has reached its terminal outcome and cannot accept further changes through this path. To make the requested change now, use `momentum:quick-fix` against `main` directly, or fold it into the next sprint's planning. The sprint's goals verdict (tier-2 closure) remains open — its `sprints/index.json` entry may already show `completed`/`done` from the `sprint complete` call, but that index status is not the closure verdict, which is a separate decision.</output>
+        <output>Sprint `{{sprint_slug}}` is already merged to `main` and pushed to origin — this gate has reached its terminal outcome and cannot accept further changes through this path. To make the requested change now, use `momentum:quick-fix` against `main` directly, or fold it into the next sprint's planning. The sprint's own goal verdict (tier-2 closure) is a separate decision — see the closure step below (or its prior result, if this pass already ran it) for whether it has been decided yet.</output>
       </check>
 
       <check if="the latest merge-gate-outcome row for this sprint (by ts) does NOT have outcome == 'merged'">
@@ -2990,6 +2987,71 @@ Review the updated report, acknowledge any decision cards in §04, then approve 
       <ask>The end-gate report is open in the viewer. Review each section. The commits that will reach `origin/main` if you approve are: {{pending_commits}} (also shown in §07). Acknowledge any decision cards in §04. Then approve to merge to `main` AND push to origin — one decision, executed and verified together — or request changes.</ask>
 
       </check>
+    </check>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TIER-2 SPRINT CLOSURE (DEC-040 D2/D3)                        -->
+    <!-- Separate from the tier-1 merge gate above. Runs only once    -->
+    <!-- the merge-gate outcome is durably "merged" (this pass or a   -->
+    <!-- prior one) — never as part of the merge-gate execution       -->
+    <!-- sequence itself. Decides whether the sprint's own goal was   -->
+    <!-- actually verified by a human; the merge succeeding says      -->
+    <!-- nothing about that question on its own.                      -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+
+    <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merged'">
+
+      <action>SPRINT CLOSURE GATE: run `momentum-tools sprint complete`. This is a gate, not an
+        unconditional closer — it refuses (non-zero exit) unless every entry in the sprint
+        record's `goal_conditions` carries a recorded human verdict in `.momentum/features.json`
+        (or, for a maintenance sprint declaring no conditions, its verified-fix list is confirmed
+        via `--fix-confirmed`/`--build`). A non-zero exit here means REFUSED, not a failure to
+        retry blindly — the merge above already succeeded and is unaffected by this outcome
+        either way.
+        <note>Idempotency: if this sprint was already closed by a prior pass (a resumed or
+        re-approved end-gate reaching this step again), `momentum-tools sprint complete` returns
+        exactly `"No active sprint to complete"` (non-zero exit). Treat that specific message as
+        an expected, non-fatal no-op — render the completion summary from the sprint's existing
+        `completed[]` record instead of re-attempting closure. Any OTHER non-zero exit is a
+        genuine gate refusal, not this no-op case, and must be surfaced per the refusal handling
+        below.</note>
+      </action>
+
+      <check if="the sprint closure gate call above succeeded (fresh close, or the idempotent no-op above)">
+        <output>Sprint `{{sprint_slug}}` is closed: **{{closure status — "done" or "failed", from the sprint's `completed[]` record}}**. {{if goal_conditions were declared: one line per condition — slug and verdict (pass/fail) with its build SHAs; if this was a maintenance sprint: the confirmed verified-fix entries; if status is "failed": the recorded reason}}</output>
+      </check>
+
+      <check if="the sprint closure gate call above refused with a message other than 'No active sprint to complete'">
+        <note>CLOSURE-PENDING STATE (AC 11). The tier-1 merge already succeeded and is durably
+        recorded above — nothing about the code or the story statuses is at risk from this
+        refusal. It means only that a human has not yet recorded a verdict on the sprint's own
+        goal. The sprint stays `active` in `sprints/index.json` until closure succeeds (as
+        `done`) or the developer records an honest FAILED verdict.</note>
+        <output>Sprint `{{sprint_slug}}` shipped to `main`, but closure is pending.
+
+**What's blocking it:** {{if the refusal's JSON output carries `blocking_conditions` (AC 1
+unverified) or `failing_conditions` (AC 3 recorded-FAIL): one line per named condition —
+"{{slug}}: {{plain-language reason, e.g. 'no human verdict recorded yet' for missing-entry/no-verdict,
+'verdict recorded without both build SHAs' for no-build-shas, or 'recorded FAIL — the running app
+still doesn't do this' for a failing_conditions entry}}"}}{{else — neither list is present, which is
+the majority case since the Conductor invokes bare `sprint complete` with no --fix-confirmed/--build/
+--punt-decision of its own: render the refusal's `error` message verbatim. This covers the
+maintenance-sprint verified-fix gate (AC 6), the undeclared-outcome refusal (AC 9), and the
+punt-decision requirement (AC 7) — none of which populate blocking_conditions/failing_conditions.}}
+
+**Why it matters:** closing `done` on an unverified outcome is exactly the punt this gate exists
+to prevent — nobody has confirmed the sprint's own goal actually works in the running app.
+
+**Next step:** {{if goal_conditions were declared on this sprint: verify each named condition with
+`momentum-tools feature verify`, then re-run `momentum-tools sprint complete`}}{{else — maintenance
+sprint, no goal_conditions declared: confirm the sprint's verified-fix list entries against the
+running app, then close manually with `momentum-tools sprint complete --fix-confirmed "<entry text
+or 1-based index>" --build <backendSha:clientSha>` (repeat --fix-confirmed once per entry); if a
+story was punted while a condition remains unverified, also add `--punt-decision <ref>` naming the
+authorizing decision document}} — or close honestly now with `momentum-tools sprint complete
+--verdict failed --reason "..."` if the goal was not met this sprint.</output>
+      </check>
+
     </check>
   </step>
 

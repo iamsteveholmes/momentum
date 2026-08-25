@@ -274,15 +274,38 @@ def test_sprint_activate_no_planning():
     assert_eq("rejected", code, 1)
 
 
+def _seed_passing_condition(proj: Path, slug: str = "demo-feature",
+                             backend_sha: str = "aaaa111", client_sha: str = "bbbb222") -> None:
+    """Seed a producer-shaped verified-PASS entry into .momentum/features.json."""
+    features_path_of(proj).write_text(json.dumps({
+        slug: {
+            "status": "passing",
+            "last_verified": {
+                "date": "2026-04-01", "verdict": "pass",
+                "backend_sha": backend_sha, "client_sha": client_sha,
+                "evidence": "seen working end to end in the running app",
+            },
+        }
+    }, indent=2) + "\n", encoding="utf-8")
+
+
 def test_sprint_complete():
-    """Completing an active sprint."""
-    print("\n[sprint complete] Basic completion")
+    """Completing an active sprint whose declared goal_conditions are all verified-PASS
+    (DEC-040 D2/D3 closure gate — a fixture with no goal_conditions at all now hits the
+    AC 9 undeclared-outcome refusal instead, per Task 7)."""
+    print("\n[sprint complete] Basic completion (goal_conditions all verified-PASS)")
     sprints = {
-        "active": {"slug": "test-sprint", "name": "Test Sprint", "locked": True, "started": "2026-04-01"},
+        "active": {
+            "slug": "test-sprint", "name": "Test Sprint", "locked": True,
+            "started": "2026-04-01", "stories": [],
+            "goal": "The demo feature works end to end in the running app",
+            "goal_conditions": ["demo-feature"],
+        },
         "planning": None,
         "completed": []
     }
     proj = setup_project(sprints=sprints)
+    _seed_passing_condition(proj)
     code, out = run_tool(proj, "sprint", "complete")
     assert_eq("exit code 0", code, 0)
     result = read_sprints(proj)
@@ -298,6 +321,293 @@ def test_sprint_complete_no_active():
     proj = setup_project()
     code, out = run_tool(proj, "sprint", "complete")
     assert_eq("rejected", code, 1)
+    assert_eq("message preserved verbatim", out.get("error"), "No active sprint to complete")
+
+
+# --- Sprint Closure Gate Tests (DEC-040 D2/D3) ---
+#
+# AC 1: refusal on an unverified condition, per closed-set reason token.
+# AC 2: verdict admissibility (verified-PASS / recorded-FAIL / unverified).
+# AC 3: a recorded FAIL blocks done but not closure itself.
+# AC 4: FAILED is a real terminal state.
+# AC 5: retro pickup identical for both terminal states.
+# AC 6: maintenance sprints get an equivalent verified-fix gate.
+# AC 7: punting goal-critical work requires a recorded decision.
+# AC 8: the closed record tells the truth about the outcome.
+# AC 9: a sprint with no declared outcome cannot close silently.
+
+def _condition_sprint(goal_conditions=("demo-feature",), stories=()) -> dict:
+    return {
+        "slug": "test-sprint", "locked": True, "started": "2026-04-01",
+        "stories": list(stories),
+        "goal": "The demo feature works end to end in the running app",
+        "goal_conditions": list(goal_conditions),
+    }
+
+
+def test_sprint_complete_missing_entry_absent_registry():
+    """AC 1/2: an absent .momentum/features.json is unverified/missing-entry, never a pass."""
+    print("\n[sprint complete] Refuses on missing-entry — no registry at all")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("reason token missing-entry", out["blocking_conditions"][0]["reason"], "missing-entry")
+    assert_eq("names the condition", out["blocking_conditions"][0]["slug"], "demo-feature")
+    assert_eq("active untouched", read_sprints(proj)["active"] is not None, True)
+
+
+def test_sprint_complete_missing_entry_status_absent():
+    """AC 2: status 'absent' (registered but never assessed) is also missing-entry."""
+    print("\n[sprint complete] Refuses on missing-entry — status absent")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    features_path_of(proj).write_text(json.dumps(
+        {"demo-feature": {"status": "absent"}}, indent=2) + "\n", encoding="utf-8")
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("reason token missing-entry", out["blocking_conditions"][0]["reason"], "missing-entry")
+
+
+def test_sprint_complete_no_verdict():
+    """AC 2: last_verified null is unverified/no-verdict."""
+    print("\n[sprint complete] Refuses on no-verdict — last_verified null")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    features_path_of(proj).write_text(json.dumps(
+        {"demo-feature": {"status": "failing", "last_verified": None}}, indent=2) + "\n", encoding="utf-8")
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("reason token no-verdict", out["blocking_conditions"][0]["reason"], "no-verdict")
+
+
+def test_sprint_complete_no_build_shas():
+    """AC 2: a verdict recorded without both build SHAs is unverified/no-build-shas."""
+    print("\n[sprint complete] Refuses on no-build-shas")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    features_path_of(proj).write_text(json.dumps(
+        {"demo-feature": {"status": "passing", "last_verified": {"date": "2026-04-01", "verdict": "pass"}}},
+        indent=2) + "\n", encoding="utf-8")
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("reason token no-build-shas", out["blocking_conditions"][0]["reason"], "no-build-shas")
+
+
+def test_sprint_complete_recorded_fail_blocks_done():
+    """AC 3: a complete recorded FAIL blocks done with a distinct message, not an AC 1 reason token."""
+    print("\n[sprint complete] Recorded FAIL blocks done closure")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    features_path_of(proj).write_text(json.dumps({
+        "demo-feature": {"status": "failing", "last_verified": {
+            "date": "2026-04-01", "verdict": "fail",
+            "backend_sha": "aaaa111", "client_sha": "bbbb222",
+        }}
+    }, indent=2) + "\n", encoding="utf-8")
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("names failing condition", out["failing_conditions"], ["demo-feature"])
+    assert_eq("no blocking_conditions key (not an AC1 unverified refusal)", "blocking_conditions" in out, False)
+
+
+def test_sprint_complete_success_all_verified_pass():
+    """AC 1/2: success when every declared condition is verified-PASS."""
+    print("\n[sprint complete] Success when all conditions verified-PASS")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    _seed_passing_condition(proj)
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("status done", result["completed"][0]["status"], "done")
+    assert_eq("retro_run_at null", result["completed"][0]["retro_run_at"], None)
+    closure = result["completed"][0]["closure"]
+    assert_eq("closure verdict done", closure["verdict"], "done")
+    assert_eq("closure records the slug", closure["conditions"][0]["slug"], "demo-feature")
+    assert_eq("closure records build SHAs", closure["conditions"][0]["backend_sha"], "aaaa111")
+
+
+def test_sprint_complete_failed_with_reason():
+    """AC 4: FAILED closure succeeds with a non-empty reason even when unverified."""
+    print("\n[sprint complete] FAILED closure with reason succeeds despite unverified condition")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete", "--verdict", "failed",
+                          "--reason", "goal never verified in the running app")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("status failed", result["completed"][0]["status"], "failed")
+    assert_eq("retro_run_at null", result["completed"][0]["retro_run_at"], None)
+    assert_eq("reason recorded", result["completed"][0]["closure"]["reason"],
+              "goal never verified in the running app")
+
+
+def test_sprint_complete_failed_without_reason_rejected():
+    """AC 4: FAILED closure without --reason is refused."""
+    print("\n[sprint complete] FAILED closure without reason rejected")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete", "--verdict", "failed")
+    assert_eq("rejected", code, 1)
+    assert_eq("active untouched", read_sprints(proj)["active"] is not None, True)
+
+
+def test_sprint_complete_failed_lands_in_completed_with_retro_null():
+    """AC 5: retro pickup is identical for both terminal states."""
+    print("\n[sprint complete] FAILED record is retro-discoverable exactly like done")
+    proj = setup_project(sprints={"active": _condition_sprint(goal_conditions=[]), "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete", "--verdict", "failed", "--reason", "abandoned this sprint")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("appended to completed[]", len(result["completed"]), 1)
+    assert_eq("status failed", result["completed"][0]["status"], "failed")
+    assert_eq("retro_run_at null", result["completed"][0]["retro_run_at"], None)
+
+
+def test_sprint_complete_maintenance_refusal_unconfirmed():
+    """AC 6: a maintenance sprint (no goal_conditions) refuses while any fix entry is unconfirmed."""
+    print("\n[sprint complete] Maintenance sprint refuses on unconfirmed fix entries")
+    sprint = {
+        "slug": "test-sprint", "locked": True, "started": "2026-04-01", "stories": [],
+        "goal": "General maintenance.\nVerified fixes:\n- Fix A works in the running app\n- Fix B works in the running app",
+        "goal_conditions": [],
+    }
+    proj = setup_project(sprints={"active": sprint, "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete", "--fix-confirmed", "1",
+                          "--build", "aaaa111:bbbb222")
+    assert_eq("rejected", code, 1)
+    assert_eq("names unconfirmed entry", out["unconfirmed"], ["Fix B works in the running app"])
+    assert_eq("echoes parsed fix list", len(out["fix_list"]), 2)
+
+
+def test_sprint_complete_maintenance_success():
+    """AC 6: a maintenance sprint succeeds once every parsed entry is confirmed with a build."""
+    print("\n[sprint complete] Maintenance sprint succeeds when all entries confirmed")
+    sprint = {
+        "slug": "test-sprint", "locked": True, "started": "2026-04-01", "stories": [],
+        "goal": "General maintenance.\nVerified fixes:\n- Fix A works in the running app\n- Fix B works in the running app",
+        "goal_conditions": [],
+    }
+    proj = setup_project(sprints={"active": sprint, "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete",
+                          "--fix-confirmed", "Fix A works in the running app",
+                          "--fix-confirmed", "2",
+                          "--build", "aaaa111:bbbb222")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("status done", result["completed"][0]["status"], "done")
+    assert_eq("fix confirmations recorded", len(result["completed"][0]["closure"]["fix_confirmations"]), 2)
+
+
+def test_sprint_complete_maintenance_requires_build():
+    """AC 6: maintenance confirmations without --build are refused."""
+    print("\n[sprint complete] Maintenance sprint requires --build")
+    sprint = {
+        "slug": "test-sprint", "locked": True, "started": "2026-04-01", "stories": [],
+        "goal": "General maintenance.\nVerified fixes:\n- Fix A works in the running app",
+        "goal_conditions": [],
+    }
+    proj = setup_project(sprints={"active": sprint, "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete", "--fix-confirmed", "1")
+    assert_eq("rejected", code, 1)
+
+
+def test_sprint_complete_undeclared_outcome_refused():
+    """AC 9: no goal_conditions and no verified-fix list in goal — done refused, both exits stated."""
+    print("\n[sprint complete] Undeclared outcome refuses done closure")
+    sprint = {"slug": "test-sprint", "locked": True, "started": "2026-04-01", "stories": [],
+              "goal": "General cleanup"}
+    proj = setup_project(sprints={"active": sprint, "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("mentions condition", "condition" in out["error"].lower(), True)
+    assert_eq("mentions failed", "failed" in out["error"].lower(), True)
+
+
+def test_sprint_complete_punt_decision_required_on_failed_path():
+    """AC 7: FAILED closure with a punted story and a not-verified-pass condition requires
+    --punt-decision; refused when absent, succeeds once a real decision doc is referenced."""
+    print("\n[sprint complete] FAILED closure requires --punt-decision when a story is punted")
+    proj = setup_project(
+        stories={"punted-story": {"status": "closed-incomplete", "title": "P", "epic_slug": "e",
+                                   "story_file": False, "depends_on": [], "touches": []}},
+        sprints={"active": _condition_sprint(stories=["punted-story"]), "planning": None, "completed": []},
+    )
+    code, out = run_tool(proj, "sprint", "complete", "--verdict", "failed", "--reason", "goal not met")
+    assert_eq("rejected without --punt-decision", code, 1)
+
+    decisions_dir = proj / "_bmad-output" / "planning-artifacts" / "decisions"
+    decisions_dir.mkdir(parents=True)
+    (decisions_dir / "dec-999-punt.md").write_text("# DEC-999 punt\n")
+    code, out = run_tool(proj, "sprint", "complete", "--verdict", "failed", "--reason", "goal not met",
+                          "--punt-decision", "dec-999-punt")
+    assert_eq("succeeds with a real punt-decision ref", code, 0)
+    assert_eq("punt_decision recorded", read_sprints(proj)["completed"][0]["closure"]["punt_decision"],
+              "dec-999-punt")
+
+
+def test_sprint_complete_punt_decision_not_required_when_all_verified_pass():
+    """AC 7: the punt gate is scoped to non-verified-pass conditions — a done closure can never
+    reach it (AC 1/3 already require every condition verified-pass for done), so this documents
+    that a punted story alongside an all-verified-pass condition set does not block done closure."""
+    print("\n[sprint complete] Punt-decision not required on done path when conditions all verified-PASS")
+    proj = setup_project(
+        stories={"punted-story": {"status": "closed-incomplete", "title": "P", "epic_slug": "e",
+                                   "story_file": False, "depends_on": [], "touches": []}},
+        sprints={"active": _condition_sprint(stories=["punted-story"]), "planning": None, "completed": []},
+    )
+    _seed_passing_condition(proj)
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("succeeds without --punt-decision", code, 0)
+
+
+def test_sprint_complete_punt_decision_unresolvable_ref_rejected():
+    """AC 7: a --punt-decision ref that doesn't resolve to a document on disk is refused."""
+    print("\n[sprint complete] Unresolvable punt-decision ref is refused")
+    proj = setup_project(
+        stories={"punted-story": {"status": "dropped", "title": "P", "epic_slug": "e",
+                                   "story_file": False, "depends_on": [], "touches": []}},
+        sprints={"active": _condition_sprint(stories=["punted-story"]), "planning": None, "completed": []},
+    )
+    code, out = run_tool(proj, "sprint", "complete", "--verdict", "failed", "--reason", "x",
+                          "--punt-decision", "no-such-decision")
+    assert_eq("rejected", code, 1)
+
+
+def _import_parse_verified_fix_list():
+    """Import _parse_verified_fix_list from momentum-tools.py via importlib."""
+    spec = importlib.util.spec_from_file_location("momentum_tools", str(SCRIPT))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod._parse_verified_fix_list
+
+
+def test_parse_verified_fix_list_strips_exactly_one_bullet_marker():
+    """A fix entry with extra leading dashes ('-- Fix A') must keep the inner dash —
+    only the single bullet marker is stripped, not every leading '-' character."""
+    print("\n[_parse_verified_fix_list] strips exactly one bullet marker, not all leading dashes")
+    _parse_verified_fix_list = _import_parse_verified_fix_list()
+    entries = _parse_verified_fix_list("Verified fixes:\n-- Fix A works in the running app")
+    assert_eq("inner dash preserved", entries, ["- Fix A works in the running app"])
+
+
+def test_sprint_complete_refusal_echoes_active_sprint_slug():
+    """AC 12 (bmad-code-review-5): every refusal from cmd_sprint_complete names the
+    active sprint's slug, so a caller can tell it apart from a different sprint's
+    refusal — the resume/retro convention relies on this."""
+    print("\n[sprint complete] Refusal echoes the active sprint slug")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("refusal names the active sprint", out.get("slug"), "test-sprint")
+
+
+def test_sprint_complete_success_output_includes_closure_block():
+    """bmad-code-review-7: the CLI's own stdout on success carries the closure block it
+    just wrote — not just the on-disk record — so a caller reading only the CLI output
+    (never re-reading sprints/index.json) still sees the per-condition verdict snapshot."""
+    print("\n[sprint complete] Success output echoes the closure block")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    _seed_passing_condition(proj)
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("closure block present in output", "closure" in out, True)
+    assert_eq("output closure verdict done", out["closure"]["verdict"], "done")
+    assert_eq("output closure matches written record",
+              out["closure"], read_sprints(proj)["completed"][0]["closure"])
 
 
 # --- Epic Membership Tests ---
@@ -674,14 +984,21 @@ def test_sprint_activate_sets_status_active():
 
 
 def test_sprint_complete_sets_status_done():
-    """sprint complete sets active.status='done' and retro_run_at=None."""
+    """sprint complete sets active.status='done' and retro_run_at=None once the
+    goal_conditions gate passes (DEC-040 D2/D3 — a fixture with no goal_conditions and
+    no verified-fix list now hits the AC 9 undeclared-outcome refusal instead)."""
     print("\n[sprint complete] Sets status done and retro_run_at null")
     sprints = {
-        "active": {"slug": "test-sprint", "locked": True, "started": "2026-04-01"},
+        "active": {
+            "slug": "test-sprint", "locked": True, "started": "2026-04-01", "stories": [],
+            "goal": "The demo feature works end to end in the running app",
+            "goal_conditions": ["demo-feature"],
+        },
         "planning": None,
         "completed": []
     }
     proj = setup_project(sprints=sprints)
+    _seed_passing_condition(proj)
     code, out = run_tool(proj, "sprint", "complete")
     assert_eq("exit code 0", code, 0)
     result = read_sprints(proj)
@@ -3216,6 +3533,28 @@ def main():
     test_sprint_activate_no_planning()
     test_sprint_complete()
     test_sprint_complete_no_active()
+
+    # Sprint closure gate tests (DEC-040 D2/D3)
+    test_sprint_complete_missing_entry_absent_registry()
+    test_sprint_complete_missing_entry_status_absent()
+    test_sprint_complete_no_verdict()
+    test_sprint_complete_no_build_shas()
+    test_sprint_complete_recorded_fail_blocks_done()
+    test_sprint_complete_success_all_verified_pass()
+    test_sprint_complete_failed_with_reason()
+    test_sprint_complete_failed_without_reason_rejected()
+    test_sprint_complete_failed_lands_in_completed_with_retro_null()
+    test_sprint_complete_maintenance_refusal_unconfirmed()
+    test_sprint_complete_maintenance_success()
+    test_sprint_complete_maintenance_requires_build()
+    test_sprint_complete_undeclared_outcome_refused()
+    test_sprint_complete_punt_decision_required_on_failed_path()
+    test_sprint_complete_punt_decision_not_required_when_all_verified_pass()
+    test_sprint_complete_punt_decision_unresolvable_ref_rejected()
+    test_parse_verified_fix_list_strips_exactly_one_bullet_marker()
+    test_sprint_complete_refusal_echoes_active_sprint_slug()
+    test_sprint_complete_success_output_includes_closure_block()
+
     test_epic_membership()
     test_epic_membership_not_found()
     test_sprint_plan_add()
