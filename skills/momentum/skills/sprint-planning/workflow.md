@@ -270,6 +270,110 @@ These stories may be blocked during execution. Adjust the selection later via
       progress — so a mid-run context reset (e.g. a `/model` switch) can resume from durable state
       instead of restarting the session.</action>
 
+    <!-- Goal-condition declaration (DEC-040 D1/D3) — runs after story registration, before
+    contracts freeze at Step 3.5. This is the ONLY place `{{goal}}` and `{{goal_conditions}}` are
+    ever elicited; every later step (Step 7's capability fork, Step 8's build handoff) reads the
+    values persisted here. -->
+    <action>Read `.momentum/features.json` (a plain file Read — this is a read-only consumer;
+      sprint planning never writes this registry). Handle four cases:
+        1. File does not exist → set {{feature_candidates}} = [] and {{registry_absent}} = true
+        2. File exists but its feature list is empty → set {{feature_candidates}} = [] and
+           {{registry_absent}} = false (present but empty — same downstream path as case 1)
+        3. File exists with N entries → set {{feature_candidates}} = the list of
+           {slug, name, acceptance_condition} records and {{registry_absent}} = false
+        4. File exists but fails to parse (malformed JSON, or a shape that isn't a feature list)
+           → emit one plain-language warning naming `.momentum/features.json` as unreadable, then
+           set {{feature_candidates}} = [] and {{registry_absent}} = false and continue on the
+           same maintenance path as case 2 — never halt the run over a malformed registry.
+      Do not error, halt, or prompt the developer to create or fix the file in cases 1, 2, or 4 —
+      an absent, empty, or malformed registry is handled the same way: continue on the
+      maintenance path without blocking (the registry's own delivering story may not have shipped
+      yet in this project).</action>
+
+    <check if="{{feature_candidates}} is empty">
+      <output>{{if registry_absent: No feature registry found at .momentum/features.json — this sprint
+will declare a verified-fix goal instead. | The feature registry has no entries yet — this
+sprint will declare a verified-fix goal instead.}}</output>
+      <action>Set {{goal_conditions}} = [] — the maintenance path is the only path when there are
+      no candidates to select from.</action>
+    </check>
+
+    <check if="{{feature_candidates}} is non-empty">
+      <output>## Sprint Goal — What Will a GM Be Able to Do?
+
+Candidate features from `.momentum/features.json` this sprint could flip from failing to passing:
+
+{{#each feature_candidates}}
+  {{index}}. `{{slug}}` — {{name}}: {{acceptance_condition}}
+{{/each}}
+
+Select zero or more by number or slug (comma-separated), or enter "none" for a maintenance
+sprint with no feature-shaped goal.</output>
+      <ask>Goal conditions for this sprint:</ask>
+      <action>Parse the developer's selection into {{goal_conditions}} (a list of feature slugs;
+        empty list if "none" or blank).</action>
+    </check>
+
+    <check if="{{goal_conditions}} is non-empty">
+      <output>Selected goal conditions: {{goal_conditions|join(", ")}}</output>
+      <ask>State this sprint's goal in one plain-language sentence — "After this sprint a GM will
+be able to ___" — consistent with the conditions you selected:</ask>
+      <action>Store the developer's sentence as {{goal}}.</action>
+    </check>
+
+    <check if="{{goal_conditions}} is empty">
+      <output>No feature conditions declared — this is a maintenance sprint (bug fixes,
+configuration, or infrastructure work). Name a verified-fix list instead: each entry must be
+something a human can confirm by observing the running app (an outcome, e.g. "Re-running sprint
+plan no longer drops the declared wave") — not an implementation task (e.g. "refactor the
+parser").</output>
+      <ask>List this sprint's verified fixes (one per line, or comma-separated):</ask>
+      <action>Parse the developer's entries into a list.</action>
+
+      <check if="the developer supplied zero entries (declined the fix list) AND {{goal_conditions}} is empty">
+        <output>! A sprint needs either at least one declared feature condition or a named
+verified-fix list — one of the two is required. Re-enter your goal conditions above, or name at
+least one verified fix.</output>
+        <action>Re-present the appropriate prompt above (feature selection if candidates exist,
+        otherwise the verified-fix prompt) and do not advance until one is satisfied. This
+        re-enters at the branch point above (the "{{feature_candidates}} is non-empty" check) —
+        if the developer now selects one or more feature conditions, {{goal_conditions}} becomes
+        non-empty and this maintenance branch is exited entirely: the feature-backed
+        goal-sentence prompt runs instead, and nothing below in this maintenance branch (including
+        the "Compose {{goal}}" action) executes for that path.</action>
+      </check>
+
+      <check if="one or more entries read as an implementation task rather than a human-observable
+      outcome — signals include a bare verb-first phrase with no observable result named
+      ('refactor the parser', 'improve performance', 'clean up the code', 'update the docs') and
+      no statement of what a person would see or do differently in the running app">
+        <output>! "{{offending_entry}}" reads as an implementation task, not something a human can
+confirm in the running app. Rephrase it as an outcome — what would you actually see or do
+differently? (e.g. "Re-running sprint plan no longer drops the declared wave," not "fix the wave
+bug".)</output>
+        <action>Increment {{entry_reject_count}} for this entry (starts at 0 the first time an
+        entry is flagged). If {{entry_reject_count}} < 2, re-ask for that entry (or the full list)
+        and re-check before proceeding — do not persist a fix list containing an unrephrased
+        implementation-task entry. If {{entry_reject_count}} reaches 2 (the entry has now been
+        flagged and re-rejected twice), stop re-prompting: accept the entry as-is, and add a note
+        to {{cautions}} recording that "{{offending_entry}}" was accepted without rephrasing after
+        two rejections — this caution surfaces in the build handoff (Step 8) so the ambiguity is
+        visible downstream.</action>
+      </check>
+
+      <action if="{{goal_conditions}} is still empty">Compose {{goal}} as a lead-in line
+        "Verified fixes:" followed by one line per entry (each prefixed "- "), preserving the
+        line-break-separated shape sprint closure will parse later.</action>
+    </check>
+
+    <action>Persist the declaration durably via the CLI — never a direct edit of
+      `sprints/index.json`:
+      `momentum-tools sprint plan --goal "{{goal}}" --goal-conditions "{{comma-separated slugs, empty string if none}}"`</action>
+    <action>Confirm durability: the call's own JSON result already echoes back `goal` and
+      `goal_conditions` as persisted — both are now recoverable from `sprints/index.json` via
+      `momentum-tools`. Store {{goal}} and {{goal_conditions}} from that result for Step 7
+      (capability fork) and Step 8 (build handoff).</action>
+
     <output>## Sprint `{{sprint_slug}}` — {{count}} Stories Selected
 
 {{numbered list of selected story titles}}
@@ -1119,9 +1223,19 @@ Address all findings before the plan can proceed.</output>
         · Set abs_spec_path  = "{{cwd}}/.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}"
         · Store per-story abs_story_path and abs_spec_path for use in Phase B hrefs
 
+      Mandatory capability fork (from Step 2's declaration): build the capability ForkItem per
+      renderer §4a from {{goal_conditions}} and {{goal}} (stored at Step 2 — never re-elicited
+      here) and set it as {{genuine_forks}}[0], ahead of everything else, including coherence
+      forks. This is the FIRST action of fork assembly — coherence forks and the other
+      fork-detection rules below are prepended/appended after it, never before it. Like coherence
+      forks, it is EXEMPT from the ≤ 7 cap (floor wins per decision-grade-presentation §4): it
+      renders even when it is the only fork, and it is never dropped when 7 other forks already
+      fill the budget.
+
       Mandatory coherence forks (from Step 3.6): for every entry in {{coherence_failures}},
-      build a ForkItem per coherence-gate.md §5a and prepend it to {{genuine_forks}} BEFORE
-      applying the other fork-detection rules below. Coherence forks are EXEMPT from the ≤ 7 cap
+      build a ForkItem per coherence-gate.md §5a and prepend it to {{genuine_forks}} immediately
+      AFTER the capability fork (i.e. at index 1 onward) and BEFORE applying the other
+      fork-detection rules below. Coherence forks are EXEMPT from the ≤ 7 cap
       (floor wins per decision-grade-presentation §4 — a genuine open coherence mismatch is
       never dropped to make room: if {{coherence_failures}} has 9 entries, all 9 coherence forks
       appear, and the gate's total fork count exceeds 7 for that render).
@@ -1153,10 +1267,18 @@ Address all findings before the plan can proceed.</output>
       3. Verified stat tiles (`<div class="grid">`) — story count · wave count · CALL count · irrev count
       4. Structure diagram (`<div class="diagram">` with inline SVG) — waves + dep edges; SPOF node ⚠ marked
       5. Items at a glance — one `.scard` per story (stakes · wave · deps · verdict · story link · spec link)
-      6. Decision cards — one `.card` per genuine fork (≤ 7); each carries What · Why · Evidence · Recommendation · Options inline; zero cards if no forks with clean-plan message
+      6. Decision cards — one `.card` per genuine fork (≤ 7, plus the exempt capability and
+         coherence forks per renderer §4a/§5a); the mandatory capability fork (renderer §4a) is
+         ALWAYS the first card — {{genuine_forks|count}} is never 0, so the pre-existing
+         "zero cards, clean-plan message" path never fires for this section anymore. When the
+         capability fork is the only fork, follow it with the muted "all other stories build
+         as-specified" line per renderer §5.5 instead of omitting cards entirely.
       7. Risks section (conditional — include only if risks exist beyond fork cards)
       8. Defaulted to standards `<details>` collapsible
-      9. Sign-off gate (`<div class="gate">`) — written verdict per fork (anti-rubber-stamp), clean-plan path when zero forks
+      9. Sign-off gate (`<div class="gate">`) — written verdict per fork (anti-rubber-stamp,
+         including the mandatory capability fork's stricter verdict check per Step 7's A-branch
+         below); there is no zero-fork clean-plan path anymore — a verdict on the capability fork
+         is always required before the submit button enables
 
     Rendering rules:
       · Zero external dependencies — inline all CSS and JS
@@ -1221,11 +1343,15 @@ Review the gate, record your per-fork verdicts (if any), then enter your decisio
     </check>
 
     <check if="developer selects A (Approve)">
+      <!-- {{genuine_forks|count}} is never 0 now — the capability fork (renderer §4a) is always
+      present at index 0, so this branch always runs and always requires at least a Fork 1
+      verdict. The `> 0` guard is kept for defensive clarity, not because it can be false. -->
       <check if="{{genuine_forks|count}} > 0">
         <output>Use the 'Copy decision' button in the gate to copy your signed-off decision
 block, then paste it here. The block must contain a non-empty Fork line for each of the
-{{genuine_forks|count}} fork(s). A bare "A" or "approve" without per-fork verdicts will not
-be accepted — the anti-rubber-stamp gate requires written reasoning per fork.</output>
+{{genuine_forks|count}} fork(s), including Fork 1 (the capability sign-off). A bare "A" or
+"approve" without per-fork verdicts will not be accepted — the anti-rubber-stamp gate requires
+written reasoning per fork.</output>
         <ask>Paste the decision block from the gate:</ask>
         <action>Validate the pasted block:
           1. It starts with "Sprint plan decision — {{sprint_slug}}"
@@ -1234,9 +1360,93 @@ be accepted — the anti-rubber-stamp gate requires written reasoning per fork.<
           If any check fails: explain the specific failure and re-ask. Only proceed when all
           checks pass. A developer who types bare "A" or omits fork lines must be re-prompted.
         </action>
+
+        <!-- Fork 1 is always the capability fork (renderer §4a — always prepended first, always
+        index 0). Its verdict gets a stricter check than the generic non-whitespace rule above,
+        and its content — not the top-level A/M/R choice — determines whether this run activates,
+        returns to the goal-condition declaration, or halts (AC7, AC9). -->
+        <action>Extract the "Fork 1:" line's text (everything after the colon, trimmed) as
+        {{capability_verdict_text}}.</action>
+        <check if="{{capability_verdict_text}} is a single character, is blank, or — case-insensitively
+        and ignoring surrounding punctuation/whitespace — equals 'approve all', 'approved',
+        or any other bare approval with no reasoning that names the capability">
+          <output>The capability verdict ("Fork 1") needs more than a bare approval — it must
+name, in your own words, the capability being accepted or amended (what a GM will be able to do).
+"{{capability_verdict_text}}" doesn't do that. Revise it in the gate, copy again, and re-paste.</output>
+          <action>Re-ask for the pasted block: re-issue the `<ask>Paste the decision block from
+          the gate:</ask>` above (do not re-render the gate, do not treat this as a Modify —
+          the developer only needs to rewrite their Fork 1 verdict text and re-copy).</action>
+        </check>
+
+        <action>Classify {{capability_verdict_text}} by its REQUIRED leading keyword
+        (case-insensitive, optional trailing ":" or "—" before the reasoning that follows):
+          · Starts with "approve" → {{capability_decision}} = "approve"
+          · Starts with "change" → {{capability_decision}} = "change"
+          · Starts with "reject" → {{capability_decision}} = "reject"
+          · Anything else — including reasoning-first prose with no explicit leading keyword
+            (e.g. "This is wrong — reject") — is UNPARSEABLE. Do not default this to "approve"
+            or to any other decision.
+        </action>
+
+        <check if="{{capability_verdict_text}} does not start with the required keyword (i.e.
+        {{capability_decision}} was not set to approve, change, or reject above)">
+          <output>The capability verdict ("Fork 1") must lead with the word "Approve", "Change",
+or "Reject", followed by your reasoning. "{{capability_verdict_text}}" doesn't start with one of
+those. Revise it in the gate — put the keyword first, then your reasoning — copy again, and
+re-paste.</output>
+          <action>Re-ask for the pasted block: re-issue the `<ask>Paste the decision block from
+          the gate:</ask>` above (do not re-render the gate, do not treat this as a Modify, and
+          do not activate or halt on an unparseable verdict — the developer only needs to
+          rewrite their Fork 1 verdict to lead with the keyword and re-copy).</action>
+        </check>
+
+        <check if="{{capability_decision}} == 'reject'">
+          <action>HALT — do not proceed to Step 8. Record the reason durably: append
+          {{capability_verdict_text}} (verbatim) to
+          `.momentum/sprints/{{sprint_slug}}/coherence-report.md` under a
+          "## Capability Sign-Off — Rejected" heading. If that file does not exist yet, CREATE it
+          with that heading and the reason as its content — the durable record must exist either
+          way, not only when the file already happened to be present. The sprint is not
+          activated; no story status changes.</action>
+          <output>✗ Capability sign-off rejected — sprint not activated.
+Reason: {{capability_verdict_text}}
+
+Nothing was built or merged. Return to Step 2 to redeclare goal conditions, or end the session.</output>
+        </check>
+
+        <check if="{{capability_decision}} == 'change'">
+          <action>Return to Step 2's goal-condition declaration exchange (the `<ask>` blocks
+          after story registration) with the developer's {{capability_verdict_text}} as context
+          for what to amend. Re-run the declaration, then re-persist via
+          `momentum-tools sprint plan --goal ... --goal-conditions ...` as Step 2 already does.</action>
+          <action>Re-synthesize all gate data (Phase A) and re-render the HTML gate (Phase B) with
+          the amended {{goal}}/{{goal_conditions}} — reuse the same machinery as the M-branch
+          above: re-write `.momentum/handoffs/{{sprint_slug}}-plan-gate.html` and reload the
+          existing PLAN_GATE_SURFACE (do NOT call `cmux browser new` again).</action>
+          <action>Re-present the sign-off prompt (return to the top of Step 7's `<ask>Your
+          decision [A/M/R]:</ask>`).</action>
+        </check>
+
+        <!-- {{capability_decision}} == "approve" falls through to normal completion below. -->
       </check>
-      <action>Update task 7 (Developer review) to completed</action>
-      <action>Proceed to Step 8</action>
+      <check if="{{capability_decision}} == 'approve'">
+        <action>Update task 7 (Developer review) to completed</action>
+        <action>Proceed to Step 8</action>
+      </check>
+      <check if="{{capability_decision}} is unset">
+        <!-- Defensive arm: this should not occur since the capability fork is always present
+        at index 0 (§4a). If it does, that is a defect in Phase A/B fork construction or in the
+        Fork 1 extraction above — never fail open to activation. -->
+        <action>HALT — do not proceed to Step 8. Do not activate the sprint.</action>
+        <output>✗ Internal defect: no capability verdict was parsed from the pasted decision
+block (Fork 1 was missing, or the gate rendered without the capability fork). The sprint is NOT
+activated.
+
+Re-render the plan gate and confirm Phase A built the capability fork before re-presenting the
+sign-off prompt — do not re-paste the same block.</output>
+      </check>
+      <!-- 'reject' halted above and 'change' returned to the sign-off prompt above — neither
+      falls through to Step 8 from here. -->
     </check>
   </step>
 
