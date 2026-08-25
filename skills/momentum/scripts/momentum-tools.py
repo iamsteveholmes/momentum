@@ -337,9 +337,17 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
     path = sprints_path(project_dir)
     if not path.exists():
-        # Bootstrap a fresh sprints/index.json for a brand-new project — sprint plan
-        # is a legitimate first touch of sprint state (e.g. a throwaway fixture, or a
-        # project's very first sprint-planning run).
+        # Bootstrap a fresh sprints/index.json — but only inside a project that already has
+        # Momentum state (.momentum/stories/index.json present). Gating on that file restores
+        # the wrong-cwd tripwire: running `sprint plan` in an arbitrary git repo with no
+        # Momentum state at all is refused rather than silently seeding a new sprints file.
+        if not stories_path(project_dir).exists():
+            error_result(
+                "sprint_plan",
+                "No .momentum/stories/index.json found — this does not look like a Momentum "
+                "project. Refusing to bootstrap .momentum/sprints/index.json in the wrong "
+                "directory.",
+            )
         path.parent.mkdir(parents=True, exist_ok=True)
         write_json(path, {"active": None, "planning": None, "completed": []})
     sprints = read_json(path)
@@ -359,17 +367,39 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
     # goal / goal_conditions declaration (DEC-040 D1/D3) — optional, idempotent, applied
     # before any story add/remove, matching the existing --slug pattern.
     goal_arg = getattr(args, "goal", None)
+    goal_conditions_arg = getattr(args, "goal_conditions", None)
+
+    if goal_conditions_arg is not None:
+        # dict.fromkeys dedupes while preserving first-seen order.
+        parsed_conditions = list(dict.fromkeys(
+            s.strip() for s in goal_conditions_arg.split(",") if s.strip()
+        ))
+    else:
+        parsed_conditions = planning.get("goal_conditions", [])
+
+    if goal_arg == "" and parsed_conditions:
+        error_result(
+            "sprint_plan",
+            "--goal cannot be empty when goal_conditions is non-empty — a feature-backed or "
+            "maintenance sprint still needs a plain-language goal sentence",
+        )
+
     if goal_arg is not None:
         planning["goal"] = goal_arg
 
-    goal_conditions_arg = getattr(args, "goal_conditions", None)
     if goal_conditions_arg is not None:
-        planning["goal_conditions"] = [s.strip() for s in goal_conditions_arg.split(",") if s.strip()]
+        planning["goal_conditions"] = parsed_conditions
 
     story_slugs: list[str] = []
     operation = getattr(args, "operation", None)
+    stories_arg = getattr(args, "stories", None)
+    wave_arg = getattr(args, "wave", None)
+    if operation is None:
+        if stories_arg:
+            error_result("sprint_plan", "--stories requires --operation to be set (add or remove)")
+        if wave_arg is not None:
+            error_result("sprint_plan", "--wave requires --operation to be set (add or remove)")
     if operation is not None:
-        stories_arg = getattr(args, "stories", None)
         if not stories_arg:
             error_result("sprint_plan", "--stories is required when --operation is provided")
         story_slugs = [s.strip() for s in stories_arg.split(",")]

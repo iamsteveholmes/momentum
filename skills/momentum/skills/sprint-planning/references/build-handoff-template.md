@@ -66,7 +66,7 @@ item in `{{cautions}}`.
 | Condition | Section body |
 |---|---|
 | `{{goal}}` is null/absent | `Sprint goal not captured at planning` |
-| `{{goal_conditions}}` is empty (maintenance sprint — a verified-fix list lives in `{{goal}}` instead) | `**Goal conditions:** none — maintenance sprint (see verified-fix list above)` |
+| `{{goal_conditions}}` is null, absent, or empty (covers a maintenance sprint, where a verified-fix list lives in `{{goal}}` instead, and legacy records planned before this field existed) | `**Goal conditions:** none declared` |
 | `{{cautions}}` is empty | `No planning-time cautions raised.` |
 
 Both sections keep their heading even when using fallback wording — a section with no heading

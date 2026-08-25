@@ -40,11 +40,21 @@ Then:
 
 1. The capability fork is prepended — it is fork position 1, and the other 6 forks follow it in
    their existing order.
-2. The total card count is 7 (not 6, not 8) — the capability fork counts toward, but does not
-   exceed, the 7-fork budget alongside the other detected forks.
-3. The capability fork is never dropped by the 7-fork cap even when other forks would otherwise
-   fill all 7 slots — if 7 other genuine forks are already detected, the capability fork still
-   renders as an 8th, exempt like a coherence fork.
+2. The total card count is 7 (1 capability + 6 other) — the capability fork is exempt from the
+   7-fork cap and sits alongside, not counted against, the other detected forks' budget.
+
+## Scenario C: Seven other genuine forks already present (at the cap)
+
+Given a sprint plan with 7 other genuine forks detected (at the 7-cap)
+
+When Step 7 builds the gate
+
+Then:
+
+1. The capability fork is never dropped by the 7-fork cap even though the other forks already
+   fill all 7 slots — it still renders as an 8th card, exempt from the cap like a coherence fork.
+2. The total card count is 8 (1 capability + 7 other) — none of the 7 other forks is displaced to
+   make room for it.
 
 ## Pass Criteria
 

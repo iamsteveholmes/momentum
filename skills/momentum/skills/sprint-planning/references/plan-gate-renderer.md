@@ -368,7 +368,12 @@ the ONLY fork (no other genuine fork detected), render its card as usual and fol
 `<p class="muted">All other stories build as-specified — no additional forks found.</p>` so the
 clean-plan signal is still visible, just no longer implying zero decisions overall.
 
-For each genuine fork (capped at 7), render:
+`{{genuine_forks}}` is ordered: the capability fork (§4a) first, then any coherence forks
+(coherence-gate.md §5a), then up to 7 forks from §4's other classification rules. The 7-item cap
+applies only to that last group — the capability fork and coherence forks are exempt and are
+never counted against it (§4a, coherence-gate.md §5a).
+
+For each fork in `{{genuine_forks}}`, render:
 
 ```html
 <div class="card dec|decmed" id="fork-{{index}}">
@@ -409,9 +414,16 @@ Always include this `<details>` block. List every defaulted choice:
 
 ### 5.8 Sign-off gate
 
-**Anti-rubber-stamp requirement:** When `genuine_forks|count > 0`, the gate must require a
-written one-line verdict per genuine fork before activation can proceed. A blanket "approve all"
-with no per-fork reasoning must not satisfy the gate.
+**Anti-rubber-stamp requirement:** The gate always requires a written one-line verdict per
+genuine fork before activation can proceed — `genuine_forks|count` is never 0 because the
+capability fork (§4a) is always prepended first. A blanket "approve all" with no per-fork
+reasoning must not satisfy the gate.
+
+**Defect guard:** A zero-fork render is unreachable by design and is a defect, not a valid state,
+if it ever occurs — it means Phase A failed to build the capability fork. If `genuine_forks|count`
+computes as 0 when this section renders, HALT and fix Phase A before presenting the gate; do not
+fall back to a radio-only, no-verdict render. There is no "clean-plan, zero-fork" path in this
+gate — the capability fork guarantees at least one card, and one written verdict, every time.
 
 **Implementation:** Use the single canonical JavaScript gate below (do NOT define a second or
 illustrative `checkGate()` function — duplicates cause agents to emit the wrong variant):
@@ -424,7 +436,6 @@ Gate HTML structure:
   <p>Approve the <b>{{batch_count}} ✓ batch</b> items to build as-specified?
      <span style="font-size:20px">&#9744;</span></p>
 
-  {{if genuine_forks|count > 0:}}
   <p style="margin-top:16px"><b>For each fork, write a one-line verdict + reason</b>
      (the blank forces a real read — blanket approve-all is insufficient):</p>
   {{for each fork in genuine_forks with index i:}}
@@ -434,7 +445,6 @@ Gate HTML structure:
            oninput="checkGate()" style="min-width:280px;border:1px solid #c8bfaa;border-radius:4px;padding:3px 7px">
   </div>
   {{endfor}}
-  {{endif}}
 
   <div style="margin-top:20px">
     <label><input type="radio" name="decision" value="approve" onchange="checkGate()"> <b>A — Approve and activate</b></label><br>
@@ -443,14 +453,14 @@ Gate HTML structure:
   </div>
 
   <p id="gate-hint" style="margin-top:12px;color:#6b5e4a;font-size:14px">
-    {{if genuine_forks|count > 0: Write a one-line verdict for each fork above, then select Approve or Modify.
-      else: Select Approve to activate, or Modify to adjust the plan.}}
+    Write a one-line verdict for each fork above, then select Approve or Modify.
   </p>
   <button id="submit-btn" disabled style="margin-top:8px;padding:10px 22px;background:#3a5a7a;color:#fff;border:none;border-radius:7px;font-size:15px;cursor:pointer">
     Copy decision → paste into chat
   </button>
   <script>
-    var FORK_COUNT = {{genuine_forks|count}};  /* NOT call_count — see §2d note */
+    var FORK_COUNT = {{genuine_forks|count}};  /* always >= 1 — the capability fork (§4a)
+                                                   guarantees it; see the defect guard above */
     document.getElementById('submit-btn').addEventListener('click', function() {
       var lines = ['Sprint plan decision — ' + '{{sprint_slug}}'];
       var dec = document.querySelector('input[name="decision"]:checked').value;
@@ -463,7 +473,7 @@ Gate HTML structure:
     function checkGate() {
       var allSigned = true;
       for (var i = 1; i <= FORK_COUNT; i++) {
-        if (FORK_COUNT > 0 && !document.getElementById('verdict-' + i).value.trim()) {
+        if (!document.getElementById('verdict-' + i).value.trim()) {
           allSigned = false; break;
         }
       }
@@ -471,7 +481,7 @@ Gate HTML structure:
       document.getElementById('submit-btn').disabled = !(allSigned && decision);
       document.getElementById('gate-hint').textContent = allSigned && decision
         ? 'Ready — copy and paste the decision text back into the chat.'
-        : (FORK_COUNT > 0 ? 'Write a one-line verdict for each fork above, then select a path.' : 'Select a path.');
+        : 'Write a one-line verdict for each fork above, then select a path.';
     }
   </script>
   <p style="margin-top:16px" class="muted">Nothing is built until you sign off. The full machine-grade detail
@@ -479,8 +489,6 @@ Gate HTML structure:
   <code>.momentum/sprints/{{sprint_slug}}/specs/</code> — one click away, deliberately not in this view.</p>
 </div>
 ```
-
-**Clean-plan path (zero forks):** When `genuine_forks|count == 0`, render only the batch-approve radio group with no per-fork blanks. `checkGate()` requires only a selected radio, not written verdicts. (call_count may still be > 0 — those ★CALL items are flagged in the items-at-a-glance section but have no fork cards requiring a verdict.)
 
 ---
 

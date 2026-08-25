@@ -536,6 +536,82 @@ def test_sprint_plan_bootstraps_missing_index():
     assert_eq("goal persisted", result["planning"]["goal"], "First sprint")
 
 
+def test_sprint_plan_refuses_bootstrap_without_momentum_state():
+    """sprint plan refuses to bootstrap sprints/index.json when .momentum/stories/index.json
+    is also absent — the wrong-cwd tripwire (bmad-code-review-3)."""
+    print("\n[sprint plan] Refuses bootstrap with no Momentum state at all")
+    tmpdir = Path(tempfile.mkdtemp())
+    subprocess.run(["git", "init", "--quiet", str(tmpdir)], check=True)
+    index_path = tmpdir / ".momentum" / "sprints" / "index.json"
+    code, out = run_tool(tmpdir, "sprint", "plan", "--goal", "First sprint", "--goal-conditions", "")
+    assert_eq("rejected", code, 1)
+    assert_eq("index.json not created", index_path.exists(), False)
+
+
+def test_sprint_plan_stories_without_operation_rejected():
+    """--stories with no --operation is rejected rather than silently ignored (bmad-code-review-2)."""
+    print("\n[sprint plan] --stories without --operation is rejected")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--stories", "s1")
+    assert_eq("rejected", code, 1)
+
+
+def test_sprint_plan_wave_without_operation_rejected():
+    """--wave with no --operation is rejected rather than silently ignored (bmad-code-review-2)."""
+    print("\n[sprint plan] --wave without --operation is rejected")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--wave", "1")
+    assert_eq("rejected", code, 1)
+
+
+def test_sprint_plan_goal_conditions_deduped():
+    """--goal-conditions dedupes repeated slugs, preserving first-seen order (bmad-code-review-4)."""
+    print("\n[sprint plan] Goal conditions deduped")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "Ship X",
+                          "--goal-conditions", "a,b,a,c,b")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("deduped, order preserved", result["planning"]["goal_conditions"], ["a", "b", "c"])
+
+
+def test_sprint_plan_refuses_empty_goal_with_conditions():
+    """--goal "" is refused when goal_conditions would be non-empty (bmad-code-review-13)."""
+    print("\n[sprint plan] Refuses empty goal alongside populated goal_conditions")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "",
+                          "--goal-conditions", "session-capture")
+    assert_eq("rejected", code, 1)
+    result = read_sprints(proj)
+    assert_eq("no planning entry corrupted", result["planning"], None)
+
+
+def test_sprint_plan_refuses_empty_goal_with_existing_conditions():
+    """--goal "" is refused when the record already carries non-empty goal_conditions and this
+    call doesn't clear them (bmad-code-review-13)."""
+    print("\n[sprint plan] Refuses empty goal against pre-existing goal_conditions")
+    sprints = {"active": None, "planning": {"locked": False, "stories": [], "waves": [],
+                                             "goal": "Original goal",
+                                             "goal_conditions": ["session-capture"]}, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "")
+    assert_eq("rejected", code, 1)
+    result = read_sprints(proj)
+    assert_eq("original goal untouched", result["planning"]["goal"], "Original goal")
+
+
+def test_sprint_plan_allows_empty_goal_when_conditions_also_cleared():
+    """--goal "" together with --goal-conditions "" is allowed (both empty is a valid, if
+    incomplete, maintenance-sprint-in-progress state) (bmad-code-review-13)."""
+    print("\n[sprint plan] Empty goal allowed when goal_conditions is also empty")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "", "--goal-conditions", "")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("goal empty", result["planning"]["goal"], "")
+    assert_eq("goal_conditions empty", result["planning"]["goal_conditions"], [])
+
+
 # --- Helpers for new tests ---
 
 def setup_installed_json(project_dir: Path, data: dict) -> Path:
@@ -3161,6 +3237,13 @@ def main():
     test_sprint_plan_stories_required_with_operation()
     test_sprint_activate_carries_goal_and_conditions()
     test_sprint_plan_bootstraps_missing_index()
+    test_sprint_plan_refuses_bootstrap_without_momentum_state()
+    test_sprint_plan_stories_without_operation_rejected()
+    test_sprint_plan_wave_without_operation_rejected()
+    test_sprint_plan_goal_conditions_deduped()
+    test_sprint_plan_refuses_empty_goal_with_conditions()
+    test_sprint_plan_refuses_empty_goal_with_existing_conditions()
+    test_sprint_plan_allows_empty_goal_when_conditions_also_cleared()
 
     # Sprint status field tests
     test_sprint_plan_sets_status_planning()

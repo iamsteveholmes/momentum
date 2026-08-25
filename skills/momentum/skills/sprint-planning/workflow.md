@@ -275,15 +275,20 @@ These stories may be blocked during execution. Adjust the selection later via
     ever elicited; every later step (Step 7's capability fork, Step 8's build handoff) reads the
     values persisted here. -->
     <action>Read `.momentum/features.json` (a plain file Read — this is a read-only consumer;
-      sprint planning never writes this registry). Handle three cases:
+      sprint planning never writes this registry). Handle four cases:
         1. File does not exist → set {{feature_candidates}} = [] and {{registry_absent}} = true
         2. File exists but its feature list is empty → set {{feature_candidates}} = [] and
            {{registry_absent}} = false (present but empty — same downstream path as case 1)
         3. File exists with N entries → set {{feature_candidates}} = the list of
            {slug, name, acceptance_condition} records and {{registry_absent}} = false
-      Do not error, halt, or prompt the developer to create the file in cases 1–2 — an absent or
-      empty registry is an expected, ordinary state (the registry's own delivering story may not
-      have shipped yet in this project).</action>
+        4. File exists but fails to parse (malformed JSON, or a shape that isn't a feature list)
+           → emit one plain-language warning naming `.momentum/features.json` as unreadable, then
+           set {{feature_candidates}} = [] and {{registry_absent}} = false and continue on the
+           same maintenance path as case 2 — never halt the run over a malformed registry.
+      Do not error, halt, or prompt the developer to create or fix the file in cases 1, 2, or 4 —
+      an absent, empty, or malformed registry is handled the same way: continue on the
+      maintenance path without blocking (the registry's own delivering story may not have shipped
+      yet in this project).</action>
 
     <check if="{{feature_candidates}} is empty">
       <output>{{if registry_absent: No feature registry found at .momentum/features.json — this sprint
@@ -333,7 +338,12 @@ parser").</output>
 verified-fix list — one of the two is required. Re-enter your goal conditions above, or name at
 least one verified fix.</output>
         <action>Re-present the appropriate prompt above (feature selection if candidates exist,
-        otherwise the verified-fix prompt) and do not advance until one is satisfied.</action>
+        otherwise the verified-fix prompt) and do not advance until one is satisfied. This
+        re-enters at the branch point above (the "{{feature_candidates}} is non-empty" check) —
+        if the developer now selects one or more feature conditions, {{goal_conditions}} becomes
+        non-empty and this maintenance branch is exited entirely: the feature-backed
+        goal-sentence prompt runs instead, and nothing below in this maintenance branch (including
+        the "Compose {{goal}}" action) executes for that path.</action>
       </check>
 
       <check if="one or more entries read as an implementation task rather than a human-observable
@@ -344,13 +354,19 @@ least one verified fix.</output>
 confirm in the running app. Rephrase it as an outcome — what would you actually see or do
 differently? (e.g. "Re-running sprint plan no longer drops the declared wave," not "fix the wave
 bug".)</output>
-        <action>Re-ask for that entry (or the full list) and re-check before proceeding — do not
-        persist a fix list containing an unrephrased implementation-task entry.</action>
+        <action>Increment {{entry_reject_count}} for this entry (starts at 0 the first time an
+        entry is flagged). If {{entry_reject_count}} < 2, re-ask for that entry (or the full list)
+        and re-check before proceeding — do not persist a fix list containing an unrephrased
+        implementation-task entry. If {{entry_reject_count}} reaches 2 (the entry has now been
+        flagged and re-rejected twice), stop re-prompting: accept the entry as-is, and add a note
+        to {{cautions}} recording that "{{offending_entry}}" was accepted without rephrasing after
+        two rejections — this caution surfaces in the build handoff (Step 8) so the ambiguity is
+        visible downstream.</action>
       </check>
 
-      <action>Compose {{goal}} as a lead-in line "Verified fixes:" followed by one line per
-        entry (each prefixed "- "), preserving the line-break-separated shape sprint closure will
-        parse later.</action>
+      <action if="{{goal_conditions}} is still empty">Compose {{goal}} as a lead-in line
+        "Verified fixes:" followed by one line per entry (each prefixed "- "), preserving the
+        line-break-separated shape sprint closure will parse later.</action>
     </check>
 
     <action>Persist the declaration durably via the CLI — never a direct edit of
@@ -1364,19 +1380,36 @@ name, in your own words, the capability being accepted or amended (what a GM wil
           the developer only needs to rewrite their Fork 1 verdict text and re-copy).</action>
         </check>
 
-        <action>Classify {{capability_verdict_text}} by its leading word (case-insensitive,
-        optional trailing ":" or "—"):
+        <action>Classify {{capability_verdict_text}} by its REQUIRED leading keyword
+        (case-insensitive, optional trailing ":" or "—" before the reasoning that follows):
+          · Starts with "approve" → {{capability_decision}} = "approve"
           · Starts with "change" → {{capability_decision}} = "change"
           · Starts with "reject" → {{capability_decision}} = "reject"
-          · Otherwise (including "approve", or reasoning with no explicit leading keyword that
-            isn't change/reject) → {{capability_decision}} = "approve"
+          · Anything else — including reasoning-first prose with no explicit leading keyword
+            (e.g. "This is wrong — reject") — is UNPARSEABLE. Do not default this to "approve"
+            or to any other decision.
         </action>
 
+        <check if="{{capability_verdict_text}} does not start with the required keyword (i.e.
+        {{capability_decision}} was not set to approve, change, or reject above)">
+          <output>The capability verdict ("Fork 1") must lead with the word "Approve", "Change",
+or "Reject", followed by your reasoning. "{{capability_verdict_text}}" doesn't start with one of
+those. Revise it in the gate — put the keyword first, then your reasoning — copy again, and
+re-paste.</output>
+          <action>Re-ask for the pasted block: re-issue the `<ask>Paste the decision block from
+          the gate:</ask>` above (do not re-render the gate, do not treat this as a Modify, and
+          do not activate or halt on an unparseable verdict — the developer only needs to
+          rewrite their Fork 1 verdict to lead with the keyword and re-copy).</action>
+        </check>
+
         <check if="{{capability_decision}} == 'reject'">
-          <action>HALT — do not proceed to Step 8. Record the reason: append
-          {{capability_verdict_text}} (verbatim) to the sprint's coherence-report.md under a
-          "## Capability Sign-Off — Rejected" heading if that file exists, otherwise surface it in
-          the halt output. The sprint is not activated; no story status changes.</action>
+          <action>HALT — do not proceed to Step 8. Record the reason durably: append
+          {{capability_verdict_text}} (verbatim) to
+          `.momentum/sprints/{{sprint_slug}}/coherence-report.md` under a
+          "## Capability Sign-Off — Rejected" heading. If that file does not exist yet, CREATE it
+          with that heading and the reason as its content — the durable record must exist either
+          way, not only when the file already happened to be present. The sprint is not
+          activated; no story status changes.</action>
           <output>✗ Capability sign-off rejected — sprint not activated.
 Reason: {{capability_verdict_text}}
 
@@ -1398,11 +1431,21 @@ Nothing was built or merged. Return to Step 2 to redeclare goal conditions, or e
 
         <!-- {{capability_decision}} == "approve" falls through to normal completion below. -->
       </check>
-      <check if="{{capability_decision}} is unset (no genuine forks were built at all, a state
-      that should not occur since the capability fork is always present) OR
-      {{capability_decision}} == 'approve'">
+      <check if="{{capability_decision}} == 'approve'">
         <action>Update task 7 (Developer review) to completed</action>
         <action>Proceed to Step 8</action>
+      </check>
+      <check if="{{capability_decision}} is unset">
+        <!-- Defensive arm: this should not occur since the capability fork is always present
+        at index 0 (§4a). If it does, that is a defect in Phase A/B fork construction or in the
+        Fork 1 extraction above — never fail open to activation. -->
+        <action>HALT — do not proceed to Step 8. Do not activate the sprint.</action>
+        <output>✗ Internal defect: no capability verdict was parsed from the pasted decision
+block (Fork 1 was missing, or the gate rendered without the capability fork). The sprint is NOT
+activated.
+
+Re-render the plan gate and confirm Phase A built the capability fork before re-presenting the
+sign-off prompt — do not re-paste the same block.</output>
       </check>
       <!-- 'reject' halted above and 'change' returned to the sign-off prompt above — neither
       falls through to Step 8 from here. -->
