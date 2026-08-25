@@ -399,7 +399,7 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
             error_result("sprint_plan", "--stories requires --operation to be set (add or remove)")
         if wave_arg is not None:
             error_result("sprint_plan", "--wave requires --operation to be set (add or remove)")
-    if operation is not None:
+    else:
         if not stories_arg:
             error_result("sprint_plan", "--stories is required when --operation is provided")
         story_slugs = [s.strip() for s in stories_arg.split(",")]

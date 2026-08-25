@@ -294,6 +294,8 @@ These stories may be blocked during execution. Adjust the selection later via
       <output>{{if registry_absent: No feature registry found at .momentum/features.json — this sprint
 will declare a verified-fix goal instead. | The feature registry has no entries yet — this
 sprint will declare a verified-fix goal instead.}}</output>
+      <action>Set {{goal_conditions}} = [] — the maintenance path is the only path when there are
+      no candidates to select from.</action>
     </check>
 
     <check if="{{feature_candidates}} is non-empty">
@@ -310,11 +312,6 @@ sprint with no feature-shaped goal.</output>
       <ask>Goal conditions for this sprint:</ask>
       <action>Parse the developer's selection into {{goal_conditions}} (a list of feature slugs;
         empty list if "none" or blank).</action>
-    </check>
-
-    <check if="{{feature_candidates}} is empty">
-      <action>Set {{goal_conditions}} = [] — the maintenance path is the only path when there are
-      no candidates to select from.</action>
     </check>
 
     <check if="{{goal_conditions}} is non-empty">
@@ -372,9 +369,10 @@ bug".)</output>
     <action>Persist the declaration durably via the CLI — never a direct edit of
       `sprints/index.json`:
       `momentum-tools sprint plan --goal "{{goal}}" --goal-conditions "{{comma-separated slugs, empty string if none}}"`</action>
-    <action>Confirm durability: read `.momentum/sprints/index.json` back and verify
-      `planning.goal` and `planning.goal_conditions` match what was just declared. Store
-      {{goal}} and {{goal_conditions}} for Step 7 (capability fork) and Step 8 (build handoff).</action>
+    <action>Confirm durability: the call's own JSON result already echoes back `goal` and
+      `goal_conditions` as persisted — both are now recoverable from `sprints/index.json` via
+      `momentum-tools`. Store {{goal}} and {{goal_conditions}} from that result for Step 7
+      (capability fork) and Step 8 (build handoff).</action>
 
     <output>## Sprint `{{sprint_slug}}` — {{count}} Stories Selected
 
