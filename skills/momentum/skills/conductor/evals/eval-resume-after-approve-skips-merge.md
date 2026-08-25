@@ -23,9 +23,17 @@ killed (or context-compacted) before the developer saw the final completion outp
 3. No error is raised about re-merging a missing branch or re-transitioning an already-done
    story.
 4. The MAJOR-RESIDUAL GOVERNANCE GUARD still runs (it is independently idempotent via
-   momentum:triage's own dedup gate) and the push summary / push-confirmation / completion
-   output are still presented — the resumed build's final output is content-equivalent to
-   what the interrupted session would have shown had it not died.
+   momentum:triage's own dedup gate). Push and the post-execution read-back verification are
+   NOT covered by the `end-gate-phase-complete` checkpoint (per `conduct-merge-gate-completes-
+   by-executing-merge-push-story` — push is folded into the single approve control, not a
+   separate confirmation) — they still execute on this resumed pass: `git push` (idempotent if
+   already pushed in the dying session), then the read-back verification (`main` contains the
+   sprint tip, local `main` equals `origin/main`, merged stories read `done`). If a
+   `merge-gate-outcome: merged` row does not already exist, a fresh one is appended once
+   verification passes and the completion output is presented; if one already exists (the prior
+   session got that far before dying), the resumed pass reflects the recorded outcome instead of
+   re-announcing it. Either way, the resumed build's final output is content-equivalent to what
+   the interrupted session would have shown had it not died.
 5. The end-gate report reopened in this session was re-rendered fresh from the ledger (not
    from stale in-context state) and matches the report an uninterrupted run would have
    produced for the same sprint.

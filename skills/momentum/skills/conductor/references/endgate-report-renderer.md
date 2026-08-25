@@ -165,7 +165,7 @@ Open it in the cmux viewer pane (right pane) so the developer can read it immedi
 | #decision | §04 The decision(s) for you | conduct | One card per {{stakes_findings}} entry + one force-close-or-investigate card per non-shipped story (see §5b below); anti-rubber-stamp gate per §6 below |
 | #waved | §05 Waved off & routine | conduct | Dismissed findings with rationale; routine remainder as a single count — not itemized |
 | #done  | §06 How done is this, really? | conduct | Two tables: live vs hollow; explicit "what approving does" callout |
-| #merge | §07 Merge & push preview | conduct | Commits/diffstat; exact approve sequence; "push is a separate confirmation" |
+| #merge | §07 Merge & push preview | conduct | Commits/diffstat (the exact commits that will reach origin, shown before the gate decision); exact approve sequence — approving merges to `main`, pushes to origin, and moves stories to `done`, all as one executed and verified transition; the sprint itself stays open until the separate closure decision |
 | #process | **§08 Process review (Keep / Stop / Change)** | **retro** | `{{process_findings}}` ≤7 entries organized by disposition (Stop → Change → Keep order); each with what/why/evidence inline; routine findings collapsed to a single count line. Added by retro's fused re-render (Phase 4.5). See §12 for rendering spec. |
 | gate   | Single gate control | conduct+retro | Approve / Request Changes; copy-decision-as-prompt; approve disabled until all §04 cards answered AND (if §08 is present) all process findings have written reasons. One gate control governs both sections. |
 
@@ -413,9 +413,15 @@ Two tables:
 **What is live and working now** — capabilities that exist and can be relied on.
 **What is still hollow** — gaps with plain-language explanation of what each means for the developer.
 
-Followed by a `<div class="callout">` labeled "So what does approving actually do?" that states plainly what merging does and does not turn on.
+Followed by a `<div class="callout">` labeled "So what does approving actually do?" that states
+plainly, per DEC-040 D2: approving merges `sprint/{{sprint_slug}}` into `main`, pushes `main` to
+origin, and moves every merged story to `done` (non-merged stories to `closed-incomplete`) — as
+one executed and verified transition, not a rendered report. The push is never described as a
+later or optional step; there is no second, separately-declinable push prompt after approval. The
+callout also states plainly that the sprint itself stays open — sprint closure (have the sprint's
+goals been met) is a separate decision, made later, and is unaffected by this callout.
 
-**Cardinal sin:** A report that reads more finished than the thing is. If the system is a partial slice, say so in §01 and say it in full here.
+**Cardinal sin:** A report that reads more finished than the thing is. If the system is a partial slice, say so in §01 and say it in full here. A close second: describing the push as optional, deferred, or a separate confirmation — it is folded into the single approve control (§07).
 
 ---
 
