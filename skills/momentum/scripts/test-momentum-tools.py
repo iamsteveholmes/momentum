@@ -5680,6 +5680,23 @@ def _tasting_write_registry(proj: Path, features: dict) -> None:
     )
 
 
+def _tasting_single_claim_registry(last_verified_date: str | None = None) -> dict:
+    """The single-feature ("tide-chart-overlay") registry shape most tasting
+    tests seed, varying only the last_verified date (or omitting
+    last_verified entirely when None)."""
+    entry = {
+        "name": "Tide chart overlay",
+        "acceptance_condition": "Owner sees the tide chart render.",
+        "status": "passing",
+    }
+    if last_verified_date is not None:
+        entry["last_verified"] = {
+            "date": last_verified_date, "verdict": "pass",
+            "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b",
+        }
+    return {"tide-chart-overlay": entry}
+
+
 def tasting_brief_path(proj: Path, day: str | None = None) -> Path:
     from datetime import date
     day = day or date.today().isoformat()
@@ -5804,14 +5821,7 @@ def test_tasting_brief_same_day_rerun_regenerates_in_place():
     """AC12: running brief twice the same day regenerates one file, never duplicates."""
     print("\n[tasting brief] Same-day rerun regenerates in place (AC12)")
     proj = setup_project()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": "2026-01-05", "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
     run_tool(proj, "tasting", "brief")
     run_tool(proj, "tasting", "brief")
     tasting_files = list((proj / ".momentum" / "tasting").glob("brief-*.md"))
@@ -5845,14 +5855,7 @@ def test_tasting_brief_probes_between_two_and_three():
     """AC5: with a single claim, 2 probes are generated, each naming the feature slug and an app action."""
     print("\n[tasting brief] Probes generated within 2-3 cap (AC5)")
     proj = setup_project()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": "2026-01-05", "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
     code, out = run_tool(proj, "tasting", "brief", "--json")
     assert_eq("exit code 0", code, 0)
     probes = out["brief"]["probes"]
@@ -5867,14 +5870,7 @@ def test_tasting_brief_json_flag_prints_machine_readable_summary():
     """AC1: --json prints a valid, structured JSON summary of the same content to stdout."""
     print("\n[tasting brief] --json prints machine-readable summary (AC1)")
     proj = setup_project()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": "2026-01-05", "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
     code, out = run_tool(proj, "tasting", "brief", "--json")
     assert_eq("exit code 0", code, 0)
     assert_eq("has success field", out.get("success"), True)
@@ -5922,14 +5918,7 @@ def test_tasting_status_tier_quiet_at_two_days():
     from datetime import date, timedelta
     proj = setup_project()
     d2 = (date.today() - timedelta(days=2)).isoformat()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": d2, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry(d2))
     code, out = run_tool(proj, "tasting", "status")
     assert_eq("exit code 0", code, 0)
     assert_eq("tier is quiet", out["tier"], "quiet")
@@ -5943,14 +5932,7 @@ def test_tasting_status_tier_insistent_at_five_days():
     from datetime import date, timedelta
     proj = setup_project()
     d5 = (date.today() - timedelta(days=5)).isoformat()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": d5, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry(d5))
     code, out = run_tool(proj, "tasting", "status")
     assert_eq("exit code 0", code, 0)
     assert_eq("tier is insistent", out["tier"], "insistent")
@@ -5962,14 +5944,7 @@ def test_tasting_status_tier_leading_at_eight_days():
     from datetime import date, timedelta
     proj = setup_project()
     d8 = (date.today() - timedelta(days=8)).isoformat()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": d8, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry(d8))
     code, out = run_tool(proj, "tasting", "status")
     assert_eq("exit code 0", code, 0)
     assert_eq("tier is leading", out["tier"], "leading")
@@ -5981,14 +5956,7 @@ def test_tasting_status_not_due_same_day():
     from datetime import date
     proj = setup_project()
     today = date.today().isoformat()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": today, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry(today))
     code, out = run_tool(proj, "tasting", "status")
     assert_eq("exit code 0", code, 0)
     assert_eq("due is False", out["due"], False)
@@ -6000,14 +5968,7 @@ def test_tasting_status_read_only_registry_unchanged():
     """AC2: `tasting status` never writes a byte back to the registry."""
     print("\n[tasting status] Read-only against registry (AC2)")
     proj = setup_project()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": "2026-01-05", "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry("2026-01-05"))
     before = features_path_of(proj).read_bytes()
     run_tool(proj, "tasting", "status")
     after = features_path_of(proj).read_bytes()
@@ -6050,14 +6011,7 @@ def test_tasting_status_future_dated_verdict_routes_to_leading_never_quiet():
     from datetime import date, timedelta
     proj = setup_project()
     future = (date.today() + timedelta(days=5)).isoformat()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": future, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry(future))
     code, out = run_tool(proj, "tasting", "status")
     assert_eq("exit code 0", code, 0)
     assert_eq("tier is leading, not quiet", out["tier"], "leading")
@@ -6072,14 +6026,7 @@ def test_tasting_brief_future_dated_verdict_explains_anomaly_not_reassurance():
     from datetime import date, timedelta
     proj = setup_project()
     future = (date.today() + timedelta(days=5)).isoformat()
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-            "last_verified": {"date": future, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry(future))
     code, out = run_tool(proj, "tasting", "brief")
     assert_eq("exit code 0", code, 0)
     brief = tasting_brief_path(proj).read_text(encoding="utf-8").lower()
@@ -6126,13 +6073,7 @@ def test_tasting_brief_merged_commits_truncated_uses_open_ended_phrasing():
             ["git", "-C", str(proj), "commit", "--allow-empty", "-q", "-m", f"tasting-fill {i}"],
             check=True,
         )
-    _tasting_write_registry(proj, {
-        "tide-chart-overlay": {
-            "name": "Tide chart overlay",
-            "acceptance_condition": "Owner sees the tide chart render.",
-            "status": "passing",
-        }
-    })
+    _tasting_write_registry(proj, _tasting_single_claim_registry())
     code, out = run_tool(proj, "tasting", "brief")
     assert_eq("exit code 0", code, 0)
     brief = tasting_brief_path(proj).read_text(encoding="utf-8")

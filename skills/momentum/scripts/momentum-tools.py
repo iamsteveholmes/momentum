@@ -2463,24 +2463,14 @@ def _load_features_registry_safe(project_dir: Path) -> dict:
     """Read .momentum/features.json read-only, tolerating every failure mode.
 
     Absent, empty, unparseable, or non-object content all degrade to an empty
-    registry rather than raising. Never writes, never repairs.
+    registry rather than raising. Never writes, never repairs. Reuses
+    `_read_json_object` for the exists/parse/shape checks it already covers,
+    adding tolerance for the OSError/UnicodeDecodeError it doesn't.
     """
-    path = features_path(project_dir)
-    if not path.exists():
-        return {}
     try:
-        text = path.read_text(encoding="utf-8")
+        return _read_json_object(features_path(project_dir)) or {}
     except (OSError, UnicodeDecodeError):
         return {}
-    if not text.strip():
-        return {}
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError:
-        return {}
-    if not isinstance(data, dict):
-        return {}
-    return data
 
 
 def _parse_iso_date(value) -> "date | None":
@@ -2553,45 +2543,41 @@ def _tasting_window(registry: dict, today: date) -> dict:
         }
 
     days_since = (today - newest).days
+    if 0 <= days_since <= TASTING_WINDOW_MAX_DAYS:
+        return {
+            "newest_verified_date": newest.isoformat(),
+            "days_since_newest": days_since,
+            "window_days": max(days_since, 0),
+            "window_start": newest,
+            "explanation": (
+                f"This brief covers the {days_since} day(s) since the last recorded "
+                f"verdict on {newest.isoformat()}."
+            ),
+        }
+
     if days_since < 0:
         # A future-dated last_verified.date is an anomalous registry state (clock
         # skew, hand-edited fixture, corrupted write) — never treat it as the
         # reassuring "verified recently" case. Fall back to the bounded default
         # window and say plainly that the date is untrustworthy.
-        return {
-            "newest_verified_date": newest.isoformat(),
-            "days_since_newest": days_since,
-            "window_days": TASTING_WINDOW_MAX_DAYS,
-            "window_start": today - timedelta(days=TASTING_WINDOW_MAX_DAYS),
-            "explanation": (
-                f"The most recently recorded verdict is dated {newest.isoformat()}, which is "
-                "in the future relative to today — an anomalous registry state, not a recent "
-                f"verification. This brief falls back to the bounded {TASTING_WINDOW_MAX_DAYS}-day "
-                "default window rather than trusting that date."
-            ),
-        }
-    if days_since > TASTING_WINDOW_MAX_DAYS:
-        return {
-            "newest_verified_date": newest.isoformat(),
-            "days_since_newest": days_since,
-            "window_days": TASTING_WINDOW_MAX_DAYS,
-            "window_start": today - timedelta(days=TASTING_WINDOW_MAX_DAYS),
-            "explanation": (
-                f"The last recorded verdict was on {newest.isoformat()}, {days_since} "
-                "days ago — past the bounded 14-day default window, so this brief "
-                f"uses the last {TASTING_WINDOW_MAX_DAYS} days instead."
-            ),
-        }
-
+        explanation = (
+            f"The most recently recorded verdict is dated {newest.isoformat()}, which is "
+            "in the future relative to today — an anomalous registry state, not a recent "
+            f"verification. This brief falls back to the bounded {TASTING_WINDOW_MAX_DAYS}-day "
+            "default window rather than trusting that date."
+        )
+    else:
+        explanation = (
+            f"The last recorded verdict was on {newest.isoformat()}, {days_since} "
+            "days ago — past the bounded 14-day default window, so this brief "
+            f"uses the last {TASTING_WINDOW_MAX_DAYS} days instead."
+        )
     return {
         "newest_verified_date": newest.isoformat(),
         "days_since_newest": days_since,
-        "window_days": max(days_since, 0),
-        "window_start": newest,
-        "explanation": (
-            f"This brief covers the {days_since} day(s) since the last recorded "
-            f"verdict on {newest.isoformat()}."
-        ),
+        "window_days": TASTING_WINDOW_MAX_DAYS,
+        "window_start": today - timedelta(days=TASTING_WINDOW_MAX_DAYS),
+        "explanation": explanation,
     }
 
 
@@ -2603,15 +2589,14 @@ def _tasting_tier(days_since) -> str:
     that state and never gets a reassuring quiet/insistent label.
 
     days_since == 0 (verified today) is not one of AC 9's three named tiers —
-    `due` is already False for that state, so no nudge renders at all. It is
-    deliberately reported as "quiet" (the least-alarming label) rather than
-    inventing a fourth tier value nothing downstream consumes.
+    `due` is already False for that state, so no nudge renders at all. It
+    folds into the "quiet" branch below deliberately (the least-alarming
+    label) rather than inventing a fourth tier value nothing downstream
+    consumes.
     """
     if days_since is None or days_since < 0:
         return "leading"
-    if days_since == 0:
-        return "quiet"  # deliberate: not-due state, see docstring
-    if 1 <= days_since <= TASTING_QUIET_MAX_DAYS:
+    if days_since <= TASTING_QUIET_MAX_DAYS:
         return "quiet"
     if days_since <= TASTING_INSISTENT_MAX_DAYS:
         return "insistent"
@@ -2637,7 +2622,7 @@ def _tasting_probes(claims: list[dict]) -> list[dict]:
     else:
         chosen = claims[:TASTING_PROBES_MAX]
     probes = []
-    for i, claim in enumerate(chosen[:TASTING_PROBES_MAX]):
+    for i, claim in enumerate(chosen):
         probes.append({
             "slug": claim["slug"],
             "claim": claim["acceptance_condition"],
@@ -2850,9 +2835,9 @@ def cmd_tasting_status(args: argparse.Namespace) -> None:
 
     window = _tasting_window(registry, today)
     days_since = window["days_since_newest"]
-    # A future-dated (negative) days_since is an anomalous registry state, not a
-    # recent verification — it is always due, same as no verdict at all.
-    due = days_since is None or days_since < 0 or days_since >= 1
+    # None (no verdict) and any negative days_since (future-dated, anomalous)
+    # are always due, same as any positive count — only exactly 0 is not due.
+    due = days_since != 0
     tier = _tasting_tier(days_since)
 
     result(
