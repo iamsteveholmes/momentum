@@ -1,6 +1,6 @@
 ---
 name: impetus
-description: Impetus — Momentum practice orchestrator. Session orientation, sprint intelligence, and workflow dispatch for the Momentum agentic engineering practice. Use when developer invokes /momentum.
+description: Impetus — Momentum practice orchestrator. Session orientation, sprint intelligence, and workflow dispatch. Use when developer invokes /momentum.
 model: sonnet
 effort: low
 ---

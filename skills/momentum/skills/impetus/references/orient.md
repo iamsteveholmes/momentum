@@ -19,9 +19,10 @@ Read these silently at session open. No narration. The owner sees only the synth
 - `{project-root}/.momentum/signals/` — pending work flags (retro-derived). Iterate the directory; if empty or absent, no narration. For each `*.json` signal file, read `signal_type`, `origin`, `payload` and surface as part of orientation context.
 - `{project-root}/.momentum/features.json` — feature registry (DEC-040 D1), read-only. A JSON
   object keyed by feature slug; derive N (entries with `status == "passing"`) and M (total entries).
-  `failing`, `absent`, and no-status entries all count toward M, never toward N. Absent file or zero
-  entries is the honest "no features tracked yet" state, reported the same way as any other missing
-  source below — never an error, never a fabricated count. This source is never written by Impetus;
+  `failing`, `absent`, and no-status entries all count toward M, never toward N. Absent file, zero
+  entries, or a malformed/unexpected-shape file (invalid JSON, not an object, entries missing the
+  expected structure) is the same honest "no features tracked yet" state, reported the same way as
+  any other missing source below — never an error, never a fabricated count. This source is never written by Impetus;
   `momentum-tools feature verify` is the sole writer.
 
 There is no fallback to `_bmad-output/implementation-artifacts/`. If a source is missing, report state honestly (e.g., "no sprints recorded") rather than substituting old paths.
