@@ -37,14 +37,17 @@ Usage:
     momentum-tools.py practice-ledger close-stale [--age-days N]
     momentum-tools.py version check
     momentum-tools.py feature verify FEATURE_SLUG --verdict pass|fail --evidence TEXT --build BACKEND_SHA:CLIENT_SHA
+    momentum-tools.py tasting brief [--json]  (writes .momentum/tasting/brief-<date>.md; read-only against features.json)
+    momentum-tools.py tasting status [--json]  (due-ness, days-since, prominence tier: quiet/insistent/leading)
 """
 
 import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import NoReturn
 
@@ -2436,6 +2439,358 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
     result("feature_verify", success=True, slug=slug, status=status, path=str(path))
 
 
+# --- Tasting Commands (DEC-040 D4) ---
+#
+# `tasting brief` and `tasting status` are read-only consumers of
+# .momentum/features.json. Neither command opens the registry for writing,
+# creates it, or repairs it under any code path — including when it is
+# absent, empty, or unparseable. `momentum-tools feature verify` remains the
+# sole writer (DEC-040 D1).
+
+TASTING_WINDOW_MAX_DAYS = 14
+TASTING_CLAIMS_CAP = 7
+TASTING_PROBES_MAX = 3
+TASTING_PROBES_MIN = 2
+TASTING_QUIET_MAX_DAYS = 3
+TASTING_INSISTENT_MAX_DAYS = 7
+
+
+def tasting_dir(project_dir: Path) -> Path:
+    return project_dir / ".momentum" / "tasting"
+
+
+def _load_features_registry_safe(project_dir: Path) -> dict:
+    """Read .momentum/features.json read-only, tolerating every failure mode.
+
+    Absent, empty, unparseable, or non-object content all degrade to an empty
+    registry rather than raising. Never writes, never repairs.
+    """
+    path = features_path(project_dir)
+    if not path.exists():
+        return {}
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    if not text.strip():
+        return {}
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return data
+
+
+def _parse_iso_date(value) -> "date | None":
+    if not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _tasting_claims(registry: dict) -> list[dict]:
+    """Passing features with a usable acceptance_condition, newest-verified first.
+
+    Degradation is per-entry: an entry with a missing/invalid date sorts as
+    oldest (never crashes), and an entry missing acceptance_condition simply
+    is not a quotable claim — it never blocks a sibling entry's claim.
+    """
+    claims = []
+    for slug, entry in registry.items():
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("status") != "passing":
+            continue
+        cond = entry.get("acceptance_condition")
+        if not isinstance(cond, str) or not cond.strip():
+            continue
+        last_verified = entry.get("last_verified")
+        verified_date = None
+        if isinstance(last_verified, dict):
+            verified_date = _parse_iso_date(last_verified.get("date"))
+        name = entry.get("name")
+        claims.append({
+            "slug": slug,
+            "name": name.strip() if isinstance(name, str) and name.strip() else slug,
+            "acceptance_condition": cond.strip(),
+            "verified_date": verified_date,
+        })
+    claims.sort(key=lambda c: c["verified_date"] or date.min, reverse=True)
+    return claims
+
+
+def _tasting_window(registry: dict, today: date) -> dict:
+    """Derive the walkthrough window from the newest last_verified.date.
+
+    Clamps to the bounded 14-day default whenever no verdict exists at all,
+    or the newest verdict predates that bound — never grows without limit.
+    """
+    newest = None
+    for entry in registry.values():
+        if not isinstance(entry, dict):
+            continue
+        last_verified = entry.get("last_verified")
+        if not isinstance(last_verified, dict):
+            continue
+        candidate = _parse_iso_date(last_verified.get("date"))
+        if candidate is not None and (newest is None or candidate > newest):
+            newest = candidate
+
+    if newest is None:
+        return {
+            "newest_verified_date": None,
+            "days_since_newest": None,
+            "window_days": TASTING_WINDOW_MAX_DAYS,
+            "window_start": today - timedelta(days=TASTING_WINDOW_MAX_DAYS),
+            "explanation": (
+                "No recorded verdict exists yet, so this brief uses the bounded "
+                f"14-day default window (the last {TASTING_WINDOW_MAX_DAYS} days)."
+            ),
+        }
+
+    days_since = (today - newest).days
+    if days_since > TASTING_WINDOW_MAX_DAYS:
+        return {
+            "newest_verified_date": newest.isoformat(),
+            "days_since_newest": days_since,
+            "window_days": TASTING_WINDOW_MAX_DAYS,
+            "window_start": today - timedelta(days=TASTING_WINDOW_MAX_DAYS),
+            "explanation": (
+                f"The last recorded verdict was on {newest.isoformat()}, {days_since} "
+                "days ago — past the bounded 14-day default window, so this brief "
+                f"uses the last {TASTING_WINDOW_MAX_DAYS} days instead."
+            ),
+        }
+
+    return {
+        "newest_verified_date": newest.isoformat(),
+        "days_since_newest": days_since,
+        "window_days": max(days_since, 0),
+        "window_start": newest,
+        "explanation": (
+            f"This brief covers the {days_since} day(s) since the last recorded "
+            f"verdict on {newest.isoformat()}."
+        ),
+    }
+
+
+def _tasting_tier(days_since) -> str:
+    """Prominence tier per AC 9: quiet 1-3, insistent 4-7, leading 8+.
+
+    No recorded verdict at all is treated as the most urgent case (leading) —
+    a session is always due in that state.
+    """
+    if days_since is None:
+        return "leading"
+    if days_since <= TASTING_QUIET_MAX_DAYS:
+        return "quiet"
+    if days_since <= TASTING_INSISTENT_MAX_DAYS:
+        return "insistent"
+    return "leading"
+
+
+def _tasting_probes(claims: list[dict]) -> list[dict]:
+    """2-3 probes, never more, never zero when at least one claim exists.
+
+    Draws from the already-capped claims list (most recently verified first).
+    A single available claim is probed twice, via distinct actions, rather
+    than manufacturing a second feature that was never actually verified.
+    """
+    if not claims:
+        return []
+    actions = [
+        "Open the running app and exercise this claim through its primary path.",
+        "Open the running app and exercise this claim through a secondary or edge-case path.",
+        "Open the running app and exercise this claim after a normal day of other usage.",
+    ]
+    if len(claims) == 1:
+        chosen = [claims[0], claims[0]]
+    else:
+        chosen = claims[:TASTING_PROBES_MAX]
+    probes = []
+    for i, claim in enumerate(chosen[:TASTING_PROBES_MAX]):
+        probes.append({
+            "slug": claim["slug"],
+            "claim": claim["acceptance_condition"],
+            "action": actions[i % len(actions)],
+        })
+    return probes
+
+
+def _tasting_merged_since(project_dir: Path, window_start: date) -> "list[str] | None":
+    """Best-effort `git log --since` over the window. None means unavailable.
+
+    Tolerates a missing git binary, a non-repository project directory
+    (every fixture in the frozen contract is a bare temp dir with no git
+    history at all), and any other subprocess failure — this signal is
+    informational only and must never block the brief.
+    """
+    try:
+        proc = subprocess.run(
+            [
+                "git", "-C", str(project_dir), "log",
+                "--since", window_start.isoformat(),
+                "--oneline", "--no-decorate", "-n", "50",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def cmd_tasting_brief(args: argparse.Namespace) -> None:
+    """Generate the expected-vs-reality tasting brief (DEC-040 D4).
+
+    Read-only against .momentum/features.json on every code path, including
+    absent, empty, and unparseable registries — always exits 0. Regenerates
+    the same day's file in place on a same-day rerun.
+    """
+    project_dir = resolve_project_dir()
+    registry = _load_features_registry_safe(project_dir)
+    today = date.today()
+
+    claims_all = _tasting_claims(registry)
+    display_claims = claims_all[:TASTING_CLAIMS_CAP]
+    collapsed_count = max(0, len(claims_all) - TASTING_CLAIMS_CAP)
+
+    window = _tasting_window(registry, today)
+    probes = _tasting_probes(display_claims)
+    merged = _tasting_merged_since(project_dir, window["window_start"])
+
+    lines = [
+        f"# Daily Tasting Brief — {today.isoformat()}",
+        "",
+        (
+            "Purpose: a short walkthrough brief contrasting what the practice "
+            "claims works today against what you actually see in the running "
+            "app — no more than ten minutes, run before you trust any of it."
+        ),
+        "",
+        "## What should work today",
+    ]
+    if not display_claims:
+        lines.append(
+            "There are no recorded claims to test — the feature registry has "
+            "no passing entries yet."
+        )
+    else:
+        for claim in display_claims:
+            lines.append(
+                f"- **{claim['name']}** (`{claim['slug']}`): "
+                f"\"{claim['acceptance_condition']}\""
+            )
+        if collapsed_count:
+            lines.append(
+                f"- {collapsed_count} more passing feature(s) not shown above "
+                "(see `.momentum/features.json`)."
+            )
+
+    lines += ["", "## What changed", window["explanation"]]
+    if merged is None:
+        lines.append(
+            "No merge history is available for this window (no git repository "
+            "detected)."
+        )
+    elif not merged:
+        lines.append("Nothing merged in this window.")
+    else:
+        shown = merged[:TASTING_CLAIMS_CAP]
+        lines.extend(f"- {commit}" for commit in shown)
+        if len(merged) > TASTING_CLAIMS_CAP:
+            lines.append(
+                f"- {len(merged) - TASTING_CLAIMS_CAP} more commit(s) not shown above."
+            )
+
+    lines += ["", "## Probes to run"]
+    if not probes:
+        lines.append("No probes — there are no passing claims to test yet.")
+    else:
+        for i, probe in enumerate(probes, start=1):
+            lines.append(
+                f"{i}. Feature `{probe['slug']}` — claim: \"{probe['claim']}\". "
+                f"Action: {probe['action']}"
+            )
+
+    lines += [
+        "",
+        "## Routing findings",
+        (
+            "Anything you observe while running these probes enters intake at "
+            "**critical** priority with a mandatory feature link — carry the "
+            "slug of the probe that surfaced it (DEC-040 D6)."
+        ),
+        "",
+    ]
+
+    out_dir = tasting_dir(project_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    brief_path = out_dir / f"brief-{today.isoformat()}.md"
+    brief_path.write_text("\n".join(lines), encoding="utf-8")
+
+    payload = {
+        "path": str(brief_path),
+        "date": today.isoformat(),
+        "claims_shown": len(display_claims),
+        "claims_collapsed": collapsed_count,
+        "probes": len(probes),
+        "window": {
+            "days": window["window_days"],
+            "newest_verified_date": window["newest_verified_date"],
+            "explanation": window["explanation"],
+        },
+    }
+    if getattr(args, "json", False):
+        payload["brief"] = {
+            "claims": [
+                {
+                    "slug": c["slug"],
+                    "name": c["name"],
+                    "acceptance_condition": c["acceptance_condition"],
+                }
+                for c in display_claims
+            ],
+            "probes": probes,
+            "changed": merged if merged is not None else [],
+        }
+
+    result("tasting_brief", success=True, **payload)
+
+
+def cmd_tasting_status(args: argparse.Namespace) -> None:
+    """Report tasting due-ness and prominence tier (DEC-040 D4/D5).
+
+    Never fails, blocks, or errors under any input — including a missing
+    registry, a malformed registry, or a repository with no git history.
+    Escalation is re-surfacing at rising prominence, nothing else.
+    """
+    project_dir = resolve_project_dir()
+    registry = _load_features_registry_safe(project_dir)
+    today = date.today()
+
+    window = _tasting_window(registry, today)
+    days_since = window["days_since_newest"]
+    due = days_since is None or days_since >= 1
+    tier = _tasting_tier(days_since)
+
+    result(
+        "tasting_status",
+        success=True,
+        due=due,
+        days_since=days_since,
+        tier=tier,
+        last_verified_date=window["newest_verified_date"],
+    )
+
+
 # --- Specialist Classify Command (retired — Decision 55 / DEC-023) ---
 #
 # This command formerly mapped touched paths to a pre-shipped dev specialist
@@ -3657,6 +4012,25 @@ def build_parser() -> argparse.ArgumentParser:
     fsh = subparsers.add_parser("feature-status-hash",
                                 help="Compute SHA-256 hash of features.json + stories/index.json")
     fsh.set_defaults(func=cmd_feature_status_hash)
+
+    # tasting command group (DEC-040 D4) — read-only consumer of .momentum/features.json
+    tasting = subparsers.add_parser("tasting", help="Daily tasting reminder + brief generator (DEC-040 D4)")
+    tasting_sub = tasting.add_subparsers(dest="tasting_action", required=True)
+
+    tb = tasting_sub.add_parser(
+        "brief",
+        help="Generate today's expected-vs-reality tasting brief at .momentum/tasting/brief-<date>.md"
+    )
+    tb.add_argument("--json", action="store_true",
+                     help="Also print a machine-readable summary of the brief's content to stdout")
+    tb.set_defaults(func=cmd_tasting_brief)
+
+    ts = tasting_sub.add_parser(
+        "status",
+        help="Report whether a tasting session is due, days-since count, and prominence tier"
+    )
+    ts.add_argument("--json", action="store_true", help="Present for CLI-shape consistency; output is always JSON")
+    ts.set_defaults(func=cmd_tasting_status)
 
     return parser
 
