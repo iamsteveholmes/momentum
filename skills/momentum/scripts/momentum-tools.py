@@ -1956,8 +1956,8 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
         error_result("feature_verify", build_error)
         return
 
-    evidence = (args.evidence or "").strip()
-    if not evidence:
+    evidence = args.evidence or ""
+    if not evidence.strip():
         error_result(
             "feature_verify",
             "Missing or empty --evidence: a verdict with no observation behind it "
@@ -1969,7 +1969,21 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
         error_result("feature_verify", f"Feature registry not found: {path}")
         return
 
-    registry = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        registry = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        error_result(
+            "feature_verify",
+            f"Feature registry at {path} is not valid JSON: {exc}"
+        )
+        return
+
+    if not isinstance(registry, dict):
+        error_result(
+            "feature_verify",
+            f"Feature registry at {path} must be a JSON object keyed by feature slug"
+        )
+        return
 
     slug = args.feature_slug
     if slug not in registry:
@@ -1979,10 +1993,17 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
         )
         return
 
+    entry = registry[slug]
+    if not isinstance(entry, dict):
+        error_result(
+            "feature_verify",
+            f"Feature entry '{slug}' in {path} must be a JSON object"
+        )
+        return
+
     verdict = args.verdict  # argparse choices restrict this to "pass" or "fail"
     status = "passing" if verdict == "pass" else "failing"
 
-    entry = registry[slug]
     entry["status"] = status
     entry["last_verified"] = {
         "date": date.today().isoformat(),

@@ -3281,6 +3281,7 @@ def main():
     test_feature_verify_pass_sets_passing()
     test_feature_verify_fail_sets_failing()
     test_feature_verify_last_verified_complete_shape()
+    test_feature_verify_persists_evidence_as_supplied()
     test_feature_verify_rejects_malformed_build_single_sha()
     test_feature_verify_rejects_malformed_build_empty_side()
     test_feature_verify_rejects_malformed_build_extra_colon()
@@ -3289,6 +3290,9 @@ def main():
     test_feature_verify_rejects_missing_evidence_flag()
     test_feature_verify_rejects_unknown_slug()
     test_feature_verify_rejects_missing_registry()
+    test_feature_verify_rejects_corrupt_json_registry()
+    test_feature_verify_rejects_non_dict_registry_top_level()
+    test_feature_verify_rejects_non_dict_entry()
     test_feature_verify_never_passing_without_recorded_pass()
     test_feature_verify_fail_then_pass_then_fail_flips_status()
     test_feature_verify_surgical_write_neighbor_untouched()
@@ -4703,6 +4707,19 @@ def test_feature_verify_last_verified_complete_shape():
     assert_eq("date is ISO YYYY-MM-DD", len(lv["date"]) == 10 and lv["date"][4] == "-" and lv["date"][7] == "-", True)
 
 
+def test_feature_verify_persists_evidence_as_supplied():
+    """AC3: evidence persists as the text as supplied, not a stripped variant —
+    padding around otherwise-valid evidence is not trimmed on write."""
+    print("\n[feature verify] Evidence persists as supplied, unstripped (AC3)")
+    proj = setup_features_project()
+    padded = f"  {FV_EVIDENCE}  "
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", padded, "--build", FV_BUILD_PAIR)
+    assert_eq("exit code 0", code, 0)
+    lv = read_features(proj)[FV_TARGET]["last_verified"]
+    assert_eq("evidence persisted unstripped", lv["evidence"], padded)
+
+
 def test_feature_verify_rejects_malformed_build_single_sha():
     """AC4: a single SHA with no colon is rejected before any write."""
     print("\n[feature verify] Rejects single-SHA build value (AC4)")
@@ -4801,6 +4818,56 @@ def test_feature_verify_rejects_missing_registry():
     assert_eq("non-zero exit", code != 0, True)
     assert_eq("error names the expected path", "features.json" in json.dumps(out), True)
     assert_eq("registry still absent", reg_path.exists(), False)
+
+
+def test_feature_verify_rejects_corrupt_json_registry():
+    """AC10: a registry file that isn't valid JSON produces an error envelope
+    (not an uncaught traceback), naming the path, and exits non-zero."""
+    print("\n[feature verify] Rejects corrupt-JSON registry (AC10)")
+    proj = setup_features_project()
+    reg_path = features_path_of(proj)
+    corrupt = "{ this is not valid json "
+    reg_path.write_text(corrupt)
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("envelope has action", "action" in out, True)
+    assert_eq("envelope success false", out.get("success"), False)
+    assert_eq("error names the registry path", "features.json" in out.get("error", ""), True)
+    assert_eq("registry left unchanged", reg_path.read_text(), corrupt)
+
+
+def test_feature_verify_rejects_non_dict_registry_top_level():
+    """AC10: a registry whose top-level JSON value isn't an object produces an
+    error envelope instead of crashing, and leaves the file unchanged."""
+    print("\n[feature verify] Rejects non-dict registry top level (AC10)")
+    proj = setup_features_project()
+    reg_path = features_path_of(proj)
+    before = json.dumps(["not", "a", "dict"])
+    reg_path.write_text(before)
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("envelope success false", out.get("success"), False)
+    assert_eq("registry left unchanged", reg_path.read_text(), before)
+
+
+def test_feature_verify_rejects_non_dict_entry():
+    """AC10: a registry entry that isn't a JSON object produces an error
+    envelope instead of crashing on attribute-style mutation."""
+    print("\n[feature verify] Rejects non-dict feature entry (AC10)")
+    proj = setup_features_project()
+    reg_path = features_path_of(proj)
+    features = read_features(proj)
+    features[FV_TARGET] = "not-an-object"
+    before = json.dumps(features, indent=2) + "\n"
+    reg_path.write_text(before)
+    code, out = run_tool(proj, "feature", "verify", FV_TARGET,
+                          "--verdict", "pass", "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("non-zero exit", code != 0, True)
+    assert_eq("envelope success false", out.get("success"), False)
+    assert_eq("error names the slug", FV_TARGET in out.get("error", ""), True)
+    assert_eq("registry left unchanged", reg_path.read_text(), before)
 
 
 def test_feature_verify_never_passing_without_recorded_pass():
