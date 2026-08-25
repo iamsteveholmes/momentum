@@ -754,9 +754,11 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 
 **Findings handed off:** {{handoff_items | length}} events written to practice-ledger.jsonl (source: retro, event_type: created, intent: handoff)
 
-**Sprint status:** closed (retro_run_at set to {{today}})
 {{#if sprint_closure_gate_refused}}
+**Sprint status:** active — closure pending (retro_run_at set to {{today}})
 **Note:** this sprint's own closure gate refused when re-checked during retro ({{sprint_closure_gate_refusal_message}}) — it was unexpectedly still `active`. The retro above is complete regardless; close the sprint separately with `momentum-tools sprint complete` once the named condition(s) are resolved, or record an honest FAILED verdict.
+{{else}}
+**Sprint status:** closed (retro_run_at set to {{today}})
 {{/if}}
 
 **Sprint summary:** `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`

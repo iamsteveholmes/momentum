@@ -858,6 +858,21 @@ def test_sprint_plan_refuses_bootstrap_without_momentum_state():
     assert_eq("index.json not created", index_path.exists(), False)
 
 
+def test_sprint_plan_bootstraps_when_sprints_dir_present_without_stories_index():
+    """sprint plan bootstraps sprints/index.json when .momentum/sprints/ already exists, even
+    if .momentum/stories/index.json is absent — the sprints dir alone is enough Momentum-state
+    signal to allow bootstrap (STRUCT-E-001)."""
+    print("\n[sprint plan] Bootstraps when .momentum/sprints/ present but stories index absent")
+    tmpdir = Path(tempfile.mkdtemp())
+    subprocess.run(["git", "init", "--quiet", str(tmpdir)], check=True)
+    sprints_dir = tmpdir / ".momentum" / "sprints"
+    sprints_dir.mkdir(parents=True)
+    index_path = sprints_dir / "index.json"
+    code, out = run_tool(tmpdir, "sprint", "plan", "--goal", "First sprint", "--goal-conditions", "")
+    assert_eq("accepted", code, 0)
+    assert_eq("index.json created", index_path.exists(), True)
+
+
 def test_sprint_plan_stories_without_operation_rejected():
     """--stories with no --operation is rejected rather than silently ignored (bmad-code-review-2)."""
     print("\n[sprint plan] --stories without --operation is rejected")
@@ -3577,6 +3592,7 @@ def main():
     test_sprint_activate_carries_goal_and_conditions()
     test_sprint_plan_bootstraps_missing_index()
     test_sprint_plan_refuses_bootstrap_without_momentum_state()
+    test_sprint_plan_bootstraps_when_sprints_dir_present_without_stories_index()
     test_sprint_plan_stories_without_operation_rejected()
     test_sprint_plan_wave_without_operation_rejected()
     test_sprint_plan_goal_conditions_deduped()

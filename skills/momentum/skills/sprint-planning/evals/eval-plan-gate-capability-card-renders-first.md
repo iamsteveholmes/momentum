@@ -21,9 +21,11 @@ Then:
    story.
 3. The capability card is the FIRST card in the section, positioned ahead of where any coherence
    or other fork would appear.
-4. The card's title asks, in the developer's own declared plain language, "After this sprint a GM
-   will be able to ___" — filled from `{{goal}}` / `{{goal_conditions}}`, not a generic template
-   string with no substance.
+4. The card's title asks, in the developer's own declared plain language, "After this sprint
+   {{role_noun|default("the developer")}} will be able to ___" — filled from `{{goal}}` /
+   `{{goal_conditions}}`, not a generic template string with no substance. For Momentum,
+   `{{role_noun}}` resolves to its default, "the developer" — "GM" is the PRD's own generic
+   example wording (FR143), never the rendered Momentum text.
 5. The card carries all five ForkItem fields inline: What, Why it matters, Evidence,
    Recommendation, Options — and Options lists exactly "approve", "change", "reject" (or
    equivalent plain-language phrasing of those three).

@@ -299,7 +299,10 @@ sprint will declare a verified-fix goal instead.}}</output>
     </check>
 
     <check if="{{feature_candidates}} is non-empty">
-      <output>## Sprint Goal — What Will a GM Be Able to Do?
+      <!-- {{role_noun}} is the FR143 role-noun token, adapted per project. Default for
+      Momentum: "the developer". Projects may override via agent-guidelines-generated config;
+      "GM" remains the PRD's own generic example, not the Momentum default. -->
+      <output>## Sprint Goal — What Will {{role_noun|default("the developer")}} Be Able to Do?
 
 Candidate features from `.momentum/features.json` this sprint could flip from failing to passing:
 
@@ -316,8 +319,9 @@ sprint with no feature-shaped goal.</output>
 
     <check if="{{goal_conditions}} is non-empty">
       <output>Selected goal conditions: {{goal_conditions|join(", ")}}</output>
-      <ask>State this sprint's goal in one plain-language sentence — "After this sprint a GM will
-be able to ___" — consistent with the conditions you selected:</ask>
+      <ask>State this sprint's goal in one plain-language sentence — "After this sprint
+{{role_noun|default("the developer")}} will be able to ___" — consistent with the conditions you
+selected:</ask>
       <action>Store the developer's sentence as {{goal}}.</action>
     </check>
 
@@ -1382,7 +1386,8 @@ written reasoning per fork.</output>
         and ignoring surrounding punctuation/whitespace — equals 'approve all', 'approved',
         or any other bare approval with no reasoning that names the capability">
           <output>The capability verdict ("Fork 1") needs more than a bare approval — it must
-name, in your own words, the capability being accepted or amended (what a GM will be able to do).
+name, in your own words, the capability being accepted or amended (what
+{{role_noun|default("the developer")}} will be able to do).
 "{{capability_verdict_text}}" doesn't do that. Revise it in the gate, copy again, and re-paste.</output>
           <action>Re-ask for the pasted block: re-issue the `<ask>Paste the decision block from
           the gate:</ask>` above (do not re-render the gate, do not treat this as a Modify —

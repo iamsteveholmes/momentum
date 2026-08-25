@@ -48,7 +48,7 @@ Each named surface type below has a stated budget. A surface without a declared 
 
 | Surface | Budget | Notes |
 |---|---|---|
-| **Situational report** (e.g., Impetus session greeting) | ≤ 2 sentences | The N-of-M feature acceptance-condition headline + honest ledger counts + recurring-pattern signal must appear inline within that budget (floor wins on the signal — do not drop it to hit the sentence count; trim other wording instead) |
+| **Situational report** (e.g., Impetus session greeting) | ≤ 2 sentences | The N-of-M feature acceptance-condition headline + honest ledger counts + recurring-pattern signal + a tasting-due nudge (DEC-040 D4, when `momentum-tools tasting status` reports due) must appear inline within that budget (floor wins on the signal — do not drop it to hit the sentence count; trim other wording instead). The tasting nudge's placement is tier-mapped per `.claude/rules/impetus.md` — quiet inside the second sentence, insistent opening the second sentence, leading as the first sentence (deferring only to a pending resume card, which leads ahead of it) — and it is absent entirely when not due. |
 | **Finding card / divergence card** | Lead-in ≤ 1 sentence; supporting detail in collapsible or second paragraph | The what/why/evidence triple is required inline regardless of this budget (floor wins) |
 | **Decision card** (adopt/reject/defer presentation) | ≤ 5 lines of prose + ≤ 3 supporting bullets | Headline + verdict first; rationale after; what/why/evidence inline (floor wins) |
 | **Pause-ask surface** (mid-flight escalation) | Per the Pause-Ask Surface Contract template | What / Why / Evidence fields are required and cannot be omitted; template is the floor |

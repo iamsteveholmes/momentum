@@ -73,10 +73,18 @@ All developer-facing output produced by this skill is governed by the
 **Floor (non-negotiable):** The situational report must carry the **N-of-M feature headline**
 (features with a recorded `passing` verdict, out of the total tracked in `.momentum/features.json`
 — or the honest no-features-tracked-yet statement when the registry is absent or empty), the
-**honest ledger counts**, and any **recurring-pattern signal** inline within its 2-sentence budget.
+**honest ledger counts**, any **recurring-pattern signal**, and a **tasting-due nudge** (DEC-040 D4,
+when `momentum-tools tasting status --json` reports due) inline within its 2-sentence budget.
 These are decision-relevant signals — omitting any of them is a defect, not a space-saving choice.
 If the budget feels tight, trim other wording (e.g., the voice framing) first; do not drop the
-feature headline, the counts, or the signal.
+feature headline, the counts, the signal, or a due tasting nudge.
+
+**Tasting-nudge floor (non-negotiable):** the nudge's placement is set by the prominence tier
+`tasting status` reports, per `.claude/rules/impetus.md`'s Session-start behavior section — quiet
+(1–3 days) inside the second sentence, insistent (4–7 days) opening the second sentence, leading
+(8+ days) as the report's first sentence. It never appears when tasting is not due, and it never
+displaces a pending resume card's lead position — when both a pending card and a `leading` nudge
+are present, the nudge falls back to the `insistent` placement so the card keeps its lead.
 
 **Pending-gate agenda floor (non-negotiable):** when a resume card is pending
 (`skills/momentum/skills/conductor/references/resume-card.md`), its cap above governs length but

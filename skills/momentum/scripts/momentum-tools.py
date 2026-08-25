@@ -635,15 +635,17 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
     path = sprints_path(project_dir)
     if not path.exists():
         # Bootstrap a fresh sprints/index.json — but only inside a project that already has
-        # Momentum state (.momentum/stories/index.json present). Gating on that file restores
-        # the wrong-cwd tripwire: running `sprint plan` in an arbitrary git repo with no
-        # Momentum state at all is refused rather than silently seeding a new sprints file.
-        if not stories_path(project_dir).exists():
+        # Momentum state: either .momentum/stories/index.json, or the .momentum/sprints/
+        # directory itself (present without its index.json, e.g. a fixture or a project mid
+        # setup). Either signal restores the wrong-cwd tripwire: running `sprint plan` in an
+        # arbitrary git repo with no Momentum state at all is refused rather than silently
+        # seeding a new sprints file.
+        if not stories_path(project_dir).exists() and not path.parent.exists():
             error_result(
                 "sprint_plan",
-                "No .momentum/stories/index.json found — this does not look like a Momentum "
-                "project. Refusing to bootstrap .momentum/sprints/index.json in the wrong "
-                "directory.",
+                "No .momentum/stories/index.json or .momentum/sprints/ directory found — this "
+                "does not look like a Momentum project. Refusing to bootstrap "
+                ".momentum/sprints/index.json in the wrong directory.",
             )
         path.parent.mkdir(parents=True, exist_ok=True)
         write_json(path, {"active": None, "planning": None, "completed": []})

@@ -195,10 +195,16 @@ forks already fill the budget.
 
 Build its `ForkItem` as:
 
+`{{role_noun}}` is the FR143 role-noun token, adapted per project; it **defaults to "the developer"
+for Momentum**. "GM" is the PRD's own generic example wording, not the Momentum-rendered default —
+substitute the resolved `{{role_noun}}` (falling back to "the developer" when unset) everywhere
+this template renders the capability sentence.
+
 ```
 ForkItem = {
-  title:           "After this sprint a GM will be able to {{goal_conditions summarized in the
-                    developer's own plain language, or the maintenance {{goal}} summarized}}?",
+  title:           "After this sprint {{role_noun|default("the developer")}} will be able to
+                    {{goal_conditions summarized in the developer's own plain language, or the
+                    maintenance {{goal}} summarized}}?",
   stakes:          HIGH,
   what:            the declared capability stated plainly — inline {{goal}} and the plain-language
                     meaning of each {{goal_conditions}} slug (its name + acceptance_condition from
@@ -206,8 +212,8 @@ ForkItem = {
                     text if maintenance) — never a bare slug list with no meaning attached,
   why:             "this is the one statement the sprint is ultimately judged against — if nobody
                     signs off on it in plain language, the sprint can ship every story green and
-                    still deliver nothing a GM can see change" (the nornspun failure mode this
-                    fork exists to catch),
+                    still deliver nothing {{role_noun|default("the developer")}} can see change"
+                    (the nornspun failure mode this fork exists to catch),
   evidence:        the declared {{goal}} text plus the {{goal_conditions}} slug list (or, for a
                     maintenance sprint, the verified-fix entries) — quoted, not summarized away,
   recommendation:  "Approve as declared — the conditions match what Step 2 selected",
@@ -295,7 +301,8 @@ Fill the `.hero` block with:
 - `.eyebrow`: "What this sprint does"
 - `.big`: 1–2 sentences stating the sprint's purpose in plain language readable by a non-implementer.
   **The first sentence must state the declared capability** — the same statement as the capability
-  fork's title (§4a): "After this sprint a GM will be able to {{...}}." Word it consistently with
+  fork's title (§4a): "After this sprint {{role_noun|default("the developer")}} will be able to
+  {{...}}." Word it consistently with
   the capability card, not as an independently-restated paraphrase — a reader who compares the two
   should see the same claim, not two different summaries of the plan. Bold the 2–3 most important
   nouns/outcomes with `<b>…</b>`.
