@@ -26,9 +26,13 @@ leads the whole report whenever one exists, regardless of this list's order:
   directory, independent of which sprint (if any) `.momentum/sprints/index.json` marks active,
   since a gate can be pending on a sprint that never closed. Parse each file found. **Check shape
   before filtering on status:** a file that exists but is missing or renames its `status` or
-  `question` field is a shape error, not a "no card" state — name the offending file path in the
-  report rather than silently treating the session as clean; a broken card may be hiding a
-  genuinely pending decision. Only once a file has passed this shape check does the status filter
+  `question` field is a shape error, not a "no card" state. The same check applies one level
+  deeper — a `question` object that is present but missing any of `question.text`,
+  `question.gates`, or `question.options` (the three sub-fields the render instructions below read
+  directly) is equally a shape error, not a valid pending question. In either case, name the
+  offending file path in the report rather than silently treating the session as clean; a broken
+  card may be hiding a genuinely pending decision. Only once a file has passed this full shape
+  check does the status filter
   apply: keep only cards whose `status` reads `"pending"`. If more than one is pending, the one with the most recent
   `waited_since` leads; name the rest in a single count line (e.g. "2 more gates also waiting").
   Full field shape, correlation key, and write semantics are the seam contract at

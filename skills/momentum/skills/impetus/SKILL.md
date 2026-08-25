@@ -82,8 +82,9 @@ feature headline, the counts, or the signal.
 (`skills/momentum/skills/conductor/references/resume-card.md`), its cap above governs length but
 never trims the floor: the one pending question, its options, and the report link must survive
 inline regardless of the cap. The pending question leads ahead of the feature headline, ledger
-counts, and everything else in the situational report — it is the single exception to "N-of-M
-leads" stated in the situational-report floor below. No elapsed time or resurface count may ever
+counts, and everything else in the situational report — it is the single exception to the
+N-of-M feature headline otherwise leading the situational report, per the Floor stated above.
+No elapsed time or resurface count may ever
 change the card's status away from `pending` — this surface has no expiry path, only rising
 prominence via the waited-for line.
 

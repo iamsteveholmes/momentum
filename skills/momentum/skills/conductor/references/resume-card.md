@@ -201,11 +201,14 @@ described above, and never creates, repairs, or backfills a card.
 ### Malformed card handling
 
 A card file that exists but is missing or renames `status` or `question` (the two fields the
-consumer cannot safely default) is not silently treated as "no card." Impetus names the offending
-file path and states that a resume card was found but its shape is unreadable — because a broken
-card may be hiding a genuinely pending gate, silently skipping it is the exact wall-of-silence
-failure mode this contract exists to prevent. This is a shape-incompatibility signal, not a normal
-"no pending work" state.
+consumer cannot safely default) is not silently treated as "no card." The same holds one level
+deeper: a `question` object that is present but missing any of its required sub-fields —
+`question.text`, `question.gates`, or `question.options`, the three fields the render instructions
+read directly — is equally malformed; a present-but-incomplete shell is not a valid pending
+question and must not be rendered as one. Impetus names the offending file path and states that a
+resume card was found but its shape is unreadable — because a broken card may be hiding a genuinely
+pending gate, silently skipping it is the exact wall-of-silence failure mode this contract exists
+to prevent. This is a shape-incompatibility signal, not a normal "no pending work" state.
 
 ---
 
