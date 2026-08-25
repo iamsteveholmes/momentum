@@ -691,11 +691,24 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 
     <!-- ─── END SPRINT SUMMARY PRODUCTION ─── -->
 
-    <action>Call sprint closure:
+    <action>Call sprint closure (tier-2 gate, DEC-040 D2/D3 — a safety net here, not the primary
+      closure path; Step 1 above only proceeds on a sprint already in `completed[]`, so this
+      sprint is normally already closed by the time retro reaches this point):
       `momentum-tools sprint complete`
+      This refuses (non-zero exit) unless every declared `goal_conditions` entry carries a
+      recorded human verdict, or, for a maintenance sprint, its verified-fix list is confirmed —
+      it is a gate, not an unconditional closer.
     </action>
 
-    <note>sprint complete transitions the active sprint to the completed list. If this sprint was already moved to completed by sprint-dev Phase 7, this command will report no active sprint — that is expected and safe to ignore.</note>
+    <note>Because Step 1 only selects a sprint already present in `completed[]`, this call's usual
+    return is exactly `"No active sprint to complete"` (non-zero exit) — treat that specific
+    message as an expected no-op; the sprint was already closed by the Conductor's tier-2 closure
+    step or by sprint-dev Phase 7. A refusal with any OTHER message means the gate found an
+    unverified condition, a recorded FAIL, or an unconfirmed maintenance fix on a sprint that was
+    unexpectedly still active at retro time — surface it plainly in the retro output below rather
+    than silently swallowing it, but continue to `sprint retro-complete` regardless: retro's
+    transcript audit above is already complete and is not gated by the sprint's own goal
+    verdict.</note>
 
     <action>Call retro completion:
       `momentum-tools sprint retro-complete`
@@ -728,6 +741,9 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 **Findings handed off:** {{handoff_items | length}} events written to practice-ledger.jsonl (source: retro, event_type: created, intent: handoff)
 
 **Sprint status:** closed (retro_run_at set to {{today}})
+{{#if sprint_closure_gate_refused}}
+**Note:** this sprint's own closure gate refused when re-checked during retro ({{sprint_closure_gate_refusal_message}}) — it was unexpectedly still `active`. The retro above is complete regardless; close the sprint separately with `momentum-tools sprint complete` once the named condition(s) are resolved, or record an honest FAILED verdict.
+{{/if}}
 
 **Sprint summary:** `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`
 
