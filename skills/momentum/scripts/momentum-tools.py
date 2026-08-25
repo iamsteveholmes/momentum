@@ -15,6 +15,7 @@ Usage:
     momentum-tools.py sprint complete
     momentum-tools.py sprint epic-membership --story SLUG --epic SLUG
     momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N] [--slug SPRINT_SLUG]
+    momentum-tools.py sprint plan --goal "GOAL TEXT" --goal-conditions "slug-a,slug-b"  (or "" for a maintenance sprint; --operation/--stories optional here)
     momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY] [--depends-on SLUG[,SLUG,...]]
     momentum-tools.py sprint story-set-contract --slug SLUG --verification-method METHOD --contract-path PATH --harness-profile PROFILE --coverage-disposition DISPOSITION [--covered-by-scenario SCENARIO] --frozen-sha256 SHA256 --can-merge-independently BOOL
     momentum-tools.py sprint compute-verification-method --story SLUG
@@ -335,6 +336,12 @@ def cmd_epic_membership(args: argparse.Namespace) -> None:
 def cmd_sprint_plan(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
     path = sprints_path(project_dir)
+    if not path.exists():
+        # Bootstrap a fresh sprints/index.json for a brand-new project — sprint plan
+        # is a legitimate first touch of sprint state (e.g. a throwaway fixture, or a
+        # project's very first sprint-planning run).
+        path.parent.mkdir(parents=True, exist_ok=True)
+        write_json(path, {"active": None, "planning": None, "completed": []})
     sprints = read_json(path)
 
     # Create planning entry if it doesn't exist
@@ -349,40 +356,57 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
     if sprint_slug_arg:
         planning["slug"] = sprint_slug_arg
 
-    story_slugs = [s.strip() for s in args.stories.split(",")]
+    # goal / goal_conditions declaration (DEC-040 D1/D3) — optional, idempotent, applied
+    # before any story add/remove, matching the existing --slug pattern.
+    goal_arg = getattr(args, "goal", None)
+    if goal_arg is not None:
+        planning["goal"] = goal_arg
 
-    if args.operation == "add":
-        existing = set(planning.get("stories", []))
-        for slug in story_slugs:
-            if slug not in existing:
-                planning.setdefault("stories", []).append(slug)
-        if args.wave is not None:
-            waves = planning.setdefault("waves", [])
-            # Find or create wave
-            wave_entry = None
-            for w in waves:
-                if w.get("wave") == args.wave:
-                    wave_entry = w
-                    break
-            if not wave_entry:
-                wave_entry = {"wave": args.wave, "stories": []}
-                waves.append(wave_entry)
-                waves.sort(key=lambda w: w["wave"])
-            existing_wave = set(wave_entry.get("stories", []))
+    goal_conditions_arg = getattr(args, "goal_conditions", None)
+    if goal_conditions_arg is not None:
+        planning["goal_conditions"] = [s.strip() for s in goal_conditions_arg.split(",") if s.strip()]
+
+    story_slugs: list[str] = []
+    operation = getattr(args, "operation", None)
+    if operation is not None:
+        stories_arg = getattr(args, "stories", None)
+        if not stories_arg:
+            error_result("sprint_plan", "--stories is required when --operation is provided")
+        story_slugs = [s.strip() for s in stories_arg.split(",")]
+
+        if operation == "add":
+            existing = set(planning.get("stories", []))
             for slug in story_slugs:
-                if slug not in existing_wave:
-                    wave_entry["stories"].append(slug)
+                if slug not in existing:
+                    planning.setdefault("stories", []).append(slug)
+            if args.wave is not None:
+                waves = planning.setdefault("waves", [])
+                # Find or create wave
+                wave_entry = None
+                for w in waves:
+                    if w.get("wave") == args.wave:
+                        wave_entry = w
+                        break
+                if not wave_entry:
+                    wave_entry = {"wave": args.wave, "stories": []}
+                    waves.append(wave_entry)
+                    waves.sort(key=lambda w: w["wave"])
+                existing_wave = set(wave_entry.get("stories", []))
+                for slug in story_slugs:
+                    if slug not in existing_wave:
+                        wave_entry["stories"].append(slug)
 
-    elif args.operation == "remove":
-        planning["stories"] = [s for s in planning.get("stories", []) if s not in story_slugs]
-        for wave in planning.get("waves", []):
-            wave["stories"] = [s for s in wave.get("stories", []) if s not in story_slugs]
-        # Remove empty waves
-        planning["waves"] = [w for w in planning.get("waves", []) if w.get("stories")]
+        elif operation == "remove":
+            planning["stories"] = [s for s in planning.get("stories", []) if s not in story_slugs]
+            for wave in planning.get("waves", []):
+                wave["stories"] = [s for s in wave.get("stories", []) if s not in story_slugs]
+            # Remove empty waves
+            planning["waves"] = [w for w in planning.get("waves", []) if w.get("stories")]
 
     write_json(path, sprints)
-    result("sprint_plan", success=True, operation=args.operation, stories=story_slugs,
-           slug=planning.get("slug"))
+    result("sprint_plan", success=True, operation=operation, stories=story_slugs,
+           slug=planning.get("slug"), goal=planning.get("goal"),
+           goal_conditions=planning.get("goal_conditions"))
 
 
 def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
@@ -2952,11 +2976,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     # sprint plan
     sp = sprint_sub.add_parser("plan", help="Add/remove stories from planning sprint")
-    sp.add_argument("--operation", required=True, choices=["add", "remove"], help="Add or remove")
-    sp.add_argument("--stories", required=True, help="Comma-separated story slugs")
+    sp.add_argument("--operation", required=False, default=None, choices=["add", "remove"],
+                    help="Add or remove (omit when only setting --goal/--goal-conditions/--slug)")
+    sp.add_argument("--stories", required=False, default=None,
+                    help="Comma-separated story slugs (required when --operation is given)")
     sp.add_argument("--wave", type=int, default=None, help="Wave number (for add)")
     sp.add_argument("--slug", default=None,
                     help="Set the planning sprint's slug (idempotent; the command fails if the sprint is locked)")
+    sp.add_argument("--goal", default=None,
+                    help="Set the planning sprint's goal text — a plain-language sprint purpose, or "
+                         "a verified-fix list for a maintenance sprint (idempotent; fails if locked)")
+    sp.add_argument("--goal-conditions", dest="goal_conditions", default=None,
+                    help="Comma-separated feature slugs (from .momentum/features.json) whose "
+                         "acceptance conditions this sprint intends to flip from failing to passing. "
+                         "Empty string persists as [] (maintenance sprint). Idempotent; fails if locked.")
     sp.set_defaults(func=cmd_sprint_plan)
 
     # sprint ready

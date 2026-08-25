@@ -418,6 +418,124 @@ def test_sprint_plan_slug_never_clobbers_locked_sprint():
     assert_eq("original slug untouched", result["planning"]["slug"], "sprint-original")
 
 
+def test_sprint_plan_sets_goal_and_conditions():
+    """sprint plan --goal --goal-conditions persists both onto the planning record (AC4/AC5)."""
+    print("\n[sprint plan] Sets goal and goal_conditions via CLI")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "Ship the thing",
+                          "--goal-conditions", "session-capture,campaign-identity")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("goal persisted", result["planning"]["goal"], "Ship the thing")
+    assert_eq("goal_conditions persisted", result["planning"]["goal_conditions"],
+              ["session-capture", "campaign-identity"])
+
+
+def test_sprint_plan_goal_without_operation_or_stories():
+    """--goal/--goal-conditions work standalone, without --operation/--stories (AC5)."""
+    print("\n[sprint plan] Goal declaration without operation/stories")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "Maintenance sprint",
+                          "--goal-conditions", "")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("planning created", result["planning"] is not None, True)
+    assert_eq("goal persisted", result["planning"]["goal"], "Maintenance sprint")
+    assert_eq("empty goal_conditions persists as []", result["planning"]["goal_conditions"], [])
+
+
+def test_sprint_plan_goal_conditions_empty_string_is_empty_list():
+    """An empty --goal-conditions string persists as [] (maintenance sprint, AC2)."""
+    print("\n[sprint plan] Empty goal-conditions persists as []")
+    sprints = {"active": None, "planning": {"locked": False, "stories": [], "waves": [],
+                                             "goal_conditions": ["stale-slug"]}, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "Verified fixes:\n- fix one",
+                          "--goal-conditions", "")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("goal_conditions cleared to []", result["planning"]["goal_conditions"], [])
+
+
+def test_sprint_plan_goal_idempotent():
+    """Re-running with the same --goal/--goal-conditions values is a no-op on those fields."""
+    print("\n[sprint plan] Goal declaration is idempotent")
+    proj = setup_project()
+    run_tool(proj, "sprint", "plan", "--goal", "Ship X", "--goal-conditions", "a,b")
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "Ship X", "--goal-conditions", "a,b")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("goal unchanged", result["planning"]["goal"], "Ship X")
+    assert_eq("goal_conditions unchanged, no duplication", result["planning"]["goal_conditions"], ["a", "b"])
+
+
+def test_sprint_plan_goal_never_clobbers_locked_sprint():
+    """A locked sprint refuses --goal/--goal-conditions exactly like the existing flags (AC5)."""
+    print("\n[sprint plan] Goal declaration refused on a locked sprint")
+    sprints = {"active": None, "planning": {"goal": "original goal", "goal_conditions": ["orig"],
+                                             "locked": True, "stories": [], "waves": []}, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "sprint", "plan", "--goal", "hijacked goal",
+                          "--goal-conditions", "hijacked")
+    assert_eq("rejected", code, 1)
+    result = read_sprints(proj)
+    assert_eq("original goal untouched", result["planning"]["goal"], "original goal")
+    assert_eq("original goal_conditions untouched", result["planning"]["goal_conditions"], ["orig"])
+
+
+def test_sprint_plan_goal_omitted_backward_compat():
+    """Calls without --goal/--goal-conditions introduce neither field (backward compat)."""
+    print("\n[sprint plan] Goal flags omitted stays backward-compatible")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--operation", "add", "--stories", "s1")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("no goal field introduced", "goal" in result["planning"], False)
+    assert_eq("no goal_conditions field introduced", "goal_conditions" in result["planning"], False)
+
+
+def test_sprint_plan_stories_required_with_operation():
+    """--operation without --stories is rejected (Task 2 argparse contract)."""
+    print("\n[sprint plan] Operation without stories is rejected")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--operation", "add", "--goal", "x")
+    assert_eq("rejected", code, 1)
+
+
+def test_sprint_activate_carries_goal_and_conditions():
+    """sprint activate carries goal and goal_conditions onto the active record unchanged (AC5)."""
+    print("\n[sprint activate] Carries goal and goal_conditions onto active")
+    sprints = {
+        "active": None,
+        "planning": {"slug": "test-sprint", "locked": False, "stories": [], "approvals": [],
+                     "goal": "Ship X", "goal_conditions": ["session-capture"]},
+        "completed": []
+    }
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("goal carried to active", result["active"]["goal"], "Ship X")
+    assert_eq("goal_conditions carried to active", result["active"]["goal_conditions"], ["session-capture"])
+
+
+def test_sprint_plan_bootstraps_missing_index():
+    """sprint plan creates sprints/index.json when it does not exist yet."""
+    print("\n[sprint plan] Bootstraps a missing sprints/index.json")
+    tmpdir = Path(tempfile.mkdtemp())
+    stories_dir = tmpdir / ".momentum" / "stories"
+    stories_dir.mkdir(parents=True)
+    (stories_dir / "index.json").write_text(json.dumps({}, indent=2) + "\n")
+    subprocess.run(["git", "init", "--quiet", str(tmpdir)], check=True)
+    index_path = tmpdir / ".momentum" / "sprints" / "index.json"
+    assert_eq("index.json absent before call", index_path.exists(), False)
+    code, out = run_tool(tmpdir, "sprint", "plan", "--goal", "First sprint", "--goal-conditions", "")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("index.json created", index_path.exists(), True)
+    result = read_sprints(tmpdir)
+    assert_eq("goal persisted", result["planning"]["goal"], "First sprint")
+
+
 # --- Helpers for new tests ---
 
 def setup_installed_json(project_dir: Path, data: dict) -> Path:
@@ -3032,6 +3150,17 @@ def main():
     test_sprint_plan_slug_optional_backward_compat()
     test_sprint_plan_slug_idempotent()
     test_sprint_plan_slug_never_clobbers_locked_sprint()
+
+    # Sprint goal / goal_conditions declaration tests (DEC-040 D1/D3)
+    test_sprint_plan_sets_goal_and_conditions()
+    test_sprint_plan_goal_without_operation_or_stories()
+    test_sprint_plan_goal_conditions_empty_string_is_empty_list()
+    test_sprint_plan_goal_idempotent()
+    test_sprint_plan_goal_never_clobbers_locked_sprint()
+    test_sprint_plan_goal_omitted_backward_compat()
+    test_sprint_plan_stories_required_with_operation()
+    test_sprint_activate_carries_goal_and_conditions()
+    test_sprint_plan_bootstraps_missing_index()
 
     # Sprint status field tests
     test_sprint_plan_sets_status_planning()

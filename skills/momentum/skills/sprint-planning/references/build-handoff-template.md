@@ -36,6 +36,8 @@ file once the build session has consumed it — handoffs are ephemeral, not pres
 
 {{goal}}
 
+**Goal conditions:** {{goal_conditions|join(", ")}}
+
 ## Stories by Wave
 
 ### Wave {{n}}
@@ -64,16 +66,22 @@ item in `{{cautions}}`.
 | Condition | Section body |
 |---|---|
 | `{{goal}}` is null/absent | `Sprint goal not captured at planning` |
+| `{{goal_conditions}}` is empty (maintenance sprint — a verified-fix list lives in `{{goal}}` instead) | `**Goal conditions:** none — maintenance sprint (see verified-fix list above)` |
 | `{{cautions}}` is empty | `No planning-time cautions raised.` |
 
 Both sections keep their heading even when using fallback wording — a section with no heading
-at all is a missing section (producer/consumer mismatch), not an empty one.
+at all is a missing section (producer/consumer mismatch), not an empty one. The
+`{{goal}}` fallback fires only when the developer genuinely declined to declare a goal at Step 2
+— which itself only happens when the sprint has neither declared conditions nor a verified-fix
+list (a state Step 2 refuses to advance past). A normally-completed sprint always has a non-null
+`{{goal}}`; this fallback exists as a defect guard, not an expected path.
 
 ## 4. Data sourcing (all already in scope at Step 8 — no new elicitation)
 
 | Field | Source |
 |---|---|
 | `{{goal}}` | Active sprint record's `goal` field (`.momentum/sprints/index.json` → `active.goal`), read via a targeted query — not a whole-file Read |
+| `{{goal_conditions}}` | Active sprint record's `goal_conditions` field (`active.goal_conditions`) — persisted by Step 2 via `momentum-tools sprint plan --goal-conditions` and carried onto `active` unchanged by `sprint activate` |
 | `{{waves}}` | Active sprint record's `waves` list (`active.waves`) — wave number → ordered story slugs |
 | `{{contract_path}}` per story | `active.team.story_assignments[slug].contract.path`, just persisted in Step 8.B (equivalently `{{contract_metadata[story_slug].contract_path}}`, already in scope) |
 | `{{cautions}}` | Union of: (a) coverage-plan.md's `## Known Guard Failures` section, if `{{guard_status}}` == `"accepted_with_failures"` (Step 3.5); (b) `{{avfl_result}}` == `"CHECKPOINT_WARNING"` findings the developer proceeded past (Step 6); (c) per-fork caveats from the developer's pasted plan-gate sign-off block, if `{{genuine_forks\|count}}` > 0 (Step 7). Empty list if none of these produced content. |
@@ -91,6 +99,8 @@ file once the build session has consumed it — handoffs are ephemeral, not pres
 The agent cohort goes live: the composition stack — Momentum's own KB, the manifesto producer,
 and routing-table resolution — lands and is proven by the shipped E2E driver passing live
 against the nornspun fixture with observed PASS output.
+
+**Goal conditions:** agent-cohort-composition, routing-table-resolution
 
 ## Stories by Wave
 

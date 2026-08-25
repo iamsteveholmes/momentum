@@ -23,17 +23,23 @@ Then:
 1. The submit button enables
 2. The decision text includes both fork verdicts (not just "APPROVE")
 
-## Scenario B: Clean plan path — zero forks enables batch approve without per-fork forcing
+## Scenario B: Clean plan path — zero OTHER forks still requires the mandatory capability verdict
 
-Given a plan gate where AVFL returned CLEAN and no genuine forks were detected
-(all stories are `✓ batch`)
+Given a plan gate where AVFL returned CLEAN and no genuine fork other than the mandatory
+capability sign-off (renderer §4a) was detected (all stories are `✓ batch`)
 
 When the developer reviews the gate
 
 Then:
-1. No per-fork verdict text fields are rendered (nothing to fill in)
-2. Selecting "Approve" radio enables the submit button without requiring any additional written text
-3. The gate is not artificially forced when there are no genuine decisions
+1. Exactly one per-fork verdict text field is rendered — Fork 1, the capability sign-off. No
+   other per-fork fields appear (nothing else to fill in).
+2. Selecting "Approve" radio does NOT enable the submit button until the Fork 1 verdict field
+   carries written text — the capability fork is never treated as pre-approved just because it is
+   the only fork.
+3. Once Fork 1 carries a written verdict AND "Approve" is selected, the submit button enables.
+4. The gate is not artificially forced with additional per-fork fields when there are no OTHER
+   genuine decisions — but it is never reduced to zero required fields, because the capability
+   fork (§4a) is mandatory on every render, including this one.
 
 ## Scenario C: Genuine fork card carries all five required fields inline
 
@@ -79,19 +85,25 @@ Then:
 
 ## Pass Criteria
 
-- With forks: submit button disabled when fork verdict fields are empty
-- With forks: submit button enables after all fork verdicts are filled
-- Zero forks: submit button enables on radio selection alone (no blank-filling required)
+- With OTHER forks (beyond the mandatory capability fork): submit button disabled when any fork
+  verdict field is empty
+- With OTHER forks: submit button enables after all fork verdicts, including Fork 1 (capability),
+  are filled
+- Zero OTHER forks: submit button still requires the Fork 1 (capability) verdict — it never
+  enables on radio selection alone, because `{{genuine_forks|count}}` is never 0
 - Each fork card has all five fields: What, Why it matters, Evidence, Recommendation, Options
 - Story links use absolute paths pointing to canonical `.md` files (no glob, no relative path)
 - Story body is not inlined in the gate
-- Workflow A-branch rejects a bare "A" when genuine forks > 0; requires pasted decision block
+- Workflow A-branch rejects a bare "A" (genuine_forks|count is always ≥ 1); requires pasted
+  decision block on every approval
 
 ## Fail Criteria
 
-- Gate can be approved in one click without any written text when genuine forks exist
+- Gate can be approved in one click without any written text (the capability fork's verdict is
+  always required, even with zero other forks)
 - A fork card is missing one or more of the five required fields
 - Fork card references a decision by handle only ("per DEC-036") without inlining the substance
 - Full story AC text appears inline in the gate body
 - Story href uses a glob pattern (`.*`) or relative path (`.momentum` as URL host)
-- Workflow routes to Step 8 (activation) from a bare "A" response when genuine forks > 0
+- Workflow routes to Step 8 (activation) from a bare "A" response, or from a pasted block whose
+  Fork 1 (capability) verdict is blank, single-character, or a bare "approve all"
