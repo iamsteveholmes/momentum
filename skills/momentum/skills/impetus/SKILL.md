@@ -68,6 +68,7 @@ All developer-facing output produced by this skill is governed by the
 | Surface | Cap |
 |---|---|
 | Situational report (session greeting — the orientation output after Rebirth) | ≤ 2 sentences |
+| Pending-gate agenda (DEC-040 D5 — the resume-card question, when one is pending) | Lead ≤ 2 sentences; one question with its options; merged/blocked as count lines only; report linked, never inlined; re-surfacing adds exactly one waited-for line and nothing else |
 
 **Floor (non-negotiable):** The situational report must carry the **N-of-M feature headline**
 (features with a recorded `passing` verdict, out of the total tracked in `.momentum/features.json`
@@ -76,6 +77,15 @@ All developer-facing output produced by this skill is governed by the
 These are decision-relevant signals — omitting any of them is a defect, not a space-saving choice.
 If the budget feels tight, trim other wording (e.g., the voice framing) first; do not drop the
 feature headline, the counts, or the signal.
+
+**Pending-gate agenda floor (non-negotiable):** when a resume card is pending
+(`skills/momentum/skills/conductor/references/resume-card.md`), its cap above governs length but
+never trims the floor: the one pending question, its options, and the report link must survive
+inline regardless of the cap. The pending question leads ahead of the feature headline, ledger
+counts, and everything else in the situational report — it is the single exception to "N-of-M
+leads" stated in the situational-report floor below. No elapsed time or resurface count may ever
+change the card's status away from `pending` — this surface has no expiry path, only rising
+prominence via the waited-for line.
 
 **Caps-vs-floor:** The 2-sentence cap governs the greeting's length. It does not override the
 floor's requirement that the feature headline, ledger counts, and recurring-pattern signal appear
