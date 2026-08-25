@@ -318,9 +318,12 @@ Ready to begin?</output>
         is the SAME question already on record, carry the existing `waited_since` forward unchanged;
         only a genuinely NEW question resets it to `NOW()` (per references/resume-card.md's
         shared-write field semantics). `resurface_count` is never touched by the Conductor except to
-        initialize it at `0` on a new question — Impetus owns incrementing it. Every RESUME-CARD
-        REFRESH/RESOLVE site below folds this read-check-and-overwrite into the same Bash invocation
-        as the ledger/build_log append it immediately follows — never a separate round trip.
+        initialize it at `0` on a new question — Impetus owns incrementing it. `sprint_slug` is
+        written once at the initial write (Step 2.1) and carried forward unchanged — verbatim, not
+        recomputed — on every subsequent refresh/resolve site below; it never changes for the life
+        of the card. Every RESUME-CARD REFRESH/RESOLVE site below folds this read-check-and-overwrite
+        into the same Bash invocation as the ledger/build_log append it immediately follows — never a
+        separate round trip.
       </action>
 
       <check if="file exists at {{ledger_path}} (a prior session wrote events for this sprint)">
@@ -634,12 +637,12 @@ Ready to begin?</output>
           death here would leave the sprint with zero card, so a returning developer would see a
           clean greeting despite an abandoned mid-flight build.</note>
         <action>RESUME-CARD REFRESH (DEC-040 D5, per references/resume-card.md): write
-          {{resume_card_path}} — status: "pending", phase: "build", merged: { count: 0, slugs: [] },
-          blocked: { count: 0, slugs: [] }, question: { text: "Resume the sprint build", gates: "the
-          in-progress build — whether it continues launching and merging stories", options: ["Resume
-          the sprint build"], report_path: null }, waited_since: NOW(), resurface_count: 0,
-          resolved_at: null, resolution: null — per the RESUME-CARD WRITE STANDING RULE above (full
-          JSON serializer, full-file overwrite).</action>
+          {{resume_card_path}} — sprint_slug: {{sprint_slug}}, status: "pending", phase: "build",
+          merged: { count: 0, slugs: [] }, blocked: { count: 0, slugs: [] }, question: { text:
+          "Resume the sprint build", gates: "the in-progress build — whether it continues launching
+          and merging stories", options: ["Resume the sprint build"], report_path: null },
+          waited_since: NOW(), resurface_count: 0, resolved_at: null, resolution: null — per the
+          RESUME-CARD WRITE STANDING RULE above (full JSON serializer, full-file overwrite).</action>
       </check>
 
       <note>All stories currently in {{frontier}} are launched as concurrent per-story pipelines in a single turn. There is NO story-count cap: if 10 stories are unblocked at once, all 10 are launched. None are deferred solely because of how many are ready. This invariant is absolute — it derives from DEC-035 D4 and the no-cap critical above.</note>
@@ -3158,9 +3161,11 @@ Review the updated report, acknowledge any decision cards in §04, then approve 
           references/resume-card.md's `question.options` contract — concrete selectable answers, not
           CLI-path or slug detail) belong in `text` alongside the condition/CLI detail, gates: "the
           tier-2 sprint closure gate — whether `sprints/index.json` records this sprint as done",
-          options: ["Verify a condition", "Close as failed"] — the two real selectable resolutions,
-          never the condition slugs or CLI-path text (that detail lives in `text` above, per
-          resume-card.md's `question.options` contract), report_path:
+          options: {{if goal_conditions were declared on this sprint: ["Verify a condition", "Close
+          as failed"]}}{{else — maintenance sprint, no goal_conditions declared: ["Confirm the
+          verified-fix build", "Close as failed"]}} — the two real selectable resolutions for
+          whichever case applies, never the condition slugs or CLI-path text (that detail lives in
+          `text` above, per resume-card.md's `question.options` contract), report_path:
           ".momentum/handoffs/{{sprint_slug}}-endgate-report.html" }.
           This question is NEW relative to the merge-gate-approval question already resolved above
           (`resolution: "approved"`) — bind a fresh `waited_since = NOW()` on first refusal; a

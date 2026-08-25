@@ -1690,18 +1690,26 @@ Sprint records carry an `approvals: []` array on `planning`, `active`, and `comp
       "retro_run_at": "2026-03-29",  // null if retro not yet run — null on FAILED sprints too, same shape as done
       "closure": {                   // DEC-040 D2/D3 — written at every successful closure, on done AND failed sprints
         "verdict": "failed",         // "done" | "failed" — the tier-2 sprint-closure verdict
-        "conditions": [              // snapshot of per-condition verdicts at closure time, one per goal_conditions slug
+        "conditions": [              // snapshot of per-condition verdicts at closure time, one per goal_conditions slug — flat shape per sprint-tracking-schema.md
           {
             "slug": "session-capture",
+            "state": "verified-pass", // verified-pass | recorded-fail | unverified
+            "reason": null,
             "status": "passing",     // registry status at closure time
-            "verdict": "PASS",       // recorded human verdict
-            "build_shas": { "main": "9b2c4f0e...", "sprint_tip": "3e7a1d5c..." }
+            "verdict": "pass",       // recorded human verdict — lowercase pass|fail
+            "backend_sha": "9b2c4f0e",
+            "client_sha": "3e7a1d5c",
+            "summary": "pass — build 9b2c4f0e:3e7a1d5c"
           },
           {
             "slug": "campaign-identity",
+            "state": "recorded-fail",
+            "reason": null,
             "status": "failing",
-            "verdict": "FAIL",
-            "build_shas": { "main": "9b2c4f0e...", "sprint_tip": "3e7a1d5c..." }
+            "verdict": "fail",
+            "backend_sha": "9b2c4f0e",
+            "client_sha": "3e7a1d5c",
+            "summary": "fail — build 9b2c4f0e:3e7a1d5c"
           }
         ],
         "fix_confirmations": [],     // maintenance sprints only — per-fix confirmations against the goal's verified-fix list

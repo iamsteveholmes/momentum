@@ -76,7 +76,7 @@ as it stood at resolution, a historical record of the last pending state.
 | `blocked.count`, `blocked.slugs` | int, array of string | Conductor only | Same rule as `merged`, sourced from the ledger's blocked/failed story set. |
 | `question.text` | string | Conductor only | The single pending question, in plain language. Exactly one question ever exists on the card — never an array, never two questions bundled into one string. |
 | `question.gates` | string | Conductor only | What the question's answer controls — e.g. "the tier-1 merge gate," "whether the build continues to the next story," "the sprint's tier-2 closure verdict." Required — a question without a stated "what it gates" is a defect (AC 2). |
-| `question.options` | array of string | Conductor only | The concrete answers available (e.g. `["Approve", "Request changes"]`, `["Resume the build"]`). |
+| `question.options` | array of string | Conductor only | The concrete, selectable answers available (e.g. `["Approve", "Request changes"]`, `["Resume the build"]`) — never CLI-path or slug detail; that detail belongs in `question.text` alongside the condition/CLI prose. |
 | `question.report_path` | string \| null | Conductor only | Path to the end-gate report (or other depth artifact) for the developer to open for full detail. `null` when no such report exists yet (e.g. the mid-build resume-the-build question, before Phase 5 has ever rendered a report). |
 | `waited_since` | string (ISO 8601) | **Shared-write** — see below | Anchors "how long has this decision been waiting." |
 | `resurface_count` | integer | **Shared-write** — see below | Counts how many session greetings have surfaced this still-pending card. |
@@ -141,7 +141,13 @@ points, and nowhere else:
    interrupted session between them still leaves an accurate durable record of what was answered
    and what is newly waiting.
 3. **Tier-2 closure succeeds.** `momentum-tools sprint complete` succeeds (fresh close or the
-   idempotent no-op). `resolution: "closed"`.
+   idempotent no-op). `resolution: "closed"`. **Same-pass carve-out:** if the merge-gate approval
+   already resolved this card earlier in the same pass (`resolution: "approved"`), a closure
+   success immediately after leaves the card's resolution as `"approved"` — the Idempotency rule's
+   no-op (status already `"resolved"`, do not write again) is correct and intended here, not a
+   missed update. A cross-session re-close of a still-`"pending"` closure card (the closure-refusal
+   RESUME-CARD REFRESH case, resolved on a later pass) still writes `resolution: "closed"` as
+   above.
 
 **Idempotency:** resolving an already-resolved card is a no-op — check `status` before writing; if
 already `"resolved"`, do not write again. This guarantees a resumed session can never double-write
@@ -175,6 +181,9 @@ The Conductor (`skills/momentum/skills/conductor/workflow.md`) is the sole write
 except the two shared-write fields' updates from Impetus. Emit/refresh sites (all cite this
 contract instead of restating field shape):
 
+- Step 2.1, on first frontier launch when no card file yet exists — the very first write for the
+  sprint (fires before the first merge lands): `phase: "build"`, `merged`/`blocked` both at zero,
+  question "Resume the sprint build."
 - Phase 2 build loop, on each `story-terminal` row with `outcome: "merged"` — refreshes
   `merged`/`blocked`/`phase`, question stays "resume the build."
 - The `avfl-on-merge-complete` and `e2e-phase-complete` phase checkpoints — same refresh, question
