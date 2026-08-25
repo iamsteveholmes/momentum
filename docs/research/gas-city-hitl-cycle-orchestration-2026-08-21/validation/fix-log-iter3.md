@@ -71,7 +71,7 @@ strip() { for f in raw/*.md scope.md; do
 | 3 | `shipped 2026-07-23` | **0 uncaveated hits.** Remaining date references are the PR-metadata citations (#4553, 2026-07-23), which are accurate. |
 | 4 | `two load-bearing gaps` / `two gaps` / `two holes` | **0 hits.** (Only `maturity` :69's unrelated v1-vs-v2 spec gaps.) |
 | 5 | `proven` | **Clean.** Surviving uses are all supported: gate primitive block/resolve (empirically proven), the pack-rewrite path ("five methodologies have walked it"), and #4587's "reproduction-proven" fix. The out-of-session overclaim is gone. |
-| 6 | `beta` | **Clean.** Only remaining hit is the literal cursor example `alpha:4,beta:9`. |
+| 6 | `beta` | **Clean** — but this self-report was inaccurate as written. **[Annotated at iter4 — ACCURACY4-A-008.]** There are three surviving hits, not one: the literal cursor example `alpha:4,beta:9`, plus **two legitimate hits on `research-hitl-alternative-patterns.md`:247** — the corrected claim itself (*"Treat the nag loop as **unshipped — not merely beta**"*) and its own correction marker, which reads in part: "beta" implied a released-but-immature path that does not exist. Both are fix text, so the sweep's *verdict* (clean — no uncaveated `beta` claim survives) stands; only its hit-count narration was wrong. Log artifact, no corpus change. |
 | 7 | `production support` / `production-grade` | **Clean.** Both hits are the caveated Bottom Line and the explicit negation at :212. |
 | 8 | `760` / `1,729` | **Clean.** Surviving: issue `#1760` (unrelated), and both figures quoted inside their own retractions. |
 | 9 | `roughly 760 open PRs` | **0 hits.** |

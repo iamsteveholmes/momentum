@@ -1,0 +1,4 @@
+# iter4 Validator: domain / Adversary — DECISION-GRADE, 2 low non-blocking nits
+All 8 axes consistently stated and evidence-backed (full axis answers recorded in the teammate report and avfl-consolidated-iter3 lineage); all 4 residual open items confirmed marked open (bd v1.2.2 CAS, FileStore write-path moot, failed-close §9c, multi-hour session Q1-Q2); extra opens named for synthesizer (Q3/Q4, payload-match selector, notify-vs-typed-gate inferred, cost floors).
+DOMAIN4-A-001 | low | beads-coupling:14 vs gate-mechanics:51-56,:61,:366 | init-vs-start dependency attribution differs ("gc start adds tmux" vs transcript showing gc init reports all three); same requirement set either way; iter3 rewrite residue. Fix opportunistically.
+DOMAIN4-A-002 | low | notification-watcher:166-172 | glue bullets sum 5.5–9 vs "≈6–9d" headline; "≈"+floor makes it negligible; don't present 6.0 as derived.
