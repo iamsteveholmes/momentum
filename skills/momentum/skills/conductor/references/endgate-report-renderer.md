@@ -424,7 +424,7 @@ callout — even though the sprint's `sprints/index.json` entry may already read
 from the `sprint complete` call folded into this same approve sequence; that index status is not
 the closure verdict.
 
-**Cardinal sin:** A report that reads more finished than the thing is. If the system is a partial slice, say so in §01 and say it in full here. A close second: describing the push as optional, deferred, or a separate confirmation — it is folded into the single approve control (§07).
+**Cardinal sin:** A report that reads more finished than the thing is. If the system is a partial slice, say so in §01 and say it in full here.
 
 ---
 
