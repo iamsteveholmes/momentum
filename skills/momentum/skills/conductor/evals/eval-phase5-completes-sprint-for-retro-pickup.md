@@ -1,7 +1,12 @@
 # Eval: Phase 5 completes the sprint for retro pickup (regression)
 
 **Surface under test:** Phase 5 approve — sprint-completion call between the terminal story-status
-transitions and the push summary.
+transitions and the PUSH action of the merge-gate execution sequence (per
+`conduct-merge-gate-completes-by-executing-merge-push-story`, the standalone "push summary /
+`Push to origin/main?`" step this eval originally anchored to no longer exists as a separate step —
+push is folded into the same execution sequence as the merge and transitions. The positional
+assertion below is updated to the new anchors; the behavior being guarded — `sprint complete` runs
+after the terminal transitions and before push — is unchanged.)
 
 **Regression guard for:** the conduct-never-completes-its-own-sprint defect. `momentum-tools sprint
 complete` is the transition that moves the active sprint into `sprints/index.json` `completed[]`
@@ -25,7 +30,9 @@ branch runs to completion).
 **Then:**
 
 1. The Conductor calls `momentum-tools sprint complete` after the terminal story-status
-   transitions and before the push summary (`git log @{u}..HEAD --oneline`).
+   transitions and before the PUSH action (`git push origin main`) of the merge-gate execution
+   sequence — with the MAJOR-RESIDUAL GOVERNANCE GUARD action in between, per the current
+   sequence order.
 2. `sprints/index.json` shows the sprint moved from `active` into `completed[]`, with that entry's
    `status == "done"` and `retro_run_at == null`.
 3. No separate, manually-run completion command was needed to reach this state.
@@ -36,14 +43,14 @@ branch runs to completion).
 **And (resume-safety):** if the Phase 5 approve branch runs a second time against a sprint already
 completed by a prior pass (a rehydrated or re-approved end-gate), `momentum-tools sprint complete`
 returns `"No active sprint to complete"` (exit non-zero per `momentum-tools.py:296`), and the
-Conductor treats this as an expected, non-fatal no-op — the approve sequence continues to the push
-summary without surfacing an error or aborting.
+Conductor treats this as an expected, non-fatal no-op — the approve sequence continues through the
+MAJOR-RESIDUAL GOVERNANCE GUARD to the PUSH action without surfacing an error or aborting.
 
 ## Pass Criteria
 
 - The workflow text at Phase 5 approve (`conductor/workflow.md`, `<check if="developer approves">`)
   prescribes a `momentum-tools sprint complete` call positioned after the terminal story-transition
-  action and before the push-summary action.
+  action and before the PUSH action of the merge-gate execution sequence.
 - An adjacent note states that a `"No active sprint to complete"` return is an expected, non-fatal
   no-op on resumed/re-approved runs, and that the sequence continues rather than aborting — mirroring
   the convention already documented at `retro/workflow.md:698`.
@@ -57,15 +64,17 @@ summary without surfacing an error or aborting.
 ## Fail Criteria
 
 - The workflow's Phase 5 approve branch contains no `sprint complete` call, or the call is placed
-  before the terminal story-transition action or after the push summary/push confirmation.
+  before the terminal story-transition action or after the PUSH action of the merge-gate execution
+  sequence.
 - The workflow lacks the idempotency note, or treats a `"No active sprint to complete"` return as
   an error that aborts the approve sequence.
 - After a live approve-sequence run, `sprints/index.json` still shows the sprint as `active` (or
   absent from `completed[]`), forcing a manual `momentum-tools sprint complete` call.
 - `momentum:retro`, invoked immediately after approval, HALTs with "No sprint is awaiting a
   retrospective" even though a sprint was just completed.
-- The terminal-transition logic, the MAJOR-RESIDUAL governance guard, or the push/ask sequence were
-  altered by this change (out of scope for this story).
+- The terminal-transition logic, the MAJOR-RESIDUAL governance guard, or the merge-gate execution
+  sequence's ordering were altered by this change (out of scope for this story) beyond the
+  documented anchor update to the removed standalone push-summary/ask step.
 
 ## Verification Method
 
@@ -73,7 +82,8 @@ summary without surfacing an error or aborting.
 
 1. Inspect `skills/momentum/skills/conductor/workflow.md` Phase 5 approve branch. Confirm a
    `momentum-tools sprint complete` action is present, ordered after the terminal story-transition
-   action and before the push-summary action, with an adjacent idempotency note.
+   action and before the PUSH action of the merge-gate execution sequence, with an adjacent
+   idempotency note.
 
 2. Exercise the tool directly:
    ```
