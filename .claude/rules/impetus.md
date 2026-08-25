@@ -23,14 +23,13 @@ Read order below is presentation order — the feature registry is read and repo
 - The feature registry at `.momentum/features.json`, if present — a JSON object keyed by feature
   slug. Derive **N** (features whose `status` field is exactly `"passing"`) and **M** (total feature
   entries in the object). Entries with `status: "failing"`, `status: "absent"`, or no `status` field
-  at all count toward M but never toward N — a feature with no recorded human verdict is never
-  counted as passing. If the file does not exist, exists but contains zero feature entries, or
-  exists but is malformed or an unexpected shape (invalid JSON, not an object, entries missing the
-  expected structure), that is the same honest state "no features tracked yet" — not an error, not
-  an omitted slot, and never rendered as `0 of 0` (which would read as a healthy, complete
-  registry). **This read is read-only:**
-  Impetus never creates, repairs, or backfills `.momentum/features.json` under any condition,
-  including when it is missing — `momentum-tools feature verify` is the sole writer.
+  at all count toward M but never toward N. If the file does not exist, exists but contains zero
+  feature entries, or exists but is malformed or an unexpected shape (invalid JSON, not an object,
+  entries missing the expected structure), that is the same honest state "no features tracked yet"
+  — not an error, not an omitted slot, and never rendered as `0 of 0` (which would read as a
+  healthy, complete registry). **Read-only:** Impetus never creates, repairs, or backfills
+  `.momentum/features.json` under any condition, including when it is missing — `momentum-tools
+  feature verify` is the sole writer.
 - Honest ledger counts via `momentum-tools practice-ledger summary` — returns "N open entries (X this week, Y older than 30 days, Z near auto-close)" and any recurring-pattern signals (e.g., a topic closed_stale 4 times in 60 days)
 - Active sprint summary from `.momentum/sprints/index.json`
 - Auto-close safety net: invoke `momentum-tools practice-ledger close-stale --age-days 15` (idempotent — the CLI checks last-run timestamp; no harm if the routine already ran today)
