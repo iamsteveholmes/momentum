@@ -3879,6 +3879,12 @@ def main():
     test_tasting_status_read_only_registry_unchanged()
     test_tasting_status_malformed_registry_never_errors()
     test_tasting_status_degraded_field_shapes_never_crash()
+    test_tasting_status_future_dated_verdict_routes_to_leading_never_quiet()
+    test_tasting_brief_future_dated_verdict_explains_anomaly_not_reassurance()
+    test_tasting_status_non_utf8_registry_never_crashes()
+    test_tasting_brief_non_utf8_registry_never_crashes()
+    test_tasting_brief_merged_commits_truncated_uses_open_ended_phrasing()
+    test_tasting_brief_write_failure_degrades_to_error_result()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
@@ -5987,6 +5993,7 @@ def test_tasting_status_not_due_same_day():
     assert_eq("exit code 0", code, 0)
     assert_eq("due is False", out["due"], False)
     assert_eq("days_since is 0", out["days_since"], 0)
+    assert_eq("tier is quiet (deliberate not-due default; bmad-code-review-6)", out["tier"], "quiet")
 
 
 def test_tasting_status_read_only_registry_unchanged():
@@ -6033,6 +6040,120 @@ def test_tasting_status_degraded_field_shapes_never_crash():
     code, out = run_tool(proj, "tasting", "status")
     assert_eq("exit code 0", code, 0)
     assert_eq("degrades to no-verdict state", out["due"], True)
+
+
+def test_tasting_status_future_dated_verdict_routes_to_leading_never_quiet():
+    """bmad-code-review-0: a future-dated last_verified.date (negative days_since) is an
+    anomalous registry state — it must route to the leading tier with a distinct
+    explanation and never leak a negative days-since into a reassuring quiet default."""
+    print("\n[tasting status] Future-dated verdict routes to leading, never quiet (bmad-code-review-0)")
+    from datetime import date, timedelta
+    proj = setup_project()
+    future = (date.today() + timedelta(days=5)).isoformat()
+    _tasting_write_registry(proj, {
+        "tide-chart-overlay": {
+            "name": "Tide chart overlay",
+            "acceptance_condition": "Owner sees the tide chart render.",
+            "status": "passing",
+            "last_verified": {"date": future, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
+        }
+    })
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("tier is leading, not quiet", out["tier"], "leading")
+    assert_eq("due is True", out["due"], True)
+    assert_eq("raw negative days_since surfaced, not masked", out["days_since"], -5)
+
+
+def test_tasting_brief_future_dated_verdict_explains_anomaly_not_reassurance():
+    """bmad-code-review-0: the brief's 'What changed' explanation must name the future
+    date as anomalous rather than presenting it as a normal recent verification."""
+    print("\n[tasting brief] Future-dated verdict explanation is honest, not reassuring (bmad-code-review-0)")
+    from datetime import date, timedelta
+    proj = setup_project()
+    future = (date.today() + timedelta(days=5)).isoformat()
+    _tasting_write_registry(proj, {
+        "tide-chart-overlay": {
+            "name": "Tide chart overlay",
+            "acceptance_condition": "Owner sees the tide chart render.",
+            "status": "passing",
+            "last_verified": {"date": future, "verdict": "pass", "backend_sha": "a1b2c3d", "client_sha": "e7f8a9b"},
+        }
+    })
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8").lower()
+    assert_eq("names the future date as anomalous", "future" in brief and "anomalous" in brief, True)
+
+
+def test_tasting_status_non_utf8_registry_never_crashes():
+    """bmad-code-review-1: a registry file that is not valid UTF-8 must degrade like any
+    other unparseable registry (UnicodeDecodeError was previously uncaught, violating AC10)."""
+    print("\n[tasting status] Non-UTF-8 registry never crashes (bmad-code-review-1, AC10)")
+    proj = setup_project()
+    reg_path = features_path_of(proj)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_bytes(b"\xff\xfe\x00\x01not valid utf-8 \xd8\x00")
+    code, out = run_tool(proj, "tasting", "status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("degrades to no-verdict state", out["due"], True)
+
+
+def test_tasting_brief_non_utf8_registry_never_crashes():
+    """bmad-code-review-1: `tasting brief` must also tolerate a non-UTF-8 registry, not
+    just `tasting status` — both commands share the same unsafe loader."""
+    print("\n[tasting brief] Non-UTF-8 registry never crashes (bmad-code-review-1, AC10)")
+    proj = setup_project()
+    reg_path = features_path_of(proj)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    before = b"\xff\xfe\x00\x01not valid utf-8 \xd8\x00"
+    reg_path.write_bytes(before)
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("states no recorded claims", "no recorded claims" in brief.lower(), True)
+    assert_eq("non-UTF-8 registry byte-identical", reg_path.read_bytes(), before)
+
+
+def test_tasting_brief_merged_commits_truncated_uses_open_ended_phrasing():
+    """bmad-code-review-4: when the git log fetch hits its cap, the remainder is stated
+    with open-ended phrasing ("50+ more") rather than an exact count computed from a
+    list that was itself already truncated at the old hard `-n 50` cap."""
+    print("\n[tasting brief] Truncated merge history uses open-ended phrasing (bmad-code-review-4)")
+    proj = setup_project()
+    for i in range(60):
+        subprocess.run(
+            ["git", "-C", str(proj), "commit", "--allow-empty", "-q", "-m", f"tasting-fill {i}"],
+            check=True,
+        )
+    _tasting_write_registry(proj, {
+        "tide-chart-overlay": {
+            "name": "Tide chart overlay",
+            "acceptance_condition": "Owner sees the tide chart render.",
+            "status": "passing",
+        }
+    })
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 0", code, 0)
+    brief = tasting_brief_path(proj).read_text(encoding="utf-8")
+    assert_eq("uses open-ended 50+ phrasing", "50+ more" in brief, True)
+    assert_eq("does not claim an exact truncated remainder", "43 more commit" in brief, False)
+
+
+def test_tasting_brief_write_failure_degrades_to_error_result():
+    """bmad-code-review-5: if `.momentum/tasting` exists as a plain file (blocking mkdir),
+    the brief command must fail loudly via error_result rather than crashing with an
+    unguarded traceback."""
+    print("\n[tasting brief] Write-path collision degrades to a clean error_result (bmad-code-review-5)")
+    proj = setup_project()
+    tasting_path = proj / ".momentum" / "tasting"
+    tasting_path.parent.mkdir(parents=True, exist_ok=True)
+    tasting_path.write_text("blocking file, not a directory", encoding="utf-8")
+    code, out = run_tool(proj, "tasting", "brief")
+    assert_eq("exit code 1", code, 1)
+    assert_eq("has success field", "success" in out, True)
+    assert_eq("success is False", out.get("success"), False)
+    assert_eq("has error field", "error" in out, True)
 
 
 if __name__ == "__main__":

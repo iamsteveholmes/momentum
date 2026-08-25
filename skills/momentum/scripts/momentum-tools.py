@@ -2470,7 +2470,7 @@ def _load_features_registry_safe(project_dir: Path) -> dict:
         return {}
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return {}
     if not text.strip():
         return {}
@@ -2553,6 +2553,23 @@ def _tasting_window(registry: dict, today: date) -> dict:
         }
 
     days_since = (today - newest).days
+    if days_since < 0:
+        # A future-dated last_verified.date is an anomalous registry state (clock
+        # skew, hand-edited fixture, corrupted write) — never treat it as the
+        # reassuring "verified recently" case. Fall back to the bounded default
+        # window and say plainly that the date is untrustworthy.
+        return {
+            "newest_verified_date": newest.isoformat(),
+            "days_since_newest": days_since,
+            "window_days": TASTING_WINDOW_MAX_DAYS,
+            "window_start": today - timedelta(days=TASTING_WINDOW_MAX_DAYS),
+            "explanation": (
+                f"The most recently recorded verdict is dated {newest.isoformat()}, which is "
+                "in the future relative to today — an anomalous registry state, not a recent "
+                f"verification. This brief falls back to the bounded {TASTING_WINDOW_MAX_DAYS}-day "
+                "default window rather than trusting that date."
+            ),
+        }
     if days_since > TASTING_WINDOW_MAX_DAYS:
         return {
             "newest_verified_date": newest.isoformat(),
@@ -2581,12 +2598,20 @@ def _tasting_window(registry: dict, today: date) -> dict:
 def _tasting_tier(days_since) -> str:
     """Prominence tier per AC 9: quiet 1-3, insistent 4-7, leading 8+.
 
-    No recorded verdict at all is treated as the most urgent case (leading) —
-    a session is always due in that state.
+    No recorded verdict at all, or a future-dated (anomalous) verdict, is
+    treated as the most urgent case (leading) — a session is always due in
+    that state and never gets a reassuring quiet/insistent label.
+
+    days_since == 0 (verified today) is not one of AC 9's three named tiers —
+    `due` is already False for that state, so no nudge renders at all. It is
+    deliberately reported as "quiet" (the least-alarming label) rather than
+    inventing a fourth tier value nothing downstream consumes.
     """
-    if days_since is None:
+    if days_since is None or days_since < 0:
         return "leading"
-    if days_since <= TASTING_QUIET_MAX_DAYS:
+    if days_since == 0:
+        return "quiet"  # deliberate: not-due state, see docstring
+    if 1 <= days_since <= TASTING_QUIET_MAX_DAYS:
         return "quiet"
     if days_since <= TASTING_INSISTENT_MAX_DAYS:
         return "insistent"
@@ -2621,20 +2646,28 @@ def _tasting_probes(claims: list[dict]) -> list[dict]:
     return probes
 
 
-def _tasting_merged_since(project_dir: Path, window_start: date) -> "list[str] | None":
+TASTING_GIT_LOG_LIMIT = 50
+
+
+def _tasting_merged_since(project_dir: Path, window_start: date) -> "dict | None":
     """Best-effort `git log --since` over the window. None means unavailable.
 
     Tolerates a missing git binary, a non-repository project directory
     (every fixture in the frozen contract is a bare temp dir with no git
     history at all), and any other subprocess failure — this signal is
     informational only and must never block the brief.
+
+    Fetches one more commit than TASTING_GIT_LOG_LIMIT so a truncated result
+    can be reported with open-ended phrasing ("50+ more") rather than a
+    remainder count computed from a list that was itself already cut off.
+    Returns {"commits": [...], "truncated": bool}.
     """
     try:
         proc = subprocess.run(
             [
                 "git", "-C", str(project_dir), "log",
                 "--since", window_start.isoformat(),
-                "--oneline", "--no-decorate", "-n", "50",
+                "--oneline", "--no-decorate", "-n", str(TASTING_GIT_LOG_LIMIT + 1),
             ],
             capture_output=True,
             text=True,
@@ -2644,15 +2677,20 @@ def _tasting_merged_since(project_dir: Path, window_start: date) -> "list[str] |
         return None
     if proc.returncode != 0:
         return None
-    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+    lines = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+    truncated = len(lines) > TASTING_GIT_LOG_LIMIT
+    return {"commits": lines[:TASTING_GIT_LOG_LIMIT], "truncated": truncated}
 
 
 def cmd_tasting_brief(args: argparse.Namespace) -> None:
     """Generate the expected-vs-reality tasting brief (DEC-040 D4).
 
     Read-only against .momentum/features.json on every code path, including
-    absent, empty, and unparseable registries — always exits 0. Regenerates
-    the same day's file in place on a same-day rerun.
+    absent, empty, and unparseable registries — those cases (AC6) always exit
+    0. A failure to write the brief's own output file (a separate, unrelated
+    failure mode — e.g. .momentum/tasting exists as a file) exits 1 with an
+    error_result rather than degrading silently. Regenerates the same day's
+    file in place on a same-day rerun.
     """
     project_dir = resolve_project_dir()
     registry = _load_features_registry_safe(project_dir)
@@ -2664,7 +2702,9 @@ def cmd_tasting_brief(args: argparse.Namespace) -> None:
 
     window = _tasting_window(registry, today)
     probes = _tasting_probes(display_claims)
-    merged = _tasting_merged_since(project_dir, window["window_start"])
+    merged_result = _tasting_merged_since(project_dir, window["window_start"])
+    merged = merged_result["commits"] if merged_result is not None else None
+    merged_truncated = merged_result["truncated"] if merged_result is not None else False
 
     lines = [
         f"# Daily Tasting Brief — {today.isoformat()}",
@@ -2705,7 +2745,15 @@ def cmd_tasting_brief(args: argparse.Namespace) -> None:
     else:
         shown = merged[:TASTING_CLAIMS_CAP]
         lines.extend(f"- {commit}" for commit in shown)
-        if len(merged) > TASTING_CLAIMS_CAP:
+        if merged_truncated:
+            # The git log fetch itself hit its cap — the true total beyond what
+            # was fetched is unknown, so the remainder is stated open-ended
+            # rather than as an exact count computed from truncated data.
+            lines.append(
+                f"- {TASTING_GIT_LOG_LIMIT}+ more commit(s) not shown above "
+                f"(log capped at {TASTING_GIT_LOG_LIMIT})."
+            )
+        elif len(merged) > TASTING_CLAIMS_CAP:
             lines.append(
                 f"- {len(merged) - TASTING_CLAIMS_CAP} more commit(s) not shown above."
             )
@@ -2732,9 +2780,32 @@ def cmd_tasting_brief(args: argparse.Namespace) -> None:
     ]
 
     out_dir = tasting_dir(project_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
     brief_path = out_dir / f"brief-{today.isoformat()}.md"
-    brief_path.write_text("\n".join(lines), encoding="utf-8")
+    content = "\n".join(lines)
+    import os
+    import tempfile
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fd, tmp_name = tempfile.mkstemp(dir=out_dir, prefix=".brief-", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(content)
+            os.replace(tmp_name, brief_path)
+        except OSError:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+            raise
+    except OSError as exc:
+        # Not one of the registry-degradation paths AC6 governs — this is a
+        # filesystem failure writing our own output (e.g. .momentum/tasting
+        # exists as a file, not a directory). Fail loudly rather than silently
+        # dropping the brief or crashing with an unguarded traceback.
+        error_result(
+            "tasting_brief",
+            f"Could not write the tasting brief to {brief_path}: {exc}",
+        )
 
     payload = {
         "path": str(brief_path),
@@ -2760,6 +2831,7 @@ def cmd_tasting_brief(args: argparse.Namespace) -> None:
             ],
             "probes": probes,
             "changed": merged if merged is not None else [],
+            "changed_truncated": merged_truncated,
         }
 
     result("tasting_brief", success=True, **payload)
@@ -2778,7 +2850,9 @@ def cmd_tasting_status(args: argparse.Namespace) -> None:
 
     window = _tasting_window(registry, today)
     days_since = window["days_since_newest"]
-    due = days_since is None or days_since >= 1
+    # A future-dated (negative) days_since is an anomalous registry state, not a
+    # recent verification — it is always due, same as no verdict at all.
+    due = days_since is None or days_since < 0 or days_since >= 1
     tier = _tasting_tier(days_since)
 
     result(

@@ -108,8 +108,12 @@ prominence tier `tasting status` reports:
   ledger counts — but never ahead of a pending resume card, which still leads the whole report per
   DEC-040 D5 regardless of tasting prominence. When both a pending card and a `leading` tasting
   nudge are present in the same session, the nudge instead opens the report's second sentence (the
-  same placement as `insistent`), so the two-sentence budget holds and the pending decision keeps
-  its precedence.
+  same placement as `insistent`), so the precedence order holds and the pending decision keeps
+  its place first. This placement rule does not by itself guarantee the two-sentence budget stays
+  intact — the card's own resurfacing line (added once `resurface_count` is greater than 1, per
+  the pending-card section above) can still extend the report beyond two sentences; when it does,
+  the floor from the Decision-Grade Presentation Standard governs (precedence and completeness win
+  over the sentence count).
 
 **Do not** dump menus. **Do not** narrate the read. **Do not** run heavy orientation workflows. Quick in, voice-aware out, then yield.
 
