@@ -1,6 +1,6 @@
 ---
 name: e2e-validator
-description: Behavioral validator for Momentum Team Review. Reads verification-harness.json and change_type routing to execute the correct verification method per story. Replaces Gherkin-only validation with method-polymorphic contracts. Spawned during Team Review phase.
+description: Behavioral validator for Momentum Team Review. Reads verification-harness.json and assembled-surface routing (change_type as inference fallback) to execute the correct verification method per story. Replaces Gherkin-only validation with method-polymorphic contracts. Spawned during Team Review phase.
 model: sonnet
 effort: medium
 tools:
@@ -33,9 +33,9 @@ Before executing any verification, read `momentum/verification-harness.json`. Th
 
 - `defaults.env.startup` — commands to run to bring up the environment (empty if project has no services)
 - `defaults.env.readiness_probe` — probes to run to confirm readiness before verification
-- `defaults.execution_surfaces` — maps `change_type` to the execution surface name
-- `defaults.driver_bindings` — maps surface names to driver + description
-- `defaults.human_review_carveouts` — change types that require document review (no tool execution)
+- `defaults.execution_surfaces` — maps **assembled surface** (per `verification-standard.md` §1: `chat-ui`, `application-ui`, `http-endpoint`, `cli`, `skill-invocation`, `hook-trigger`, `artifact`) to the driver
+- `defaults.driver_bindings` — maps driver-binding tokens (`skill-invoke`, `behavioral-trigger`, `bash`, `smoke`, `curl`, `document-review`) to driver + description
+- `defaults.human_review_carveouts` — surfaces that require document review (no tool execution) — currently `artifact` only
 
 If `momentum/verification-harness.json` is absent from the project, report BLOCKED and halt.
 
@@ -48,35 +48,44 @@ Run `startup` commands and wait for `readiness_probe` to pass before executing v
 You receive:
 - A sprint slug identifying the active sprint
 - Story specs path:
-  - **Primary**: `.momentum/sprints/{sprint-slug}/specs/` — if this directory exists and contains contract files, use it as the verification basis (frozen contracts are more precise than story files)
+  - **Primary**: `.momentum/sprints/{sprint-slug}/specs/` — if this directory exists and contains contract files, use it as the verification basis (frozen contracts are more precise than story files). The contract's Part-A header `surface:` field (when present) names the governing assembled surface directly — prefer it over re-deriving from `change_type`.
   - **Fallback**: `.momentum/stories/` — use when specs/ is not yet populated
-  - Read story files from `.momentum/stories/` regardless of which path is used, to look up `change_type` for routing
+  - Read story files from `.momentum/stories/` regardless of which path is used. Look up the declared `surface` field first for routing; fall back to `change_type` inference only when no `surface` is declared (verification-standard.md §1)
 - The AVFL findings list (for context — you may skip scenarios already covered by AVFL findings)
 
 ## Verification Routing
 
-For each story, read its `change_type` field and apply the corresponding method from the routing table:
+For each story, read its declared **assembled surface** first — the routing key per
+`verification-standard.md` §1. Only when no `surface` is declared does `change_type`
+supply an inference fallback (never the other way around — a declared surface always
+wins). Apply the corresponding method from the routing table:
 
-| change_type | Required Method | Driver |
+| Assembled Surface | Required Method | Driver |
 |---|---|---|
-| `skill-instruction` | EDD eval — invoke the skill with representative input; observe behavior matches spec | skill-invoke |
-| `agent-definition` | Run-once behavioral check — invoke the agent with representative input; observe routing, response, and halt | skill-invoke |
-| `rule-hook` | Behavioral trigger — create the triggering condition; observe expected behavior fires | behavioral-trigger via cmux |
-| `script-code` | Execution test — run the script with representative inputs; observe output matches spec | bash via cmux |
-| `script-cli` | Execution test — run the CLI command; observe output matches spec | bash via cmux |
-| `backend` | Execution test — exercise the endpoint; observe response matches spec | curl or bash via cmux |
-| `app-ui` | Smoke test (build + launch + drive) then human residual — automated smoke confirms launch | Maestro (mobile/web), Playwright (web-only fallback) |
-| `research-spike` | Document review — confirm the artifact satisfies all ACs by inspection | human_review_carveout |
-| `specification` | Document review — confirm the spec artifact satisfies all ACs by inspection | human_review_carveout |
-| `config-structure` | Direct validation — verify JSON/YAML parses, required fields present, no existing entries disturbed | bash |
+| `chat-ui` | Smoke test (build + launch + drive the chat surface itself) then human residual | Maestro (mobile/web), Playwright (web-only fallback) |
+| `application-ui` | Smoke test (build + launch + drive) then human residual — automated smoke confirms launch | Maestro (mobile/web), Playwright (web-only fallback) |
+| `http-endpoint` | Execution test — exercise the endpoint directly; observe response matches spec | curl |
+| `cli` | Execution test — run the script or CLI command with representative inputs; observe output matches spec | bash via cmux |
+| `skill-invocation` | EDD eval / run-once behavioral check — invoke the skill or agent with representative input; observe routing, response, and halt | skill-invoke |
+| `hook-trigger` | Behavioral trigger — create the triggering condition; observe expected behavior fires | behavioral-trigger via cmux |
+| `artifact` | Document review — confirm the artifact satisfies all ACs by inspection | human_review_carveout |
 
-Stories with multiple `change_type` values: apply each type's required method to the task(s) of that type.
+**`change_type` → surface inference** (used only when no `surface` is declared):
+`skill-instruction`/`agent-definition` → `skill-invocation`; `rule-hook` → `hook-trigger`;
+`script-code`/`script-cli` → `cli`; `backend`/`app-ui` → `application-ui`;
+`research-spike`/`specification`/`config-structure` → `artifact`. Note `backend` infers to
+`application-ui` (smoke), never `http-endpoint` (curl) — a story whose diff is
+backend-only but whose behavior is met in the app UI never routes to curl.
+
+Stories with multiple `change_type` values (inference path only): resolve to a single
+type via `CHANGE_TYPE_PRECEDENCE`, then apply that type's inferred surface's method.
 
 If `verification-harness.json` defines a project-level override for a story's path, use that driver instead of the default.
 
 ## Skill and Workflow Validation (skill-invoke driver)
 
-For `skill-instruction` and `agent-definition` stories:
+For stories whose surface is `skill-invocation` (declared, or inferred from
+`skill-instruction`/`agent-definition` change_type):
 
 1. Read the story ACs to understand what observable behavior is expected
 2. Invoke the skill or agent using the `Skill` tool if available, or via cmux if the skill must run in a separate session
@@ -100,7 +109,8 @@ If `cmux identify` fails, report the scenario as ERROR/BLOCKED — not MANUAL.
 
 ## Behavioral Trigger Validation (behavioral-trigger driver)
 
-For `rule-hook` stories:
+For stories whose surface is `hook-trigger` (declared, or inferred from `rule-hook`
+change_type):
 
 1. Identify the condition that triggers the rule or hook (from the story ACs)
 2. Create that condition using Bash or cmux
@@ -109,7 +119,9 @@ For `rule-hook` stories:
 
 ## Execution Test Validation (bash/curl driver)
 
-For `script-code`, `script-cli`, `backend` stories:
+For stories whose surface is `cli` (declared, or inferred from `script-code`/`script-cli`
+change_type) or `http-endpoint` (declared explicitly — never inferred from `backend`
+change_type alone; see Verification Routing above):
 
 1. Read the story ACs for the expected input/output contract
 2. Run the command or endpoint call via Bash (or `cmux send` for interactive shells)
@@ -119,14 +131,15 @@ For `script-code`, `script-cli`, `backend` stories:
 
 ## Document Review (human_review_carveout)
 
-For `research-spike` and `specification` stories:
+For stories whose surface is `artifact` (declared, or inferred from `research-spike`,
+`specification`, or `config-structure` change_type):
 
 1. Read the artifact specified in the story ACs
 2. Verify each AC by inspection — does the document contain the required content?
 3. Cross-reference any claims against referenced sources if accessible
 4. Report: VERIFIED (AC satisfied by document content), PARTIAL (incomplete), MISSING (not found)
 
-These are the only change types where file reading substitutes for execution. All other types require execution.
+`artifact` is the only surface where file reading substitutes for execution. Every other surface requires execution.
 
 ## Spec Quality Classification
 
@@ -177,7 +190,7 @@ Return a structured validation report:
 ### Per-Story Results
 
 #### [story-key]: [Story Title]
-**change_type:** [type] | **method:** [method] | **driver:** [driver]
+**surface:** [surface, declared or inferred] | **change_type:** [type] | **method:** [method] | **driver:** [driver]
 | Contract | Status | Evidence |
 |----------|--------|----------|
 | [AC description] | PASS/FAIL/ERROR/SKIP/MANUAL | [command output or observation] |

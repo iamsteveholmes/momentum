@@ -768,7 +768,7 @@ def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
                      story=slug)
 
     # Validate verification_method against closed enum — derived from single source of truth
-    VALID_VERIFICATION_METHODS = set(CHANGE_TYPE_TO_VERIFICATION_METHOD.values())
+    VALID_VERIFICATION_METHODS = set(SURFACE_TO_VERIFICATION_METHOD.values())
     vm = args.verification_method
     if vm not in VALID_VERIFICATION_METHODS:
         error_result("sprint_story_set_contract",
@@ -829,22 +829,52 @@ def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
            contract=contract_block)
 
 
-# Closed enum: change_type → verification method token
+# Closed enum: assembled surface → verification method token
 # Source of truth: skills/momentum/references/rules/verification-standard.md §1
-CHANGE_TYPE_TO_VERIFICATION_METHOD: dict[str, str] = {
-    "skill-instruction": "skill-invoke",
-    "agent-definition": "skill-invoke",
-    "rule-hook": "behavioral-trigger",
-    "script-code": "bash",
-    "script-cli": "bash",
-    "backend": "curl",
-    "app-ui": "smoke",
-    "research-spike": "document-review",
-    "specification": "document-review",
-    "config-structure": "document-review",
+# (DEC-040 D7, amending DEC-029: routing key is now the declared assembled surface;
+# change_type is demoted to an inference fallback — see CHANGE_TYPE_TO_SURFACE_INFERENCE
+# below. The six-token method enum itself is unchanged.)
+SURFACE_TO_VERIFICATION_METHOD: dict[str, str] = {
+    "chat-ui": "smoke",
+    "application-ui": "smoke",
+    "http-endpoint": "curl",
+    "cli": "bash",
+    "skill-invocation": "skill-invoke",
+    "hook-trigger": "behavioral-trigger",
+    "artifact": "document-review",
 }
 
-# Multi-change-type precedence order (highest weight first)
+# change_type → surface inference fallback. Consulted ONLY when a story declares no
+# `surface` — a declared surface always wins and this table is never used to override
+# one. Note `backend` infers to `application-ui` (→ smoke), NOT `http-endpoint` (→ curl):
+# the old unconditional `backend → curl` mapping is gone. A story whose actual consumer
+# is a raw HTTP client must declare `surface: http-endpoint` (or use the §2 override).
+CHANGE_TYPE_TO_SURFACE_INFERENCE: dict[str, str] = {
+    "skill-instruction": "skill-invocation",
+    "agent-definition": "skill-invocation",
+    "rule-hook": "hook-trigger",
+    "script-code": "cli",
+    "script-cli": "cli",
+    "backend": "application-ui",
+    "app-ui": "application-ui",
+    "research-spike": "artifact",
+    "specification": "artifact",
+    "config-structure": "artifact",
+}
+
+# Back-compat derived view: change_type -> verification method, computed through the
+# surface re-key above. The six-token *method* enum is unchanged by the re-key — only
+# change_type's routing ROLE changed (routing key -> inference fallback). Named
+# constant retained per verification-standard.md §1 AC10 (must stay a re-key'd,
+# consistent copy alongside compute_verification_method), independent of whether any
+# call site currently reads its values.
+CHANGE_TYPE_TO_VERIFICATION_METHOD: dict[str, str] = {
+    ct: SURFACE_TO_VERIFICATION_METHOD[surface]
+    for ct, surface in CHANGE_TYPE_TO_SURFACE_INFERENCE.items()
+}
+
+# Multi-change-type precedence order (highest weight first) — consulted only during
+# change_type inference (no declared surface).
 CHANGE_TYPE_PRECEDENCE: list[str] = [
     "app-ui",
     "script-code",
@@ -859,54 +889,95 @@ CHANGE_TYPE_PRECEDENCE: list[str] = [
 ]
 
 
-def compute_verification_method(change_type_raw) -> str:
-    """Compute the closed-enum verification_method from a story's change_type field.
+def infer_surface_from_change_type(change_type_raw) -> str | None:
+    """Infer an assembled surface from a story's change_type (inference fallback only).
 
-    Handles multi-value change_type strings (e.g. "skill-instruction + code") by
-    splitting on ' + ' and '+' and applying the precedence table to pick the highest-
-    weight type. Falls back to 'document-review' for unknown/empty change_type values.
+    Consulted only when a story declares no `surface`. Handles multi-value change_type
+    strings (e.g. "skill-instruction + code") by splitting on ' + ' / ',' and applying
+    the precedence table to pick the highest-weight type. Tolerates a list/tuple
+    change_type (e.g. a story-frontmatter YAML list mistakenly written to the index) by
+    coercing it to the canonical "+"-joined string form.
 
-    Tolerates a list/tuple change_type (e.g. a story-frontmatter YAML list mistakenly
-    written to the index) by coercing it to the canonical "+"-joined string form, so a
-    bad write degrades gracefully instead of aborting the whole sprint's Step 3.5.
+    Returns None when nothing resolvable is found (empty, unknown, or all-unknown
+    multi-value input) — callers fall back further (compute_verification_method degrades
+    to 'document-review').
     """
     if not change_type_raw:
-        return "document-review"
+        return None
 
     # Defense-in-depth: coerce a list/tuple to the canonical string form before splitting.
     if isinstance(change_type_raw, (list, tuple)):
         change_type_raw = " + ".join(str(p) for p in change_type_raw if str(p).strip())
         if not change_type_raw:
-            return "document-review"
+            return None
 
     # Split on common separators used in the existing data
     import re as _re
     parts = [p.strip() for p in _re.split(r"\s*\+\s*|,\s*", change_type_raw) if p.strip()]
 
     # Filter to known types
-    known = [p for p in parts if p in CHANGE_TYPE_TO_VERIFICATION_METHOD]
+    known = [p for p in parts if p in CHANGE_TYPE_TO_SURFACE_INFERENCE]
 
     if not known:
-        return "document-review"
+        return None
 
     if len(known) == 1:
-        return CHANGE_TYPE_TO_VERIFICATION_METHOD[known[0]]
+        return CHANGE_TYPE_TO_SURFACE_INFERENCE[known[0]]
 
     # Multi-type: apply precedence order (first match wins)
     for ct in CHANGE_TYPE_PRECEDENCE:
         if ct in known:
-            return CHANGE_TYPE_TO_VERIFICATION_METHOD[ct]
+            return CHANGE_TYPE_TO_SURFACE_INFERENCE[ct]
 
     # Unreachable if CHANGE_TYPE_PRECEDENCE covers all known types, but guard anyway
-    return CHANGE_TYPE_TO_VERIFICATION_METHOD[known[0]]
+    return CHANGE_TYPE_TO_SURFACE_INFERENCE[known[0]]
+
+
+def resolve_verification_routing(change_type_raw=None, surface=None) -> tuple[str, str | None, str]:
+    """Resolve verification_method plus routing provenance in a single pass.
+
+    Routing key is the declared assembled `surface` (verification-standard.md §1,
+    DEC-040 D7). When `surface` is a valid token in the closed enum, its mapped method
+    applies unconditionally and change_type is never consulted. Only when no surface is
+    declared (or the declared token is not in the closed enum) does change_type supply a
+    default inference via `infer_surface_from_change_type`.
+
+    Preserves the pre-re-key graceful-degradation contract: empty, unknown, or
+    list-valued change_type input still returns a valid method token ('document-review')
+    rather than raising — load-bearing for in-flight sprints (verification-standard.md
+    §1 AC11).
+
+    Returns (verification_method, governing_surface, routed_by) so callers needing only
+    the method and callers needing full routing visibility (§1 Visibility) share one
+    resolution instead of maintaining two independent copies of the same branching.
+    """
+    if surface and surface in SURFACE_TO_VERIFICATION_METHOD:
+        return SURFACE_TO_VERIFICATION_METHOD[surface], surface, "surface"
+
+    inferred_surface = infer_surface_from_change_type(change_type_raw)
+    if inferred_surface is not None:
+        return SURFACE_TO_VERIFICATION_METHOD[inferred_surface], inferred_surface, "change_type_inference"
+
+    return "document-review", None, "default_fallback"
+
+
+def compute_verification_method(change_type_raw=None, surface=None) -> str:
+    """Compute the closed-enum verification_method — surface-primary, change_type fallback.
+
+    Thin wrapper over `resolve_verification_routing` for callers that only need the
+    method token, not the routing provenance.
+    """
+    return resolve_verification_routing(change_type_raw, surface)[0]
 
 
 def cmd_sprint_compute_verification_method(args: argparse.Namespace) -> None:
-    """Compute verification_method for a story from its change_type in stories/index.json.
+    """Compute verification_method for a story — surface-primary, change_type inference fallback.
 
-    Outputs the closed-enum token and the harness_profile (identical to verification_method
-    unless a project override exists). Used by sprint-planning Step 3.5 to populate
-    Part-A contract headers without requiring inline logic in the skill workflow.
+    Reads the story's declared `surface` from stories/index.json first (the routing key
+    per verification-standard.md §1, DEC-040 D7); falls back to change_type inference
+    only when no valid surface is declared. Outputs which one governed (`routed_by`) and
+    the resolved `governing_surface` so routing is never silent (§1 Visibility) — used by
+    sprint-planning Step 3.5 to populate the Part-A contract header's `surface:` field.
     """
     project_dir = resolve_project_dir()
     path = stories_path(project_dir)
@@ -917,12 +988,18 @@ def cmd_sprint_compute_verification_method(args: argparse.Namespace) -> None:
         error_result("sprint_compute_verification_method",
                      f"Story '{slug}' not found in stories/index.json", story=slug)
 
-    change_type = stories[slug].get("change_type", "")
-    vm = compute_verification_method(change_type)
+    story = stories[slug]
+    change_type = story.get("change_type", "")
+    surface = story.get("surface") or None
+
+    vm, governing_surface, routed_by = resolve_verification_routing(change_type, surface)
 
     result("sprint_compute_verification_method", success=True,
            story=slug,
            change_type=change_type,
+           surface=surface,
+           governing_surface=governing_surface,
+           routed_by=routed_by,
            verification_method=vm,
            harness_profile=vm)  # harness_profile equals verification_method unless overridden
 
@@ -3379,7 +3456,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ssc.add_argument("--slug", required=True, help="Story slug")
     ssc.add_argument("--verification-method", required=True,
-                     choices=sorted(set(CHANGE_TYPE_TO_VERIFICATION_METHOD.values())),
+                     choices=sorted(set(SURFACE_TO_VERIFICATION_METHOD.values())),
                      help="Closed-enum verification method token")
     ssc.add_argument("--contract-path", required=True,
                      help="Relative path to the contract file from project root")

@@ -3787,6 +3787,10 @@ def main():
     test_compute_verification_method_multi_type_precedence()
     test_compute_verification_method_unknown_change_type()
     test_compute_verification_method_not_found_story()
+    test_compute_verification_method_declared_surface_overrides_backend_change_type()
+    test_compute_verification_method_backend_no_surface_infers_application_ui_not_curl()
+    test_compute_verification_method_declared_http_endpoint_surface_routes_curl()
+    test_compute_verification_method_invalid_surface_token_falls_back_to_inference()
 
     # Practice ledger tests (A1 / DEC-033)
     # Task 2: append writer
@@ -4046,8 +4050,8 @@ def test_story_set_contract_creates_team_if_absent():
 # --- compute-verification-method tests ---
 
 def test_compute_verification_method_skill_instruction():
-    """skill-instruction change_type → skill-invoke."""
-    print("\n[compute-verification-method] skill-instruction → skill-invoke")
+    """No declared surface: skill-instruction change_type infers skill-invocation → skill-invoke."""
+    print("\n[compute-verification-method] inference fallback: skill-instruction → skill-invoke")
     stories = {
         "my-skill-story": {
             "status": "backlog",
@@ -4065,11 +4069,13 @@ def test_compute_verification_method_skill_instruction():
     assert_eq("exit 0", code, 0)
     assert_eq("verification_method", out.get("verification_method"), "skill-invoke")
     assert_eq("harness_profile", out.get("harness_profile"), "skill-invoke")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
+    assert_eq("governing_surface", out.get("governing_surface"), "skill-invocation")
 
 
 def test_compute_verification_method_rule_hook():
-    """rule-hook change_type → behavioral-trigger."""
-    print("\n[compute-verification-method] rule-hook → behavioral-trigger")
+    """No declared surface: rule-hook change_type infers hook-trigger → behavioral-trigger."""
+    print("\n[compute-verification-method] inference fallback: rule-hook → behavioral-trigger")
     stories = {
         "my-hook": {
             "status": "backlog",
@@ -4085,11 +4091,12 @@ def test_compute_verification_method_rule_hook():
     code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "my-hook")
     assert_eq("exit 0", code, 0)
     assert_eq("verification_method", out.get("verification_method"), "behavioral-trigger")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
 
 
 def test_compute_verification_method_specification():
-    """specification change_type → document-review."""
-    print("\n[compute-verification-method] specification → document-review")
+    """No declared surface: specification change_type infers artifact → document-review."""
+    print("\n[compute-verification-method] inference fallback: specification → document-review")
     stories = {
         "my-spec": {
             "status": "backlog",
@@ -4105,11 +4112,14 @@ def test_compute_verification_method_specification():
     code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "my-spec")
     assert_eq("exit 0", code, 0)
     assert_eq("verification_method", out.get("verification_method"), "document-review")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
+    assert_eq("governing_surface", out.get("governing_surface"), "artifact")
 
 
 def test_compute_verification_method_multi_type_precedence():
-    """Multi-change-type 'skill-instruction + rule-hook' → skill-invoke (skill-instruction wins)."""
-    print("\n[compute-verification-method] multi-type precedence (skill-instruction beats rule-hook)")
+    """No declared surface: multi-change-type 'skill-instruction + rule-hook' infers
+    skill-invocation (skill-instruction wins precedence) → skill-invoke."""
+    print("\n[compute-verification-method] inference fallback: multi-type precedence (skill-instruction beats rule-hook)")
     stories = {
         "multi-type": {
             "status": "backlog",
@@ -4124,13 +4134,18 @@ def test_compute_verification_method_multi_type_precedence():
     proj = setup_project(stories=stories)
     code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "multi-type")
     assert_eq("exit 0", code, 0)
-    # skill-instruction > rule-hook in precedence table → skill-invoke
+    # skill-instruction > rule-hook in precedence table → skill-invocation → skill-invoke
     assert_eq("skill-instruction wins", out.get("verification_method"), "skill-invoke")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
+    assert_eq("governing_surface", out.get("governing_surface"), "skill-invocation")
 
 
 def test_compute_verification_method_unknown_change_type():
-    """Unknown change_type falls back to document-review."""
-    print("\n[compute-verification-method] unknown change_type → document-review")
+    """No declared surface, unrecognized change_type: degrades to document-review, not an
+    error. This is the fully-degraded case — no surface AND no resolvable change_type
+    inference — so routed_by must report 'default_fallback', not 'change_type_inference':
+    no inference actually occurred, and governing_surface is None (nothing to record)."""
+    print("\n[compute-verification-method] inference fallback: unknown change_type → document-review")
     stories = {
         "unknown-ct": {
             "status": "backlog",
@@ -4146,6 +4161,8 @@ def test_compute_verification_method_unknown_change_type():
     code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "unknown-ct")
     assert_eq("exit 0", code, 0)
     assert_eq("fallback to document-review", out.get("verification_method"), "document-review")
+    assert_eq("routed_by default_fallback", out.get("routed_by"), "default_fallback")
+    assert_eq("governing_surface", out.get("governing_surface"), None)
 
 
 def test_compute_verification_method_not_found_story():
@@ -4156,6 +4173,100 @@ def test_compute_verification_method_not_found_story():
                          "--story", "does-not-exist")
     assert_eq("exit 1", code, 1)
     assert_eq("error present", "error" in out, True)
+
+
+def test_compute_verification_method_declared_surface_overrides_backend_change_type():
+    """A declared surface wins over change_type inference — the AC4/AC11 regression case:
+    a backend-only diff whose behavior is met in the chat UI must route to smoke, never curl."""
+    print("\n[compute-verification-method] declared surface chat-ui overrides backend change_type (never curl)")
+    stories = {
+        "chat-story": {
+            "status": "backlog",
+            "title": "Chat Story",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "backend",
+            "surface": "chat-ui",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "chat-story")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method", out.get("verification_method"), "smoke")
+    assert_eq("never curl", out.get("verification_method") != "curl", True)
+    assert_eq("routed_by surface", out.get("routed_by"), "surface")
+    assert_eq("governing_surface", out.get("governing_surface"), "chat-ui")
+
+
+def test_compute_verification_method_backend_no_surface_infers_application_ui_not_curl():
+    """No declared surface: backend change_type now infers application-ui → smoke, not curl —
+    the unconditional backend->curl mapping no longer survives in the inference fallback."""
+    print("\n[compute-verification-method] backend inference → smoke (application-ui), not curl")
+    stories = {
+        "backend-story": {
+            "status": "backlog",
+            "title": "Backend Story",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "backend",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "backend-story")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method", out.get("verification_method"), "smoke")
+    assert_eq("governing_surface", out.get("governing_surface"), "application-ui")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
+
+
+def test_compute_verification_method_declared_http_endpoint_surface_routes_curl():
+    """Declaring surface: http-endpoint explicitly is the only way to route to curl now —
+    confirms curl is still reachable via an out-loud declaration, per verification-standard.md §1."""
+    print("\n[compute-verification-method] declared surface http-endpoint → curl")
+    stories = {
+        "api-story": {
+            "status": "backlog",
+            "title": "API Story",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "backend",
+            "surface": "http-endpoint",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "api-story")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method", out.get("verification_method"), "curl")
+    assert_eq("routed_by surface", out.get("routed_by"), "surface")
+
+
+def test_compute_verification_method_invalid_surface_token_falls_back_to_inference():
+    """An unrecognized surface token is not in the closed enum — degrades to change_type
+    inference rather than raising, matching the existing degradation contract."""
+    print("\n[compute-verification-method] invalid surface token → falls back to change_type inference")
+    stories = {
+        "bad-surface-story": {
+            "status": "backlog",
+            "title": "Bad Surface",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "rule-hook",
+            "surface": "not-a-real-surface",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "bad-surface-story")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method", out.get("verification_method"), "behavioral-trigger")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
 
 
 # --- Triage Prefilter Tests ---

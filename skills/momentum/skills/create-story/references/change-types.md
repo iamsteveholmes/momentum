@@ -44,7 +44,23 @@ The section header and change type summary ALWAYS appear. Per-type sections foll
   *(e.g., "- Tasks 1, 3 → skill-instruction (EDD)", "- Task 2 → config-structure (direct)")*
 
 ---
+
+### Universal DoD
+
+- [ ] The capability is reachable from the application's entry point by a user who has read
+      no code. (verification-standard.md §5 — applies to every story regardless of change
+      type or surface; stated once here, not repeated per change-type section below.)
+
+---
 ```
+
+**Why this lives in the header, not a per-type block:** the reachability item
+(verification-standard.md §5, DEC-040 D7) applies to every story unconditionally. Injecting
+it per change-type would miss change types with no per-type template (`script-cli`,
+`agent-definition`, `backend`, `research-spike`) and would duplicate the line for any
+multi-type story. The header template is composed for every story regardless of which
+per-type sections follow, so this is the one place the item is guaranteed to reach every
+generated story exactly once.
 
 ---
 
@@ -238,6 +254,13 @@ Injected header would be:
 **Change Types in This Story:**
 - Tasks 1, 3 → skill-instruction (EDD)
 - Task 2 → script-code (TDD)
+
+---
+
+### Universal DoD
+
+- [ ] The capability is reachable from the application's entry point by a user who has read
+      no code.
 ```
 
-Then the `skill-instruction` and `script-code` sections follow. The `rule-hook` and `config-structure` sections are omitted since those types are not present.
+Then the `skill-instruction` and `script-code` sections follow. The `rule-hook` and `config-structure` sections are omitted since those types are not present. The Universal DoD block appears regardless of which per-type sections are present or absent.
