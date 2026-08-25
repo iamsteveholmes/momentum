@@ -6405,7 +6405,7 @@
     "retro_source": "sprint-2026-07-13"
   },
   "momentum-tools-feature-verify-human-verdict-recorder-and": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "momentum-tools feature verify — human verdict recorder and sole writer of features.json",
     "epic_slug": "momentum-quality-gates-enforced",
     "story_file": true,
@@ -6420,7 +6420,7 @@
     "change_type": "script-cli"
   },
   "sprint-closure-refusal-recorded-human-verdicts-per-goal": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Sprint closure refusal — recorded human verdicts per goal_conditions, honest FAILED terminal state",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -6443,7 +6443,7 @@
     "change_type": "script-code + skill-instruction"
   },
   "sprint-planning-goal-conditions-declaration-plan-gate-leads": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "sprint-planning goal_conditions declaration + plan-gate leads with the capability fork",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "story_file": true,
@@ -6460,7 +6460,7 @@
     "change_type": "skill-instruction + script-cli"
   },
   "conduct-merge-gate-completes-by-executing-merge-push-story": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Conduct merge-gate completes by executing — merge + push + story transitions, never a report",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -6476,7 +6476,7 @@
     "change_type": "skill-instruction"
   },
   "conduct-resume-card-impetus-pending-gate-agenda-session": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Conduct resume card + Impetus pending-gate agenda — session-start re-surfacing, never expiry-FAIL",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -6494,7 +6494,7 @@
     "change_type": "skill-instruction + rule-hook"
   },
   "impetus-session-greeting-leads-with-n-of-m-feature": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Impetus session greeting leads with N-of-M feature conditions passing",
     "epic_slug": "momentum-impetus-session-orientation",
     "story_file": true,
@@ -6513,7 +6513,7 @@
     "change_type": "rule-hook + skill-instruction"
   },
   "verification-routing-re-key-to-assembled-surface-dod": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Verification routing re-key to assembled surface + DoD reachability item",
     "epic_slug": "momentum-quality-gates-enforced",
     "story_file": true,
@@ -6537,7 +6537,7 @@
     "change_type": "skill-instruction + agent-definition + script-code + config-structure"
   },
   "daily-tasting-reminder-expected-vs-reality-brief-generator": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Daily tasting reminder + expected-vs-reality brief generator",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
@@ -6562,5 +6562,105 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "decide-minimum-build-sha-length-floor-dec-040-d8": {
+    "status": "backlog",
+    "title": "Decide minimum build SHA length floor (DEC-040 D8)",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice"
+  },
+  "wrap-cli-argparse-errors-in-the-json-error-envelope": {
+    "status": "backlog",
+    "title": "Wrap CLI argparse errors in the JSON error envelope",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
+  },
+  "make-write-json-atomic-and-lock-safe": {
+    "status": "backlog",
+    "title": "Make write_json atomic and lock-safe",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
+  },
+  "fix-unsatisfiable-scenario-6-fixture-in-goal-conditions": {
+    "status": "backlog",
+    "title": "Fix unsatisfiable Scenario 6 fixture in goal-conditions frozen contract",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "defect"
+  },
+  "update-stale-change-type-keyed-eval-fixtures-to-assembled": {
+    "status": "backlog",
+    "title": "Update stale change_type-keyed eval fixtures to assembled-surface keys",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
+  },
+  "decide-who-owns-the-dev-agent-record-conductor-or-story": {
+    "status": "backlog",
+    "title": "Decide who owns the Dev Agent Record: Conductor or story template",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
+  },
+  "correct-resume-card-contract-description-of-merged": {
+    "status": "backlog",
+    "title": "Correct resume-card contract description of merged/blocked count source",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
+  },
+  "give-the-capability-fork-a-stable-id-instead-of-positional": {
+    "status": "backlog",
+    "title": "Give the capability fork a stable id instead of positional addressing",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
+  },
+  "consolidate-capability-fork-rejection-record-format-with": {
+    "status": "backlog",
+    "title": "Consolidate capability-fork-rejection record format with coherence-gate Override Decisions convention",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice"
+  },
+  "document-surface-advisory-provenance-field-in-architecturemd": {
+    "status": "backlog",
+    "title": "Document surface_advisory provenance field in architecture.md",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
   }
 }

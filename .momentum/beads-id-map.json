@@ -25,5 +25,10 @@
   "conduct-merge-gate-completes-by-executing-merge-push-story": "agent-ad5e86c17b33b028d-9cx",
   "verification-routing-re-key-to-assembled-surface-dod": "agent-ad5e86c17b33b028d-mxi",
   "daily-tasting-reminder-expected-vs-reality-brief-generator": "agent-ad5e86c17b33b028d-6fv",
-  "intake-owner-priority-validator-owner-sourced-app": "agent-ad5e86c17b33b028d-51d"
+  "intake-owner-priority-validator-owner-sourced-app": "agent-ad5e86c17b33b028d-51d",
+  "decide-minimum-build-sha-length-floor-dec-040-d8": "agent-ad5e86c17b33b028d-gn9",
+  "wrap-cli-argparse-errors-in-the-json-error-envelope": "agent-ad5e86c17b33b028d-4vx",
+  "fix-unsatisfiable-scenario-6-fixture-in-goal-conditions": "agent-ad5e86c17b33b028d-bbc",
+  "give-the-capability-fork-a-stable-id-instead-of-positional": "agent-ad5e86c17b33b028d-5yz",
+  "decide-who-owns-the-dev-agent-record-conductor-or-story": "agent-ad5e86c17b33b028d-76x"
 }
