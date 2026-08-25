@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-08-02'
+lastEdited: '2026-08-25'
 
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
@@ -56,3 +56,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-038 | [Manifesto as Per-Agent Diagnostic Table + Per-Project Multi-KB Architecture](dec-038-manifesto-diagnostic-table-multi-kb-2026-06-16.md) | 2026-06-16 | manifesto-cmp-dev-recovery-2026-06-16 | decided |
 | DEC-039 | [Sprint Goal + Goal-Criticality Scope Mutability — Amending the DEC-030 Never-Add Freeze](dec-039-sprint-goal-mutable-scope-2026-07-10.md) | 2026-07-10 | (developer-conversation) | decided (completed + amended by DEC-040) |
 | DEC-040 | [Delivery Loop Closure — Feature Verification Registry, Two-Tier Gates, and Nights-and-Weekends HITL Cadence](dec-040-delivery-loop-closure-2026-08-02.md) | 2026-08-02 | nornspun-delivery-discovery-2026-08-02 corpus + F1–F7 verdicts | decided |
+| DEC-041 | [Gas City HITL Evaluation — Deferral Reaffirmed, Notification as Hard HITL Requirement, Stop-Before-Push](dec-041-gas-city-hitl-deferral-reaffirmed-2026-08-25.md) | 2026-08-25 | gas-city-hitl-cycle-orchestration research corpus + decision-gate verdicts | decided |
