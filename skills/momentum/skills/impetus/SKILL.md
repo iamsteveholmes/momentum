@@ -69,9 +69,17 @@ All developer-facing output produced by this skill is governed by the
 |---|---|
 | Situational report (session greeting — the orientation output after Rebirth) | ≤ 2 sentences |
 
-**Floor (non-negotiable):** The situational report must carry the **honest ledger counts** and any **recurring-pattern signal** inline within its 2-sentence budget. These are decision-relevant signals — omitting them is a defect, not a space-saving choice. If the budget feels tight, trim other wording (e.g., the voice framing); do not drop the counts or the signal.
+**Floor (non-negotiable):** The situational report must carry the **N-of-M feature headline**
+(features with a recorded `passing` verdict, out of the total tracked in `.momentum/features.json`
+— or the honest no-features-tracked-yet statement when the registry is absent or empty), the
+**honest ledger counts**, and any **recurring-pattern signal** inline within its 2-sentence budget.
+These are decision-relevant signals — omitting any of them is a defect, not a space-saving choice.
+If the budget feels tight, trim other wording (e.g., the voice framing) first; do not drop the
+feature headline, the counts, or the signal.
 
-**Caps-vs-floor:** The 2-sentence cap governs the greeting's length. It does not override the floor's requirement that ledger counts and recurring-pattern signals appear inline. Trim the irrelevant; preserve the signal.
+**Caps-vs-floor:** The 2-sentence cap governs the greeting's length. It does not override the
+floor's requirement that the feature headline, ledger counts, and recurring-pattern signal appear
+inline. Trim the irrelevant — voice framing and narration first; preserve the signal.
 
 `effort: low` is set for startup performance. It does not change the completeness requirements for the situational report.
 
