@@ -786,11 +786,17 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
     <check if="the call refused for any other reason">
       <output>Sprint `{{sprint_slug}}` merged and pushed, but closure is pending: the gate named
       an unverified or recorded-FAIL condition (or an unconfirmed maintenance fix). The sprint
-      stays `active` until closure succeeds (`momentum-tools sprint complete`) or you record an
-      honest FAILED verdict (`momentum-tools sprint complete --verdict failed --reason "..."`).</output>
+      stays `active` — not `done` — until closure succeeds (`momentum-tools sprint complete`) or
+      you record an honest FAILED verdict (`momentum-tools sprint complete --verdict failed
+      --reason "..."`). Retrospective pickup keys on `completed[]`, so it will not find this
+      sprint until closure resolves one way or the other.</output>
+      <action>Update task 7 (Sprint Completion) to completed. The merge and push this phase owns
+      are done; sprint closure is a separate tier-2 concern left pending, not a defect in this
+      phase.</action>
     </check>
 
-    <output>## Sprint {{sprint_slug}} — Complete
+    <check if="the sprint closure gate succeeded (fresh close, or the idempotent no-op above)">
+      <output>## Sprint {{sprint_slug}} — Complete
 
 **Stories done:** {{done_count}} / {{total_count}}
 **Merge order:** {{merge_sequence}}
@@ -808,11 +814,12 @@ Sprint branch `sprint/{{sprint_slug}}` merged to main. Orphaned worktree-agent-*
 ---
 Run **retrospective** to surface practice improvements?</output>
 
-    <ask>Run retrospective now?</ask>
-    <action>Update task 7 (Sprint Completion) to completed</action>
+      <ask>Run retrospective now?</ask>
+      <action>Update task 7 (Sprint Completion) to completed</action>
 
-    <check if="developer says yes">
-      <action>Return to Impetus session menu and surface the retrospective option.</action>
+      <check if="developer says yes">
+        <action>Return to Impetus session menu and surface the retrospective option.</action>
+      </check>
     </check>
   </step>
 

@@ -318,21 +318,32 @@ def _load_features_registry(project_dir: Path) -> dict | None:
     return data
 
 
+def _unverified_condition(slug: str, reason: str, *, status=None, verdict=None,
+                           backend_sha=None, client_sha=None) -> dict:
+    """Build an unverified classification result. Guardrail: `reason` must be one of
+    the closed-set tokens in `_UNVERIFIED_REASONS` — a caller passing anything else is a
+    bug in this module, not a data problem, so it fails loudly rather than emitting a
+    fourth reason token silently."""
+    assert reason in _UNVERIFIED_REASONS, f"invalid unverified reason token: {reason!r}"
+    return {"slug": slug, "state": "unverified", "reason": reason,
+            "status": status, "verdict": verdict,
+            "backend_sha": backend_sha, "client_sha": client_sha}
+
+
 def _classify_goal_condition(registry: dict | None, slug: str) -> dict:
     """Classify one goal_conditions feature slug into verified-pass, recorded-fail, or
     unverified with a closed-set reason token (missing-entry|no-verdict|no-build-shas).
     Read-only — never writes .momentum/features.json (AC 1, 2)."""
     entry = (registry or {}).get(slug)
     if not isinstance(entry, dict) or entry.get("status") == "absent":
-        return {"slug": slug, "state": "unverified", "reason": "missing-entry",
-                "status": entry.get("status") if isinstance(entry, dict) else None,
-                "verdict": None, "backend_sha": None, "client_sha": None}
+        return _unverified_condition(
+            slug, "missing-entry",
+            status=entry.get("status") if isinstance(entry, dict) else None)
 
     status = entry.get("status")
     last_verified = entry.get("last_verified")
     if not isinstance(last_verified, dict):
-        return {"slug": slug, "state": "unverified", "reason": "no-verdict",
-                "status": status, "verdict": None, "backend_sha": None, "client_sha": None}
+        return _unverified_condition(slug, "no-verdict", status=status)
 
     verdict = last_verified.get("verdict")
     backend_sha = last_verified.get("backend_sha")
@@ -340,9 +351,8 @@ def _classify_goal_condition(registry: dict | None, slug: str) -> dict:
     has_shas = bool(backend_sha) and bool(client_sha)
 
     if not has_shas:
-        return {"slug": slug, "state": "unverified", "reason": "no-build-shas",
-                "status": status, "verdict": verdict,
-                "backend_sha": backend_sha, "client_sha": client_sha}
+        return _unverified_condition(slug, "no-build-shas", status=status, verdict=verdict,
+                                      backend_sha=backend_sha, client_sha=client_sha)
 
     if verdict == "fail":
         return {"slug": slug, "state": "recorded-fail", "reason": None,
@@ -357,9 +367,8 @@ def _classify_goal_condition(registry: dict | None, slug: str) -> dict:
     # A complete last_verified block (verdict + both SHAs) in a shape `feature verify`
     # never produces (e.g. verdict "pass" without status "passing"). Never an implicit
     # pass — fall back to the closest unverified reason.
-    return {"slug": slug, "state": "unverified", "reason": "no-verdict",
-            "status": status, "verdict": verdict,
-            "backend_sha": backend_sha, "client_sha": client_sha}
+    return _unverified_condition(slug, "no-verdict", status=status, verdict=verdict,
+                                  backend_sha=backend_sha, client_sha=client_sha)
 
 
 def _condition_summary(c: dict) -> str:
@@ -392,7 +401,7 @@ def _parse_verified_fix_list(goal_text: str | None) -> list[str]:
         if not stripped:
             continue
         if stripped.startswith("-"):
-            entries.append(stripped.lstrip("-").strip())
+            entries.append(stripped[1:].strip())
     return entries
 
 
@@ -447,6 +456,7 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
         error_result("sprint_complete", "No active sprint to complete")
 
     active = sprints["active"]
+    slug = active.get("slug", "unknown")
     verdict = getattr(args, "verdict", None) or "done"
     reason = getattr(args, "reason", None)
     fix_confirmed_args: list[str] = getattr(args, "fix_confirmed", None) or []
@@ -469,6 +479,7 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                 "sprint_complete",
                 "FAILED closure requires a non-empty --reason explaining why the sprint's "
                 "goal was not verified.",
+                slug=slug,
             )
     elif verdict == "done":
         if conditions:
@@ -482,6 +493,7 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                     blocking_conditions=[
                         {"slug": c["slug"], "reason": c["reason"]} for c in unverified
                     ],
+                    slug=slug,
                 )
             failed_conditions = [c for c in condition_results if c["state"] == "recorded-fail"]
             if failed_conditions:
@@ -491,6 +503,7 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                     f"Cannot close as done: recorded FAIL on {names}. Close FAILED with a "
                     "--reason instead — that is the available honest exit.",
                     failing_conditions=[c["slug"] for c in failed_conditions],
+                    slug=slug,
                 )
             # Every declared condition is verified-pass — falls through to the punt check.
         else:
@@ -501,6 +514,7 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                     "Cannot close as done: no goal_conditions declared and no verified-fix "
                     "list found in the sprint's goal. Declare the sprint's conditions with "
                     "sprint plan --goal-conditions, or close FAILED with a --reason instead.",
+                    slug=slug,
                 )
 
             if not build_arg:
@@ -509,10 +523,11 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                     "Maintenance closure requires --build <backendSha:clientSha> alongside "
                     "the --fix-confirmed entries.",
                     fix_list=fix_list_entries,
+                    slug=slug,
                 )
             backend_sha, client_sha, build_error = _parse_build_pair(build_arg)
             if build_error:
-                error_result("sprint_complete", build_error, fix_list=fix_list_entries)
+                error_result("sprint_complete", build_error, fix_list=fix_list_entries, slug=slug)
 
             confirmed_indexes: set[int] = set()
             for raw in fix_confirmed_args:
@@ -538,12 +553,14 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                     + "; ".join(unconfirmed),
                     fix_list=fix_list_entries,
                     unconfirmed=unconfirmed,
+                    slug=slug,
                 )
             fix_confirmations = [
                 {"entry": e, "build": f"{backend_sha}:{client_sha}"} for e in fix_list_entries
             ]
     else:
-        error_result("sprint_complete", f"Unknown --verdict '{verdict}'. Must be 'done' or 'failed'.")
+        error_result("sprint_complete", f"Unknown --verdict '{verdict}'. Must be 'done' or 'failed'.",
+                     slug=slug)
 
     # AC 7 — punt-decision requirement runs on both the done and failed paths.
     if _punt_decision_required(project_dir, active, condition_results):
@@ -553,12 +570,14 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
                 "This sprint has stories at closed-incomplete or dropped while a declared "
                 "condition is not verified-pass — closing requires --punt-decision <ref> "
                 "naming the decision document that authorized punting the goal-critical work.",
+                slug=slug,
             )
         if _resolve_punt_decision(project_dir, punt_decision_arg) is None:
             error_result(
                 "sprint_complete",
                 f"--punt-decision '{punt_decision_arg}' does not resolve to a document under "
                 f"{_DECISIONS_DIR_REL}/.",
+                slug=slug,
             )
 
     # --- Gate passed: perform the closure (AC 8 — the closure record tells the truth) ---
@@ -581,9 +600,8 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
     sprints["active"] = None
     write_json(path, sprints)
 
-    slug = active.get("slug", "unknown")
     result("sprint_complete", success=True, sprint=slug, status=active["status"],
-           completed=active["completed"])
+           completed=active["completed"], closure=active["closure"])
 
 
 def cmd_epic_membership(args: argparse.Namespace) -> None:

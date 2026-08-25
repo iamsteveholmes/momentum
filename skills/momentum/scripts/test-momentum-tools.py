@@ -567,6 +567,49 @@ def test_sprint_complete_punt_decision_unresolvable_ref_rejected():
     assert_eq("rejected", code, 1)
 
 
+def _import_parse_verified_fix_list():
+    """Import _parse_verified_fix_list from momentum-tools.py via importlib."""
+    spec = importlib.util.spec_from_file_location("momentum_tools", str(SCRIPT))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod._parse_verified_fix_list
+
+
+def test_parse_verified_fix_list_strips_exactly_one_bullet_marker():
+    """A fix entry with extra leading dashes ('-- Fix A') must keep the inner dash —
+    only the single bullet marker is stripped, not every leading '-' character."""
+    print("\n[_parse_verified_fix_list] strips exactly one bullet marker, not all leading dashes")
+    _parse_verified_fix_list = _import_parse_verified_fix_list()
+    entries = _parse_verified_fix_list("Verified fixes:\n-- Fix A works in the running app")
+    assert_eq("inner dash preserved", entries, ["- Fix A works in the running app"])
+
+
+def test_sprint_complete_refusal_echoes_active_sprint_slug():
+    """AC 12 (bmad-code-review-5): every refusal from cmd_sprint_complete names the
+    active sprint's slug, so a caller can tell it apart from a different sprint's
+    refusal — the resume/retro convention relies on this."""
+    print("\n[sprint complete] Refusal echoes the active sprint slug")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("rejected", code, 1)
+    assert_eq("refusal names the active sprint", out.get("slug"), "test-sprint")
+
+
+def test_sprint_complete_success_output_includes_closure_block():
+    """bmad-code-review-7: the CLI's own stdout on success carries the closure block it
+    just wrote — not just the on-disk record — so a caller reading only the CLI output
+    (never re-reading sprints/index.json) still sees the per-condition verdict snapshot."""
+    print("\n[sprint complete] Success output echoes the closure block")
+    proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
+    _seed_passing_condition(proj)
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("closure block present in output", "closure" in out, True)
+    assert_eq("output closure verdict done", out["closure"]["verdict"], "done")
+    assert_eq("output closure matches written record",
+              out["closure"], read_sprints(proj)["completed"][0]["closure"])
+
+
 # --- Epic Membership Tests ---
 
 def test_epic_membership():
@@ -3508,6 +3551,9 @@ def main():
     test_sprint_complete_punt_decision_required_on_failed_path()
     test_sprint_complete_punt_decision_not_required_when_all_verified_pass()
     test_sprint_complete_punt_decision_unresolvable_ref_rejected()
+    test_parse_verified_fix_list_strips_exactly_one_bullet_marker()
+    test_sprint_complete_refusal_echoes_active_sprint_slug()
+    test_sprint_complete_success_output_includes_closure_block()
 
     test_epic_membership()
     test_epic_membership_not_found()

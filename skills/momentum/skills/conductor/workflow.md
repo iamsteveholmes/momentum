@@ -3029,17 +3029,26 @@ Review the updated report, acknowledge any decision cards in §04, then approve 
         `done`) or the developer records an honest FAILED verdict.</note>
         <output>Sprint `{{sprint_slug}}` shipped to `main`, but closure is pending.
 
-**What's blocking it:** {{for each blocking condition named in the refusal's JSON output —
-`blocking_conditions` (AC 1 unverified) or `failing_conditions` (AC 3 recorded-FAIL) — one line:
+**What's blocking it:** {{if the refusal's JSON output carries `blocking_conditions` (AC 1
+unverified) or `failing_conditions` (AC 3 recorded-FAIL): one line per named condition —
 "{{slug}}: {{plain-language reason, e.g. 'no human verdict recorded yet' for missing-entry/no-verdict,
 'verdict recorded without both build SHAs' for no-build-shas, or 'recorded FAIL — the running app
-still doesn't do this' for a failing_conditions entry}}"}}
+still doesn't do this' for a failing_conditions entry}}"}}{{else — neither list is present, which is
+the majority case since the Conductor invokes bare `sprint complete` with no --fix-confirmed/--build/
+--punt-decision of its own: render the refusal's `error` message verbatim. This covers the
+maintenance-sprint verified-fix gate (AC 6), the undeclared-outcome refusal (AC 9), and the
+punt-decision requirement (AC 7) — none of which populate blocking_conditions/failing_conditions.}}
 
-**Why it matters:** closing `done` on an unverified condition is exactly the punt this gate exists
+**Why it matters:** closing `done` on an unverified outcome is exactly the punt this gate exists
 to prevent — nobody has confirmed the sprint's own goal actually works in the running app.
 
-**Next step:** verify each named condition with `momentum-tools feature verify`, then re-run
-`momentum-tools sprint complete` — or close honestly now with `momentum-tools sprint complete
+**Next step:** {{if goal_conditions were declared on this sprint: verify each named condition with
+`momentum-tools feature verify`, then re-run `momentum-tools sprint complete`}}{{else — maintenance
+sprint, no goal_conditions declared: confirm the sprint's verified-fix list entries against the
+running app, then close manually with `momentum-tools sprint complete --fix-confirmed "<entry text
+or 1-based index>" --build <backendSha:clientSha>` (repeat --fix-confirmed once per entry); if a
+story was punted while a condition remains unverified, also add `--punt-decision <ref>` naming the
+authorizing decision document}} — or close honestly now with `momentum-tools sprint complete
 --verdict failed --reason "..."` if the goal was not met this sprint.</output>
       </check>
 
