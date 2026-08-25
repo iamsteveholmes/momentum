@@ -19,9 +19,14 @@ recorded verdict.
 **Then:**
 
 1. `resume-card.json` is written/refreshed with `status: "pending"`, `phase: "closure"`.
-2. `question.text` is the closure-verdict question, `question.gates` names the tier-2 closure gate,
-   and `question.options` name the specific unverified/failing condition slugs (or the generic
-   verify/close-manually/close-failed paths when no named conditions are present).
+2. `question.text` is the closure-verdict question — naming the specific unverified/failing
+   condition slugs when present, or the generic CLI path for the sprint's type otherwise (`momentum-
+   tools feature verify` for declared goal_conditions; `sprint complete --fix-confirmed`/`--build`
+   for a maintenance sprint; `--verdict failed` as the fallback in either case). `question.gates`
+   names the tier-2 closure gate. `question.options` is always the two generic selectable
+   resolutions for whichever sprint type applies (`["Verify a condition", "Close as failed"]` when
+   goal_conditions were declared; `["Confirm the verified-fix build", "Close as failed"]` for a
+   maintenance sprint) — never the condition slugs or CLI-path text, which belong in `text` only.
 3. This is a NEW question relative to the already-resolved approve question — `waited_since` is
    bound fresh on first refusal, not carried forward from the resolved merge-gate card.
 4. A repeat refusal on a later pass, for the same still-unresolved closure question, carries the
@@ -39,7 +44,10 @@ outstanding conditions.
 
 No card is written on closure refusal; the closure question is missing `gates` or `options`;
 `waited_since` resets on every repeat refusal instead of staying stable; the card is left
-`resolved` (from the approve step) while a closure decision is genuinely still pending.
+`resolved` (from the approve step) while a closure decision is genuinely still pending;
+`question.options` contains a condition slug or a CLI-path fragment (e.g. `momentum-tools`,
+`sprint complete`, `--fix-confirmed`) instead of exactly the two generic resolution strings for
+the sprint's type.
 
 ## Verification Method
 

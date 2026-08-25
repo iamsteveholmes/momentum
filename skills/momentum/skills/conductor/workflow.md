@@ -319,9 +319,9 @@ Ready to begin?</output>
         only a genuinely NEW question resets it to `NOW()` (per references/resume-card.md's
         shared-write field semantics). `resurface_count` is never touched by the Conductor except to
         initialize it at `0` on a new question — Impetus owns incrementing it. `sprint_slug` is
-        written once at the initial write (Step 2.1) and carried forward unchanged — verbatim, not
-        recomputed — on every subsequent refresh/resolve site below; it never changes for the life
-        of the card. Every RESUME-CARD REFRESH/RESOLVE site below folds this read-check-and-overwrite
+        written once at the initial write (Step 2.1) and never changes for the life of the card —
+        see references/resume-card.md's Canonical Output Shape for the field's authoritative
+        definition, rather than restating it at each site below. Every RESUME-CARD REFRESH/RESOLVE site below folds this read-check-and-overwrite
         into the same Bash invocation as the ledger/build_log append it immediately follows — never a
         separate round trip.
       </action>
@@ -640,7 +640,7 @@ Ready to begin?</output>
           {{resume_card_path}} — sprint_slug: {{sprint_slug}}, status: "pending", phase: "build",
           merged: { count: 0, slugs: [] }, blocked: { count: 0, slugs: [] }, question: { text:
           "Resume the sprint build", gates: "the in-progress build — whether it continues launching
-          and merging stories", options: ["Resume the sprint build"], report_path: null },
+          and merging stories", options: ["Resume the build"], report_path: null },
           waited_since: NOW(), resurface_count: 0, resolved_at: null, resolution: null — per the
           RESUME-CARD WRITE STANDING RULE above (full JSON serializer, full-file overwrite).</action>
       </check>
@@ -2704,7 +2704,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
       <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merged'">
         <note>TERMINAL SUCCESS ALREADY ON RECORD (AC 8). A prior pass already executed and verified the full transition. Do not re-merge, re-push, or re-transition anything, and do not announce this as a fresh merge — reflect the already-recorded outcome only.</note>
-        <output>Sprint `{{sprint_slug}}` is already merged to `main` and pushed to origin — recorded outcome: merged (merge commit `{{that row's merge_commit_sha}}`, pushed head `{{that row's pushed_head_sha}}`). Nothing further to execute. The sprint's goals verdict (tier-2 closure) remains open — its `sprints/index.json` entry may already show `completed`/`done` from the `sprint complete` call, but that index status is not the closure verdict, which is a separate decision.</output>
+        <output>Sprint `{{sprint_slug}}` is already merged to `main` and pushed to origin — recorded outcome: merged (merge commit `{{that row's merge_commit_sha}}`, pushed head `{{that row's pushed_head_sha}}`). Nothing further to execute. The sprint's `sprints/index.json` `status` and its `closure.verdict` are set together by the same `sprint complete` call, so once that gate has run they read identical — what stays a separate decision is whether that gate has actually run and recorded a human-verified verdict on the sprint's own goal, which this merge succeeding does not by itself establish.</output>
       </check>
 
       <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merge-gate-failed'">
@@ -3026,7 +3026,22 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         </check>
       </check>
 
-      <!-- ── 5.RC.4 — Commit change-workflow summary and re-render report ── -->
+      <!-- ── 5.RC.4 — Re-bind gate state, checkpoint, and refresh the resume card BEFORE re-render/open ── -->
+      <!-- Ordering mirrors the initial-open path above (PRE-DECISION DISCLOSURE → PENDING CHECKPOINT →
+           RESUME-CARD REFRESH → BUILD → open): the card must be durable before the report re-render/open
+           begins, not after, so a session death in that gap never leaves only a resolved card on disk. -->
+
+      <action>Re-bind {{sprint_tip_sha}} = `git rev-parse sprint/{{sprint_slug}}` (same DELETED-BRANCH FALLBACK as the initial binding above, though the branch is expected to still exist at this point in the request-changes path since no merge has happened yet). Re-bind {{pending_commits}} = output of `git log origin/main..sprint/{{sprint_slug}} --oneline` (or against local `main` with a no-remote note, per the initial binding above) — the change-workflow pass may have added fixer commits to the sprint branch, advancing its tip, so both the disclosure the developer sees before deciding and the reference SHA the post-execution read-back verification later confirms as an ancestor of `main` must reflect the current tip, not the pre-pass one.</action>
+
+      <action>MERGE-GATE PENDING CHECKPOINT (same rule as the initial ask above): if the latest `merge-gate-outcome` row for this sprint already has `outcome == "merged"`, skip. Otherwise append { event: "merge-gate-outcome", outcome: "pending", sprint_tip_sha: {{sprint_tip_sha}}, ts: NOW() } to {{build_log}} and the build ledger — a session ending here without an answer still leaves a recorded `pending` outcome.</action>
+
+      <action>RESUME-CARD REFRESH (DEC-040 D5, AC 1, 3, per references/resume-card.md): write a
+        brand-new pending card at {{resume_card_path}} — status: "pending", phase: "end-gate",
+        merged: { count: length of {{merged}}, slugs: {{merged}} }, blocked: { count: length of
+        {{blocked}}, slugs: {{blocked}} }, question: the same object as the initial end-gate ask
+        above (text/gates/options/report_path unchanged), `waited_since: NOW()` (a fresh anchor —
+        the prior instance of this same question text was just resolved with "changes-requested"
+        above; this is a new waiting period, not a continuation), resurface_count reset to 0.</action>
 
       <action>5.RC.4 — RE-RENDER THE END-GATE REPORT:
         Rendering authority: references/endgate-report-renderer.md — identical to the initial build.
@@ -3069,18 +3084,6 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
         <critical>`--focus false` is a hard MUST — not a hint — whenever `cmux browser new` is used (branch 2b). It keeps the developer in context in the main pane while the re-rendered report becomes visible in the viewer pane. Never pass `--focus true`. Verified behavior: `cmux browser new` ALWAYS creates a new structural pane; it never reuses an existing one. Reuse requires the `goto` branch (2a) above, which is the expected path here since a viewer surface already exists from the initial open.</critical>
       </action>
-
-      <action>Re-bind {{sprint_tip_sha}} = `git rev-parse sprint/{{sprint_slug}}` (same DELETED-BRANCH FALLBACK as the initial binding above, though the branch is expected to still exist at this point in the request-changes path since no merge has happened yet). Re-bind {{pending_commits}} = output of `git log origin/main..sprint/{{sprint_slug}} --oneline` (or against local `main` with a no-remote note, per the initial binding above) — the change-workflow pass may have added fixer commits to the sprint branch, advancing its tip, so both the disclosure the developer sees before deciding and the reference SHA the post-execution read-back verification later confirms as an ancestor of `main` must reflect the current tip, not the pre-pass one.</action>
-
-      <action>MERGE-GATE PENDING CHECKPOINT (same rule as the initial ask above): if the latest `merge-gate-outcome` row for this sprint already has `outcome == "merged"`, skip. Otherwise append { event: "merge-gate-outcome", outcome: "pending", sprint_tip_sha: {{sprint_tip_sha}}, ts: NOW() } to {{build_log}} and the build ledger — a session ending here without an answer still leaves a recorded `pending` outcome.</action>
-
-      <action>RESUME-CARD REFRESH (DEC-040 D5, AC 1, 3, per references/resume-card.md): write a
-        brand-new pending card at {{resume_card_path}} — status: "pending", phase: "end-gate",
-        merged: { count: length of {{merged}}, slugs: {{merged}} }, blocked: { count: length of
-        {{blocked}}, slugs: {{blocked}} }, question: the same object as the initial end-gate ask
-        above (text/gates/options/report_path unchanged), `waited_since: NOW()` (a fresh anchor —
-        the prior instance of this same question text was just resolved with "changes-requested"
-        above; this is a new waiting period, not a continuation), resurface_count reset to 0.</action>
 
       <critical>RENDER-THEN-ASK IS ATOMIC. The turn MUST NOT end between the re-render open above and the approval ask below — proceed directly through the redispatch note and summary to the ask, all in the same turn. The redispatched gate must never be left open with no approval prompt on screen.</critical>
 
@@ -3153,19 +3156,22 @@ Review the updated report, acknowledge any decision cards in §04, then approve 
         <action>RESUME-CARD REFRESH (DEC-040 D5, AC 13, per references/resume-card.md): write/
           overwrite {{resume_card_path}} — status: "pending", phase: "closure", merged: { count:
           length of {{merged}}, slugs: {{merged}} }, blocked: { count: length of {{blocked}},
-          slugs: {{blocked}} }, question: { text: "Record the sprint's closure verdict" — naming the
-          unverified/failing condition slugs from {{blocking_conditions}}/{{failing_conditions}}
-          inline when present (e.g. "Record the sprint's closure verdict — session-capture and
-          campaign-identity still need a recorded human verdict"), else the generic paths (`momentum-
-          tools feature verify` / `sprint complete --fix-confirmed` / `--verdict failed`, per
-          references/resume-card.md's `question.options` contract — concrete selectable answers, not
-          CLI-path or slug detail) belong in `text` alongside the condition/CLI detail, gates: "the
+          slugs: {{blocked}} }, question: { text: "Record the sprint's closure verdict" — a clean
+          two-branch statement: if {{blocking_conditions}}/{{failing_conditions}} are non-empty,
+          name the unverified/failing condition slugs inline (e.g. "Record the sprint's closure
+          verdict — session-capture and campaign-identity still need a recorded human verdict");
+          otherwise, name the generic CLI path for whichever sprint type applies — declared
+          goal_conditions: `momentum-tools feature verify`; maintenance sprint (no goal_conditions
+          declared): `sprint complete --fix-confirmed "<entry>" --build <shas>`; either case: the
+          `--verdict failed` fallback. (This CLI/slug detail belongs in `text` only — see `options`
+          below for the one statement of that separation rule.) gates: "the
           tier-2 sprint closure gate — whether `sprints/index.json` records this sprint as done",
           options: {{if goal_conditions were declared on this sprint: ["Verify a condition", "Close
           as failed"]}}{{else — maintenance sprint, no goal_conditions declared: ["Confirm the
           verified-fix build", "Close as failed"]}} — the two real selectable resolutions for
-          whichever case applies, never the condition slugs or CLI-path text (that detail lives in
-          `text` above, per resume-card.md's `question.options` contract), report_path:
+          whichever case applies; never the condition slugs or CLI-path text, which belong in
+          `text` above (the sole statement of this separation rule, per resume-card.md's
+          `question.options` contract), report_path:
           ".momentum/handoffs/{{sprint_slug}}-endgate-report.html" }.
           This question is NEW relative to the merge-gate-approval question already resolved above
           (`resolution: "approved"`) — bind a fresh `waited_since = NOW()` on first refusal; a
@@ -3181,11 +3187,10 @@ Review the updated report, acknowledge any decision cards in §04, then approve 
 unverified) or `failing_conditions` (AC 3 recorded-FAIL): one line per named condition —
 "{{slug}}: {{plain-language reason, e.g. 'no human verdict recorded yet' for missing-entry/no-verdict,
 'verdict recorded without both build SHAs' for no-build-shas, or 'recorded FAIL — the running app
-still doesn't do this' for a failing_conditions entry}}"}}{{else — neither list is present, which is
-the majority case since the Conductor invokes bare `sprint complete` with no --fix-confirmed/--build/
---punt-decision of its own: render the refusal's `error` message verbatim. This covers the
-maintenance-sprint verified-fix gate (AC 6), the undeclared-outcome refusal (AC 9), and the
-punt-decision requirement (AC 7) — none of which populate blocking_conditions/failing_conditions.}}
+still doesn't do this' for a failing_conditions entry}}"}}{{else — neither list is present: render
+the refusal's `error` message verbatim. This scopes to refusals where blocking_conditions/
+failing_conditions never populate: the maintenance-sprint verified-fix gate (AC 6), the
+undeclared-outcome refusal (AC 9), and the punt-decision requirement (AC 7).}}
 
 **Why it matters:** closing `done` on an unverified outcome is exactly the punt this gate exists
 to prevent — nobody has confirmed the sprint's own goal actually works in the running app.

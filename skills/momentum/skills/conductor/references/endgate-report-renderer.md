@@ -419,10 +419,11 @@ origin, and moves every merged story to `done` (non-merged stories to `closed-in
 one executed and verified transition, not a rendered report. The push is never described as a
 later or optional step; there is no second, separately-declinable push prompt after approval. The
 callout also states plainly that the sprint's goals verdict (tier-2 closure — have the sprint's
-goals been met) remains open as a separate decision, made later, and is unaffected by this
-callout — even though the sprint's `sprints/index.json` entry may already read `completed`/`done`
-from the `sprint complete` call folded into this same approve sequence; that index status is not
-the closure verdict.
+goals been met) is a separate decision from the merge-gate outcome above, made by the `sprint
+complete` call folded into this same approve sequence: once that gate has run, the sprint's
+`sprints/index.json` `status` and `closure.verdict` read identical (both set from the same call) —
+what stays separate is whether a human-recorded verdict on the sprint's own goal exists at all,
+which the merge succeeding does not by itself guarantee.
 
 **Cardinal sin:** A report that reads more finished than the thing is. If the system is a partial slice, say so in §01 and say it in full here.
 
