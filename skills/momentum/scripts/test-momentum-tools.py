@@ -4112,6 +4112,8 @@ def test_compute_verification_method_specification():
     code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "my-spec")
     assert_eq("exit 0", code, 0)
     assert_eq("verification_method", out.get("verification_method"), "document-review")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
+    assert_eq("governing_surface", out.get("governing_surface"), "artifact")
 
 
 def test_compute_verification_method_multi_type_precedence():
@@ -4134,10 +4136,15 @@ def test_compute_verification_method_multi_type_precedence():
     assert_eq("exit 0", code, 0)
     # skill-instruction > rule-hook in precedence table → skill-invocation → skill-invoke
     assert_eq("skill-instruction wins", out.get("verification_method"), "skill-invoke")
+    assert_eq("routed_by inference", out.get("routed_by"), "change_type_inference")
+    assert_eq("governing_surface", out.get("governing_surface"), "skill-invocation")
 
 
 def test_compute_verification_method_unknown_change_type():
-    """No declared surface, unrecognized change_type: degrades to document-review, not an error."""
+    """No declared surface, unrecognized change_type: degrades to document-review, not an
+    error. This is the fully-degraded case — no surface AND no resolvable change_type
+    inference — so routed_by must report 'default_fallback', not 'change_type_inference':
+    no inference actually occurred, and governing_surface is None (nothing to record)."""
     print("\n[compute-verification-method] inference fallback: unknown change_type → document-review")
     stories = {
         "unknown-ct": {
@@ -4154,6 +4161,8 @@ def test_compute_verification_method_unknown_change_type():
     code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "unknown-ct")
     assert_eq("exit 0", code, 0)
     assert_eq("fallback to document-review", out.get("verification_method"), "document-review")
+    assert_eq("routed_by default_fallback", out.get("routed_by"), "default_fallback")
+    assert_eq("governing_surface", out.get("governing_surface"), None)
 
 
 def test_compute_verification_method_not_found_story():

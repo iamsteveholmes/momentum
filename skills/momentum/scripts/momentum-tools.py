@@ -985,8 +985,15 @@ def cmd_sprint_compute_verification_method(args: argparse.Namespace) -> None:
         routed_by = "surface"
         governing_surface = surface
     else:
-        routed_by = "change_type_inference"
         governing_surface = infer_surface_from_change_type(change_type)
+        if governing_surface is not None:
+            routed_by = "change_type_inference"
+        else:
+            # Fully degraded: no declared surface AND no resolvable change_type
+            # inference (empty/unrecognized). vm has fallen back to the
+            # 'document-review' default in compute_verification_method — no
+            # inference actually occurred, so routed_by must not claim one.
+            routed_by = "default_fallback"
 
     result("sprint_compute_verification_method", success=True,
            story=slug,

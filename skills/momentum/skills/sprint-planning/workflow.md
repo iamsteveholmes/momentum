@@ -450,7 +450,7 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
     <action>Update task 3.5 (Author frozen contracts + coverage plan) to in_progress</action>
 
     <!-- Load method-routing table and harness defaults -->
-    <action>Read `skills/momentum/references/rules/verification-standard.md` — extract the surface-routing table and the change_type inference fallback (Section 1) and the anti-insider-knowledge guard rules (Section 4). This table is authoritative for all contract format decisions below. Routing keys on the story's declared `surface` (frontmatter/index); `change_type` supplies an inference fallback only when no surface is declared.
+    <action>Read `skills/momentum/references/rules/verification-standard.md` — extract the surface-routing table and the change_type inference fallback (Section 1) and the anti-insider-knowledge guard rules (Section 4). This table is authoritative for all contract format decisions below. Routing keys on the story's declared `surface` (frontmatter/index); `change_type` supplies an inference fallback only when no surface is declared.</action>
     <action>Read `skills/momentum/skills/sprint-planning/references/contract-format-guide.md` — load per-change-type authoring rules, file extension mapping, multi-type precedence ordering, and the anti-insider checklist.</action>
 
     <!-- Phase A: Contract authoring -->
@@ -464,7 +464,9 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
          behavioral-trigger | bash | smoke | curl | document-review) drawn from the
          surface-routing table in verification-standard.md Section 1. Store as {{vm}}.
          The output also carries `governing_surface` (the surface that actually produced
-         {{vm}} — declared or inferred) and `routed_by` (`surface` | `change_type_inference`).
+         {{vm}} — declared or inferred) and `routed_by` (`surface` | `change_type_inference` |
+         `default_fallback`, the last meaning no surface was declared and no change_type
+         inference resolved, so {{vm}} is the `document-review` safe default).
          Store {{governing_surface}} — it is written into the contract's Part-A `surface:`
          field below so no story is ever verified against a surface nobody recorded (§1
          Visibility). harness_profile equals {{vm}} (no project override applies unless
