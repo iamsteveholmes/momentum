@@ -318,7 +318,9 @@ Ready to begin?</output>
         is the SAME question already on record, carry the existing `waited_since` forward unchanged;
         only a genuinely NEW question resets it to `NOW()` (per references/resume-card.md's
         shared-write field semantics). `resurface_count` is never touched by the Conductor except to
-        initialize it at `0` on a new question — Impetus owns incrementing it.
+        initialize it at `0` on a new question — Impetus owns incrementing it. Every RESUME-CARD
+        REFRESH/RESOLVE site below folds this read-check-and-overwrite into the same Bash invocation
+        as the ledger/build_log append it immediately follows — never a separate round trip.
       </action>
 
       <check if="file exists at {{ledger_path}} (a prior session wrote events for this sprint)">
@@ -2770,13 +2772,11 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <action>MERGE-GATE OUTCOME: MERGED — reached only after every check above holds. Bind {{story_transitions}} from the verified end state read in read-back check 3 above, not from what this pass itself executed — on a resume where the transitions ran in a prior pass (RESUME PAST APPROVAL-SIDE MUTATIONS above), this pass performs no transitions at all, but the outcome row must still carry them: {story_slug, target_status: "done"} for every story in {{merged}} (confirmed `"done"` by check 3), plus {story_slug, target_status: "closed-incomplete"} for every story transitioned to that status (read fresh from `.momentum/stories/index.json` — this status is not covered by check 3, which verifies only {{merged}}). Append { event: "merge-gate-outcome", outcome: "merged", merge_commit_sha: {{main_sha}}, pushed_head_sha: {{origin_main_sha}}, story_transitions: {{story_transitions}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted, see Conductor-Level Events).</action>
       <output>Sprint `{{sprint_slug}}` merged to `main` and pushed to origin — verified: `main` contains the sprint tip, `origin/main` matches local `main`, and every merged story reads `done` in `.momentum/stories/index.json`. The sprint's own goal verdict (tier-2 closure — whether the sprint's goal was actually verified) is a separate decision, attempted next by the closure step below; the merge succeeding here does not close the sprint by itself.</output>
 
-      <action>RESUME-CARD RESOLVE (DEC-040 D5, AC 11, per references/resume-card.md): if
-        {{resume_card_path}}'s current `status` is already "resolved", skip (idempotent no-op — a
-        resumed session must never double-write or regress the card). Otherwise write/overwrite it
-        with `status: "resolved"`, `resolved_at: NOW()`, `resolution: "approved"`, leaving every
-        other field (phase, merged, blocked, question, waited_since, resurface_count) exactly as it
-        stood at the moment of approval — a historical record. From the next session onward Impetus
-        stops surfacing this card.
+      <action>RESUME-CARD RESOLVE (DEC-040 D5, AC 11, per references/resume-card.md's Resolution
+        and Idempotency rules): resolve {{resume_card_path}} with `resolution: "approved"`,
+        `resolved_at: NOW()`, leaving every other field (phase, merged, blocked, question,
+        waited_since, resurface_count) exactly as it stood at the moment of approval — a historical
+        record. From the next session onward Impetus stops surfacing this card.
       </action>
 
       <action>MERGE-GATE-FAILED HANDLING (a named procedure invoked only from the STOP points above — it is never entered independently): given a `failing_step` and `error_text`, append { event: "merge-gate-outcome", outcome: "merge-gate-failed", failing_step: {{failing_step}}, error_text: {{error_text}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted). Then emit the failure output below in place of any completion claim, and end the execution sequence for this pass — do not continue to any step after the one that invoked this handling, and do not emit the MERGED output above.</action>
@@ -2790,11 +2790,10 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
     <check if="developer requests changes">
 
-      <action>RESUME-CARD RESOLVE (DEC-040 D5, AC 11, per references/resume-card.md): the currently
-        pending question ("approve or request changes") is answered the instant the developer picks
-        this path. If {{resume_card_path}}'s current `status` is already "resolved", skip
-        (idempotent no-op). Otherwise write/overwrite it with `status: "resolved"`,
-        `resolved_at: NOW()`, `resolution: "changes-requested"`. The MERGE-GATE PENDING CHECKPOINT
+      <action>RESUME-CARD RESOLVE (DEC-040 D5, AC 11, per references/resume-card.md's Resolution
+        and Idempotency rules): the currently pending question ("approve or request changes") is
+        answered the instant the developer picks this path — resolve {{resume_card_path}} with
+        `resolution: "changes-requested"`, `resolved_at: NOW()`. The MERGE-GATE PENDING CHECKPOINT
         later in this same flow (below, at the redispatch point) writes a brand-new pending card
         with a fresh `waited_since` once the autonomous fix pass completes and the report is
         re-rendered — the developer never sees a gap between these two states within one live
@@ -3052,13 +3051,10 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <action>RESUME-CARD REFRESH (DEC-040 D5, AC 1, 3, per references/resume-card.md): write a
         brand-new pending card at {{resume_card_path}} — status: "pending", phase: "end-gate",
         merged: { count: length of {{merged}}, slugs: {{merged}} }, blocked: { count: length of
-        {{blocked}}, slugs: {{blocked}} }, question: { text: "Approve merge to main and push to
-        origin, or request changes?", gates: "the tier-1 merge gate — merging this sprint's work to
-        main and pushing to origin", options: ["Approve", "Request changes"], report_path:
-        ".momentum/handoffs/{{sprint_slug}}-endgate-report.html" }, `waited_since: NOW()` (a fresh
-        anchor — the prior instance of this same question text was just resolved with
-        "changes-requested" above; this is a new waiting period, not a continuation), resurface_count
-        reset to 0.</action>
+        {{blocked}}, slugs: {{blocked}} }, question: the same object as the initial end-gate ask
+        above (text/gates/options/report_path unchanged), `waited_since: NOW()` (a fresh anchor —
+        the prior instance of this same question text was just resolved with "changes-requested"
+        above; this is a new waiting period, not a continuation), resurface_count reset to 0.</action>
 
       <critical>RENDER-THEN-ASK IS ATOMIC. The turn MUST NOT end between the re-render open above and the approval ask below — proceed directly through the redispatch note and summary to the ask, all in the same turn. The redispatched gate must never be left open with no approval prompt on screen.</critical>
 
@@ -3110,12 +3106,10 @@ Review the updated report, acknowledge any decision cards in §04, then approve 
       </action>
 
       <check if="the sprint closure gate call above succeeded (fresh close, or the idempotent no-op above)">
-        <action>RESUME-CARD RESOLVE (DEC-040 D5, AC 11, per references/resume-card.md): if
-          {{resume_card_path}}'s current `status` is already "resolved", skip (idempotent no-op).
-          Otherwise write/overwrite it with `status: "resolved"`, `resolved_at: NOW()`,
-          `resolution: "closed"` — this closes out a closure-pending card left by a prior refusal
-          (below), or is a no-op write when closure succeeded on the first attempt and no
-          closure-pending card was ever written.
+        <action>RESUME-CARD RESOLVE (DEC-040 D5, AC 11, per references/resume-card.md's Resolution
+          and Idempotency rules): resolve {{resume_card_path}} with `resolution: "closed"`,
+          `resolved_at: NOW()` — this closes out a closure-pending card left by a prior refusal
+          (below), or is a no-op when no closure-pending card was ever written.
         </action>
         <output>Sprint `{{sprint_slug}}` is closed: **{{closure status — "done" or "failed", from the sprint's `completed[]` record}}**. {{if goal_conditions were declared: one line per condition — slug and verdict (pass/fail) with its build SHAs; if this was a maintenance sprint: the confirmed verified-fix entries; if status is "failed": the recorded reason}}</output>
       </check>

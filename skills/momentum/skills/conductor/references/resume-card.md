@@ -103,8 +103,8 @@ claim on "how stale is this decision":
   same decision). Impetus never changes this value, but every file write Impetus performs to
   increment `resurface_count` necessarily rewrites the whole object — `waited_since` is carried
   forward unchanged in that same write. This is what makes it "shared-write" rather than
-  Conductor-exclusive: an Impetus rewrite that includes this field unchanged is not a violation:
-  an Impetus rewrite that *changes its value* would be.
+  Conductor-exclusive. An Impetus rewrite that includes this field unchanged is not a violation; an
+  Impetus rewrite that *changes its value* would be.
 
 No other field may be written by both sides. A field written by both without this explicit
 declaration is a Task 7 finding.
@@ -113,13 +113,13 @@ declaration is a Task 7 finding.
 
 ## Anti-Expiry Invariant (AC 10 — contract-level rule, not an implementation note)
 
-`status` has **exactly two values**: `pending` and `resolved`. **No time-based transition between
-them exists, anywhere in this contract.** Neither elapsed wall-clock time, nor `resurface_count`,
-nor session count, nor any other measure of staleness may ever change `status` away from `pending`
-on its own. The only thing that resolves a card is a recorded developer decision (see Resolution
+`status` has **exactly two values**: `pending` and `resolved`, and **no time-based transition
+between them exists anywhere in this contract** — elapsed wall-clock time, `resurface_count`,
+session count, or any other measure of staleness may never change `status` away from `pending` on
+its own. The only thing that resolves a card is a recorded developer decision (see Resolution
 below). A card may be re-surfaced across dozens of sessions and weeks of elapsed time and must
 still read `pending` throughout — rising `resurface_count` and an aging `waited_since` are the
-**entire** mechanism for rising prominence (AC 9); there is no escalation path that ends in a
+**entire** mechanism for rising prominence (AC 9), never an escalation path ending in a
 failed/expired/auto-resolved status. (DEC-040 D5 explicitly rejected the researched 48-hour
 expiry-to-FAIL design — do not reintroduce it here or anywhere downstream of this contract.)
 

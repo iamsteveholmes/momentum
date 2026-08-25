@@ -83,10 +83,9 @@ feature headline, the counts, or the signal.
 never trims the floor: the one pending question, its options, and the report link must survive
 inline regardless of the cap. The pending question leads ahead of the feature headline, ledger
 counts, and everything else in the situational report — it is the single exception to the
-N-of-M feature headline otherwise leading the situational report, per the Floor stated above.
-No elapsed time or resurface count may ever
-change the card's status away from `pending` — this surface has no expiry path, only rising
-prominence via the waited-for line.
+N-of-M feature headline otherwise leading the situational report, per the Floor stated above. The
+card's status never expires or auto-resolves (resume-card.md's Anti-Expiry Invariant) — rising
+prominence via the waited-for line is the only escalation path.
 
 **Caps-vs-floor:** The 2-sentence cap governs the greeting's length. It does not override the
 floor's requirement that the feature headline, ledger counts, and recurring-pattern signal appear

@@ -24,16 +24,12 @@ leads the whole report whenever one exists, regardless of this list's order:
 
 - Pending resume cards (DEC-040 D5): scan `.momentum/sprints/*/resume-card.json` — every sprint
   directory, independent of which sprint (if any) `.momentum/sprints/index.json` marks active,
-  since a gate can be pending on a sprint that never closed. Parse each file found. **Check shape
-  before filtering on status:** a file that exists but is missing or renames its `status` or
-  `question` field is a shape error, not a "no card" state. The same check applies one level
-  deeper — a `question` object that is present but missing any of `question.text`,
-  `question.gates`, or `question.options` (the three sub-fields the render instructions below read
-  directly) is equally a shape error, not a valid pending question. In either case, name the
-  offending file path in the report rather than silently treating the session as clean; a broken
-  card may be hiding a genuinely pending decision. Only once a file has passed this full shape
-  check does the status filter
-  apply: keep only cards whose `status` reads `"pending"`. If more than one is pending, the one with the most recent
+  since a gate can be pending on a sprint that never closed. Parse each file found, checking shape
+  before filtering on status: per resume-card.md's Malformed card handling, a card that is missing
+  or renames `status`, `question`, or any of `question.text`/`question.gates`/`question.options` is
+  a shape error, not a "no card" state — name the offending file path in the report rather than
+  silently treating the session as clean. Only a file that passes this check is filtered on status:
+  keep only cards whose `status` reads `"pending"`. If more than one is pending, the one with the most recent
   `waited_since` leads; name the rest in a single count line (e.g. "2 more gates also waiting").
   Full field shape, correlation key, and write semantics are the seam contract at
   `skills/momentum/skills/conductor/references/resume-card.md` — cite it rather than restating
@@ -67,15 +63,14 @@ ledger counts, sprint name, and handoff context. Render it within budget: state 
 its options, phrasing the lead using the card's `phase` (where the run got to) and `question.gates`
 (what the answer controls) so the sentence is self-sufficient without a second document — e.g. "The
 build stopped at the end-gate — approve merging to `main` and pushing to origin, or request
-changes?" rather than the bare question text alone; any merged/blocked work already recorded on the card appears as count lines only
-(never enumerated story slugs — those live in the card file for depth); the card's
-`question.report_path` is linked, never inlined. Once `resurface_count` (after this session's
-increment above) is greater than 1, add exactly one further line stating how long the decision has
-waited (elapsed time since `waited_since`) and across how many sessions (`resurface_count`) — this
-is the only thing that grows with repetition; nothing else about the card's rendered content
-lengthens across sessions, and no elapsed time or resurface count ever changes the card's status
-away from `pending` (it stays pending until a developer decision resolves it — never failed,
-expired, or auto-resolved). Malformed cards are named per the read-side rule above, not silently
+changes?" rather than the bare question text alone. Any merged/blocked work already recorded on the
+card appears as count lines only (never enumerated story slugs — those live in the card file for
+depth), and the card's `question.report_path` is linked, never inlined. Once `resurface_count`
+(after this session's increment above) is greater than 1, add exactly one further line stating how
+long the decision has waited (elapsed time since `waited_since`) and across how many sessions
+(`resurface_count`) — the only thing that grows with repetition. The card's status never expires or
+auto-resolves on its own (resume-card.md's Anti-Expiry Invariant) — it stays `pending` until a
+developer decision resolves it. Malformed cards are named per the read-side rule above, not silently
 dropped. **Absent any pending card, the report behaves exactly as it does today** — this section
 adds nothing to a clean start.
 
@@ -83,9 +78,8 @@ adds nothing to a clean start.
 honest no-features-tracked-yet statement when the registry is absent or empty). This is the first
 fact the developer reads — ahead of ledger counts, sprint name, handoff context, and any story
 number. Story counts never lead any Impetus report surface; where they appear at all, they follow
-the feature number as supporting detail. The only exception: when a pending gate card exists (per
-the conductor resume-card behavior), the pending question leads and the N-of-M headline follows it
-immediately. Absent a pending card, N-of-M is first.
+the feature number as supporting detail. The only exception: a pending gate card leads instead
+(per above), with N-of-M following immediately after it. Absent a pending card, N-of-M is first.
 
 The honest ledger counts — open entries, this week, older than 30 days, near auto-close — and any
 recurring-pattern signal still appear inline within the same budget — the feature headline joins
