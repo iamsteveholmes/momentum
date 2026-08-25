@@ -1954,20 +1954,17 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
     backend_sha, client_sha, build_error = _parse_build_pair(args.build)
     if build_error:
         error_result("feature_verify", build_error)
-        return
 
-    evidence = args.evidence or ""
+    evidence = args.evidence
     if not evidence.strip():
         error_result(
             "feature_verify",
             "Missing or empty --evidence: a verdict with no observation behind it "
             "is not recordable"
         )
-        return
 
     if not path.exists():
         error_result("feature_verify", f"Feature registry not found: {path}")
-        return
 
     try:
         registry = json.loads(path.read_text(encoding="utf-8"))
@@ -1976,14 +1973,12 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
             "feature_verify",
             f"Feature registry at {path} is not valid JSON: {exc}"
         )
-        return
 
     if not isinstance(registry, dict):
         error_result(
             "feature_verify",
             f"Feature registry at {path} must be a JSON object keyed by feature slug"
         )
-        return
 
     slug = args.feature_slug
     if slug not in registry:
@@ -1991,7 +1986,6 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
             "feature_verify",
             f"Unknown feature slug '{slug}': not present in {path}"
         )
-        return
 
     entry = registry[slug]
     if not isinstance(entry, dict):
@@ -1999,7 +1993,6 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
             "feature_verify",
             f"Feature entry '{slug}' in {path} must be a JSON object"
         )
-        return
 
     verdict = args.verdict  # argparse choices restrict this to "pass" or "fail"
     status = "passing" if verdict == "pass" else "failing"
