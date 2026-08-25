@@ -20,7 +20,7 @@
   is surfaced as a non-blocking notice — state it and continue; do NOT insert an `<ask>` for it.
   Do not add new inter-step confirmation gates when extending this workflow.</critical>
   <critical>Story markdown files retain ONLY plain English ACs. Verification contracts are written to `sprints/{sprint-slug}/specs/`. Dev agents read the Part-A header of their assigned contract (how_dev_self_checks, verification_method, harness_profile) as a self-check before signaling done. The verifier body (Part B: scenarios, assertion scripts, Gherkin) is for verifier agents only.</critical>
-  <critical>One contract of record per story: each planned story must resolve to EXACTLY ONE contract file in `specs/`. Step 3.5 authors the contract for non-app-ui stories (.eval.yaml, .smoke.sh, .trigger.md, or .review.md). Step 3.5 authors the app-ui .feature (Phase A); Step 4 authors .feature ONLY for smoke-routed stories that have NO existing contract file. Never emit a .feature alongside another contract format for the same slug.</critical>
+  <critical>One contract of record per story: each planned story must resolve to EXACTLY ONE contract file in `specs/`. Step 3.5 authors the contract for non-smoke-routed stories (.eval.yaml, .smoke.sh, .trigger.md, or .review.md). Step 3.5 authors the `.feature` for smoke-routed stories — surface `chat-ui` or `application-ui`, declared or inferred (Phase A); Step 4 authors .feature ONLY for smoke-routed stories that have NO existing contract file. Never emit a .feature alongside another contract format for the same slug.</critical>
   <critical>AVFL runs ONCE on the complete sprint plan — all stories together as a single validation pass, not per-story.</critical>
   <critical>Team composition uses a two-layer model: Momentum provides generic agent roles (Dev, QA, E2E Validator, Architect Guard), and the project provides stack-specific guidelines for each role.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
@@ -450,21 +450,27 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
     <action>Update task 3.5 (Author frozen contracts + coverage plan) to in_progress</action>
 
     <!-- Load method-routing table and harness defaults -->
-    <action>Read `skills/momentum/references/rules/verification-standard.md` — extract the method-routing table (Section 1) and the anti-insider-knowledge guard rules (Section 4). This table is authoritative for all contract format decisions below.</action>
+    <action>Read `skills/momentum/references/rules/verification-standard.md` — extract the surface-routing table and the change_type inference fallback (Section 1) and the anti-insider-knowledge guard rules (Section 4). This table is authoritative for all contract format decisions below. Routing keys on the story's declared `surface` (frontmatter/index); `change_type` supplies an inference fallback only when no surface is declared.
     <action>Read `skills/momentum/skills/sprint-planning/references/contract-format-guide.md` — load per-change-type authoring rules, file extension mapping, multi-type precedence ordering, and the anti-insider checklist.</action>
 
     <!-- Phase A: Contract authoring -->
     <action>Create the sprint specs directory: `.momentum/sprints/{{sprint_slug}}/specs/`</action>
 
     <action>For each approved story in {{selected_stories}}:
-      1. Compute `verification_method` from the story's `change_type`:
+      1. Compute `verification_method` from the story's declared assembled surface (routing
+         key), falling back to change_type inference only when no surface is declared:
          Run: `momentum-tools sprint compute-verification-method --story {{story_slug}}`
          The output field `verification_method` is the closed-enum token (skill-invoke |
          behavioral-trigger | bash | smoke | curl | document-review) drawn from the
-         method-routing table in verification-standard.md Section 1. Store as {{vm}}.
-         harness_profile equals {{vm}} (no project override applies unless explicitly declared
-         in momentum/verification-harness.json). `verification_method` and `harness_profile`
-         are machine-readable routing signals — they are single tokens, never free-text sentences.
+         surface-routing table in verification-standard.md Section 1. Store as {{vm}}.
+         The output also carries `governing_surface` (the surface that actually produced
+         {{vm}} — declared or inferred) and `routed_by` (`surface` | `change_type_inference`).
+         Store {{governing_surface}} — it is written into the contract's Part-A `surface:`
+         field below so no story is ever verified against a surface nobody recorded (§1
+         Visibility). harness_profile equals {{vm}} (no project override applies unless
+         explicitly declared in momentum/verification-harness.json). `verification_method`
+         and `harness_profile` are machine-readable routing signals — they are single tokens,
+         never free-text sentences.
 
       2. Determine the contract file extension using the precedence table in contract-format-guide.md
          (for multi-change-type stories: app-ui > script-code > script-cli > backend > agent-definition
@@ -496,6 +502,7 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
            story_slug: {{story_slug}}
            verification_method: {{vm}}              ← closed-enum token computed in step 1
            harness_profile: {{vm}}                  ← same token; project overrides listed in momentum/verification-harness.json
+           surface: {{governing_surface}}            ← the surface (declared or inferred) that produced {{vm}} — §1 Visibility
            contract_path: .momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}
            how_dev_self_checks: |
              <plain-language self-check the developer follows to confirm this story is done;
@@ -509,19 +516,21 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
          Set {{contract_metadata[story_slug]}} = {
            verification_method: {{vm}},
            harness_profile: {{vm}},
+           governing_surface: {{governing_surface}},
            contract_path: ".momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}"
          }
 
       6. Write to `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}`
 
-      Special case — app-ui stories:
+      Special case — stories whose {{vm}} is `smoke` (surface `chat-ui` or `application-ui`,
+      declared or inferred):
         · Write the `.feature` contract here in Phase A
         · This `.feature` is the canonical spec-of-done; Step 4 must NOT overwrite it
     </action>
 
     <output>## Contracts Authored
 
-{{for each story: · {{story_slug}}.{{ext}} — {{change_type}} → {{verification_method}}}}
+{{for each story: · {{story_slug}}.{{ext}} — {{governing_surface}} ({{routed_by}}) → {{verification_method}}}}
 
 Contracts written to `sprints/{{sprint_slug}}/specs/`. Proceeding to coverage plan.</output>
 
@@ -743,22 +752,22 @@ These surface as decisions at the Step 7 plan gate and block activation at Step 
     <action>Create the sprint specs directory (if not already created by Step 3.5):
       `.momentum/sprints/{{sprint_slug}}/specs/`</action>
 
-    <action>Load the method-routing table from `skills/momentum/references/rules/verification-standard.md` Section 1.
-    This table maps change_type → driver token (skill-invoke | behavioral-trigger | bash | smoke | curl | document-review).
-    Gherkin specs (.feature files) are generated ONLY for stories whose routing token is NOT already
-    determined by a non-behavioral contract format. Use change_type → routing token (from the table),
-    NOT the story's verification_method_advisory field (which is informational only), to decide.</action>
+    <action>Gherkin specs (.feature files) are generated ONLY for stories whose routing token is NOT already
+    determined by a non-behavioral contract format. Reuse {{contract_metadata[story_slug].verification_method}}
+    — already computed in Step 3.5 via surface-primary routing (declared surface, or change_type
+    inference fallback per verification-standard.md §1) — as the routing token for each story.
+    Do NOT recompute independently from `change_type` and do NOT branch on `verification_method_advisory`
+    (an informational hint written by create-story, not a routing signal): Step 3.5's computed token is
+    the single authoritative source, so Step 4 always agrees with §1 and with the contract just authored.</action>
 
     <action>For each approved story in {{selected_stories}}:
-      · SKIP any story that already has a `.feature` file in `specs/` (written by Step 3.5 for app-ui stories) — that file is the canonical spec-of-done and must NOT be overwritten
-      · Read the story's `change_type` from its frontmatter. Look up the routing token in the
-        method-routing table. SKIP any story whose routing token is one of:
+      · SKIP any story that already has a `.feature` file in `specs/` (written by Step 3.5 for
+        chat-ui/application-ui stories) — that file is the canonical spec-of-done and must NOT be overwritten
+      · Read {{contract_metadata[story_slug].verification_method}}. SKIP any story whose routing token is one of:
         skill-invoke, behavioral-trigger, bash, curl, document-review
         (those stories use their own dedicated contract format — .eval.yaml, .trigger.md, .smoke.sh, or .review.md — not Gherkin)
       · Only generate a .feature file for stories whose routing token is `smoke` and that do not
         already have a contract file in `specs/`
-      · Do NOT read or branch on `verification_method` or `verification_method_advisory` fields —
-        those are advisory hints written by create-story, not routing signals
     </action>
     <action>For each approved story WITHOUT an existing contract file in `specs/` AND with routing token `smoke`:</action>
     <action>Read the story's acceptance criteria from its story file — read ALL ACs

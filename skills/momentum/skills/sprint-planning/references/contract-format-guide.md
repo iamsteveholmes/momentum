@@ -1,27 +1,43 @@
 # Contract Format Guide
 
-Per-change-type authoring rules for frozen verification contracts written during Step 3.5 of sprint planning.
+Per-surface authoring rules for frozen verification contracts written during Step 3.5 of sprint planning. Routing is keyed on the story's declared **assembled surface** (verification-standard.md §1, DEC-040 D7); `change_type` supplies an inference fallback only when no surface is declared.
 
 ---
 
-## File Extension by Change-Type
+## File Extension by Assembled Surface
 
-| change_type | Extension | Harness driver |
+| Assembled Surface | Extension | Harness driver |
 |---|---|---|
-| `skill-instruction` | `.eval.yaml` | `skill-invoke` |
-| `rule-hook` | `.trigger.md` | `behavioral-trigger` |
-| `script-code` | `.smoke.sh` | `bash` |
-| `script-cli` | `.smoke.sh` | `bash` |
-| `specification` | `.review.md` | `document-review` |
-| `research-spike` | `.review.md` | `document-review` |
-| `app-ui` | `.feature` | `smoke` |
-| `agent-definition` | `.eval.yaml` | `skill-invoke` |
-| `backend` | `.smoke.sh` | `curl` |
-| `config-structure` | `.review.md` | `document-review` |
+| `skill-invocation` | `.eval.yaml` | `skill-invoke` |
+| `hook-trigger` | `.trigger.md` | `behavioral-trigger` |
+| `cli` | `.smoke.sh` | `bash` |
+| `artifact` | `.review.md` | `document-review` |
+| `chat-ui` | `.feature` | `smoke` |
+| `application-ui` | `.feature` | `smoke` |
+| `http-endpoint` | `.smoke.sh` | `curl` |
 
-### Multi-Change-Type Precedence
+### `change_type` → Surface Inference (fallback only)
 
-When a story declares multiple change-types, use the extension of the highest-weight type:
+Consulted **only** when a story declares no `surface` — a declared surface always
+resolves directly via the table above, without touching this inference:
+
+| `change_type` | Inferred Surface |
+|---|---|
+| `skill-instruction`, `agent-definition` | `skill-invocation` |
+| `rule-hook` | `hook-trigger` |
+| `script-code`, `script-cli` | `cli` |
+| `backend`, `app-ui` | `application-ui` |
+| `specification`, `research-spike`, `config-structure` | `artifact` |
+
+Note `backend` infers to `application-ui` (`.feature`/`smoke`), **not** `http-endpoint`
+(`.smoke.sh`/`curl`) — there is no unconditional `backend → curl` mapping. A story whose
+actual consumer is a raw HTTP client must declare `surface: http-endpoint` explicitly (or
+use the verification-standard.md §2 override).
+
+### Multi-Change-Type Precedence (inference path only)
+
+When a surface-less story declares multiple change-types, resolve to a single type via
+the highest-weight type before applying the inference table above:
 
 ```
 app-ui > script-code > script-cli > backend > agent-definition
@@ -60,6 +76,7 @@ fields are listed below in required order. All fields are mandatory unless marke
 story_slug: <story-slug>
 verification_method: <driver-token>
 harness_profile: <driver-token>
+surface: <declared-or-inferred surface token>
 contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.<ext>
 how_dev_self_checks: |
   <plain-language description of what to do and observe to confirm this story is done>
@@ -79,6 +96,7 @@ detect it:
 story_slug: <story-slug>
 verification_method: <driver-token>
 harness_profile: <driver-token>
+surface: <declared-or-inferred surface token>
 contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.<ext>
 how_dev_self_checks: |
   <plain-language description of what to do and observe to confirm this story is done>
@@ -97,6 +115,7 @@ platforms: [host]
 # story_slug: <story-slug>
 # verification_method: <driver-token>
 # harness_profile: <driver-token>
+# surface: <declared-or-inferred surface token>
 # contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.smoke.sh
 # how_dev_self_checks: Run this script; observe exit 0 and PASS output.
 # coverage_disposition: dedicated-run | covered-by-composition
@@ -112,12 +131,13 @@ platforms: [host]
 | `story_slug` | 1 | Kebab-case identifier matching the story file name |
 | `verification_method` | 2 | Driver token from the closed enum: `skill-invoke`, `behavioral-trigger`, `bash`, `smoke`, `curl`, `document-review` |
 | `harness_profile` | 3 | Same driver token as `verification_method` (or the profile name if project overrides exist in `momentum/verification-harness.json`) |
-| `contract_path` | 4 | Relative path to this contract file from the project root |
-| `how_dev_self_checks` | 5 | Plain-language instructions the developer follows to confirm the story is done — no insider knowledge, Outsider Test applies |
-| `coverage_disposition` | 6 | `dedicated-run` if this story is verified standalone; `covered-by-composition` if an integration scenario discharges it |
-| `covered_by_scenario` | 7 | `null` for dedicated-run; name of the integration scenario from `coverage-plan.md` for covered-by-composition |
-| `acceptance_criteria_ref` | 8 | Path and anchor to the story's ACs in its markdown file |
-| `platforms` | 9 | List of platforms where verification runs (typically `[host]`; may include `android`, `ios`, `web`) |
+| `surface` | 4 | The assembled-surface token (verification-standard.md §1) that produced `verification_method` — the declared value if the story declared one, else the `change_type`-inferred value. This is the AC5/§1 visibility record: it names, after the fact, which surface a story was actually verified against. Added by this story (DEC-040 D7); contracts frozen before this story's implementation predate the field and remain valid without it. |
+| `contract_path` | 5 | Relative path to this contract file from the project root |
+| `how_dev_self_checks` | 6 | Plain-language instructions the developer follows to confirm the story is done — no insider knowledge, Outsider Test applies |
+| `coverage_disposition` | 7 | `dedicated-run` if this story is verified standalone; `covered-by-composition` if an integration scenario discharges it |
+| `covered_by_scenario` | 8 | `null` for dedicated-run; name of the integration scenario from `coverage-plan.md` for covered-by-composition |
+| `acceptance_criteria_ref` | 9 | Path and anchor to the story's ACs in its markdown file |
+| `platforms` | 10 | List of platforms where verification runs (typically `[host]`; may include `android`, `ios`, `web`) |
 
 ---
 
@@ -131,7 +151,7 @@ platforms: [host]
 
 ---
 
-## skill-instruction → `.eval.yaml`
+## skill-invocation → `.eval.yaml`
 
 ```yaml
 # {story-slug}.eval.yaml
@@ -162,7 +182,7 @@ scenarios:
 
 ---
 
-## rule-hook → `.trigger.md`
+## hook-trigger → `.trigger.md`
 
 ```markdown
 # {story-slug} — Hook Trigger Contract
@@ -195,7 +215,7 @@ scenarios:
 
 ---
 
-## script-code / script-cli → `.smoke.sh`
+## cli → `.smoke.sh`
 
 ```bash
 #!/usr/bin/env bash
@@ -229,10 +249,18 @@ echo "PASS"
 
 ---
 
-## backend → `.smoke.sh` (curl driver)
+## http-endpoint → `.smoke.sh` (curl driver)
 
-Backend HTTP services are verified by exercising their endpoints via `curl`. The harness driver
-is `curl` — NOT `bash`. This aligns with `verification-standard.md` §1 and
+Use this format only when the HTTP endpoint is itself the surface its consumer meets —
+a public API called directly by an external client, with no UI in front of it. It is
+never the default for backend work whose behavior is actually exercised through a chat
+or application UI; that work is `application-ui`/`chat-ui` → `.feature` below. A story
+routes here only via a declared `surface: http-endpoint` or a valid §2 override — never
+from `backend` change_type alone (verification-standard.md §1 no longer infers `curl`
+from `backend`).
+
+Such endpoints are verified by exercising them via `curl`. The harness driver is `curl`
+— NOT `bash`. This aligns with `verification-standard.md` §1 and
 `momentum/verification-harness.json` `driver_bindings.curl`.
 
 ```bash
@@ -276,7 +304,10 @@ echo "PASS"
 
 ---
 
-## specification / research-spike / config-structure → `.review.md`
+## artifact → `.review.md`
+
+(Declared, or inferred from `specification`, `research-spike`, or `config-structure`
+change_type.)
 
 ```markdown
 # {story-slug} — Document Review Contract
@@ -314,11 +345,14 @@ not an internal reference]
 
 ---
 
-## app-ui → `.feature`
+## chat-ui / application-ui → `.feature`
+
+(Declared, or inferred from `app-ui`, or from `backend` when no surface is declared and
+the change type inference resolves to `application-ui` — never `http-endpoint`.)
 
 This is a Gherkin feature file. It follows all the rules in `skills/momentum/references/gherkin-template.md`.
 
-The Step 3.5 contract for app-ui stories is the canonical `.feature` — Step 4 (Gherkin spec generation) must NOT overwrite it. Step 4 treats an existing `.feature` in `specs/` as already authored and skips that story.
+The Step 3.5 contract for these stories is the canonical `.feature` — Step 4 (Gherkin spec generation) must NOT overwrite it. Step 4 treats an existing `.feature` in `specs/` as already authored and skips that story.
 
 **Part-A header for `.feature` contracts** — use Gherkin `#`-comment lines at the top of the file,
 before the `Feature:` declaration:
@@ -328,6 +362,7 @@ before the `Feature:` declaration:
 # story_slug: <story-slug>
 # verification_method: smoke
 # harness_profile: smoke
+# surface: chat-ui | application-ui
 # contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.feature
 # how_dev_self_checks: Run `maestro test <story-slug>.feature` and observe all scenarios pass.
 # coverage_disposition: dedicated-run | covered-by-composition

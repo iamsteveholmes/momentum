@@ -190,7 +190,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     </output>
   </step>
 
-  <step n="5" goal="Select verification method from change-type routing">
+  <step n="5" goal="Select verification method from declared surface, or change-type inference">
     <action>Check whether `skills/momentum/references/rules/verification-standard.md` exists on disk</action>
     <check if="verification-standard.md does not exist on disk">
       <output>Cannot select verification method — verification-standard.md not found.
@@ -198,11 +198,21 @@ This story depends on `enforced-verification-rule-change-type-method-routing-har
       <action>HALT</action>
     </check>
     <action>Load `skills/momentum/references/rules/verification-standard.md`</action>
-    <action>Read the change-type → verification-method routing table from Section 1 of verification-standard.md</action>
-    <action>For each entry in {{classification_list}}, look up its change type in the routing table. Produce {{method_candidates}}: a list of (change-type, method) pairs. Skip any entries tagged `unclassified`.</action>
+    <action>Read the story's frontmatter for a declared `surface:` field.</action>
+
+    <check if="the story frontmatter declares a `surface:` value that is a valid token in Section 1's surface enum (chat-ui, application-ui, http-endpoint, cli, skill-invocation, hook-trigger, artifact)">
+      <action>Look up that surface in Section 1's surface-to-method table. Set {{verification_method}} = the mapped method — this is the routing key; it is used directly and change_type is never consulted.</action>
+      <action>Store {{routed_by}} = "surface"</action>
+      <note>No developer prompt — a declared surface always resolves unambiguously and always wins over any change_type mapping.</note>
+      <goto anchor="write_method" />
+    </check>
+
+    <action>No declared surface (or an invalid token) — fall back to change_type inference. Read the change_type → surface inference table from Section 1 of verification-standard.md.</action>
+    <action>Store {{routed_by}} = "change_type_inference"</action>
+    <action>For each entry in {{classification_list}}, look up its change type's inferred surface, then that surface's method. Produce {{method_candidates}}: a list of (change-type, method) pairs. Skip any entries tagged `unclassified`.</action>
 
     <check if="all entries in {{classification_list}} are unclassified (no classified change types)">
-      <ask>All tasks in this story are unclassified — no change type matched. What verification method should govern this story? (Refer to the routing table in `skills/momentum/references/rules/verification-standard.md` for available methods.)</ask>
+      <ask>All tasks in this story are unclassified — no change type matched, and no `surface` is declared. What verification method should govern this story? (Refer to the routing table in `skills/momentum/references/rules/verification-standard.md` for available methods.)</ask>
       <action>Set {{verification_method}} = developer's selection</action>
       <goto anchor="write_method" />
     </check>
@@ -230,17 +240,19 @@ Which method should govern this story's verification? Select the method for the 
 
     <anchor id="write_method" />
     <note>verification_method is written as an ADVISORY hint only — it is NOT the routing key
-    that selects the verifier. The harness and conductor derive routing from change_type via the
-    routing table in verification-standard.md. Sprint-planning Step 4 (Gherkin generation) uses
-    change_type, not this field, to determine contract format. Any value written here must be a
-    closed-enum token (skill-invoke | behavioral-trigger | bash | smoke | curl | document-review)
-    — never a free-text description, legacy alias (eval/trigger/review/gherkin/skip), or
-    space-containing string.</note>
+    that selects the verifier. The harness and conductor derive the authoritative routing at
+    sprint-planning time from the story's declared `surface` (routing key), falling back to
+    change_type inference only when no surface is declared — per verification-standard.md §1.
+    Sprint-planning Step 4 (Gherkin generation) reuses Step 3.5's computed token, not this
+    advisory field, to determine contract format. Any value written here must be a closed-enum
+    token (skill-invoke | behavioral-trigger | bash | smoke | curl | document-review) — never a
+    free-text description, legacy alias (eval/trigger/review/gherkin/skip), or space-containing
+    string.</note>
     <action>Read the current content of {{story_file}}</action>
     <action>Locate the YAML frontmatter block (the `---` delimited header at the top of the file)</action>
     <action>Add or update the `verification_method_advisory:` field in the frontmatter with the value `{{verification_method}}`. Label it `verification_method_advisory` (not `verification_method`) to make clear this is informational, not the routing key used by the harness or conductor.</action>
     <action>Write the updated content back to {{story_file}}</action>
-    <output>**Verification method (advisory):** `{{verification_method}}` — written as `verification_method_advisory` in frontmatter. Routing is derived from `change_type` at sprint-planning time.</output>
+    <output>**Verification method (advisory):** `{{verification_method}}` (routed by: {{routed_by}}) — written as `verification_method_advisory` in frontmatter. The authoritative routing key is the story's declared `surface`, if any; otherwise `change_type` inference applies at sprint-planning time (verification-standard.md §1).</output>
   </step>
 
   <step n="6" goal="Inject Momentum Implementation Guide into story Dev Notes">
