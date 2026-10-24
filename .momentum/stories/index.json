@@ -6662,5 +6662,35 @@
     "touches": [],
     "priority": "low",
     "story_type": "maintenance"
+  },
+  "arbitrate-impetus-session-greeting-two-sentence-budget": {
+    "status": "backlog",
+    "title": "Arbitrate the Impetus session-greeting two-sentence budget across N-of-M, ledger sub-counts, and the tasting nudge",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
+  },
+  "add-momentum-tools-feature-register-subcommand": {
+    "status": "backlog",
+    "title": "Add momentum-tools feature register so features can enter the registry via the sole-writer path",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "give-story-surface-field-a-sanctioned-write-path": {
+    "status": "backlog",
+    "title": "Give the story surface field a sanctioned write path (create-story elicitation, --surface flag, schema row)",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
   }
 }
