@@ -536,9 +536,10 @@ Ready to begin?</output>
               row for the sprint (by `ts`), if any. If its `outcome` is `"merged"`: on reaching Phase 5,
               the approve branch's execution sequence is skipped entirely and the recorded merge commit
               SHA / pushed head SHA are reflected in the completion output rather than re-announced as
-              new. If its `outcome` is `"merge-gate-failed"`: the approve branch re-surfaces the
-              recorded `failing_step` and `error_text` before allowing any retry — it is never silently
-              retried into a success claim. If its `outcome` is `"pending"` (or no row exists yet): no
+              new. If its `outcome` is `"merge-gate-failed"`: the recorded `failing_step` and
+              `error_text` are re-surfaced BEFORE the gate ask (PRIOR FAILURE RE-SURFACE, ahead of the
+              Phase 5 ask), so any approval is a renewed, informed one — it is never silently retried
+              into a success claim. If its `outcome` is `"pending"` (or no row exists yet): no
               special resume handling is needed — the approve-branch checks at step 5 read this same
               ledger state directly at decision time.
           For step 3.D counts: scope the deferred/discharged/undischarged counts to rows with
@@ -1844,7 +1845,9 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
               the build"], report_path: null } — this is the same question as any prior mid-build
               refresh, so `waited_since` carries forward unchanged per the shared-write rule (a
               fresh `waited_since` is bound only the first time this question is ever written for
-              this sprint). This is the longest wall-clock phase and the most likely to be
+              this sprint); likewise carry `resurface_count` forward unchanged (same question) —
+              read it from the existing card and write it back as-is, never zero it in this
+              full-overwrite write (per references/resume-card.md shared-write rule). This is the longest wall-clock phase and the most likely to be
               interrupted — a session dying anywhere in Phase 2 leaves a card describing the last
               completed story, not a stale end-gate question from a prior sprint.
           </action>
@@ -2162,7 +2165,9 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       {{merged}}, slugs: {{merged}} }, blocked: { count: length of {{blocked}}, slugs: {{blocked}} },
       question unchanged from the Phase 2 build-loop refresh ("Resume the sprint build" / options:
       ["Resume the build"] / report_path: null) — `waited_since` carries forward unchanged, this is
-      the same question, only the phase label advances.
+      the same question, only the phase label advances; `resurface_count` carries forward unchanged
+      (same question — read it from the existing card and write it back as-is, never zero it in
+      this full-overwrite write, per references/resume-card.md).
     </action>
 
     <check if="{{merge_review_result}}.status == 'NON_CONVERGENT'">
@@ -2494,7 +2499,9 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       {{resume_card_path}} — status: "pending", phase: "e2e", merged: { count: length of {{merged}},
       slugs: {{merged}} }, blocked: { count: length of {{blocked}}, slugs: {{blocked}} }, question
       unchanged from the prior refresh ("Resume the sprint build") — `waited_since` carries forward
-      unchanged.
+      unchanged, and `resurface_count` carries forward unchanged (same question — read it from the
+      existing card and write it back as-is, never zero it in this full-overwrite write, per
+      references/resume-card.md).
     </action>
 
     <note>No developer ask here on the routine path. Routine E2E findings are auto-fixed silently. Stakes-class E2E findings with timing_tier == "end-gate-expanded" are held for the end-gate as decision cards. Only timing_tier == "mid-flight" findings trigger the narrow mid-flight pause (step 2.F). Proceed to Phase 5.</note>
@@ -2628,28 +2635,36 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
     <action>MERGE-GATE PRE-DECISION DISCLOSURE (AC 5 — the commit list the developer sees before acting, not after):
       Bind {{sprint_tip_sha}}: if `sprint/{{sprint_slug}}` still exists as a ref, run `git rev-parse sprint/{{sprint_slug}}` — the sprint branch tip at gate-decision time, captured now, before any mutation.
-        DELETED-BRANCH FALLBACK: if the ref no longer exists (a prior pass already merged and deleted it — the DEFENSIVE FALLBACK resume case documented in the merge action below), the branch itself can no longer supply this value. Instead, read the latest `merge-gate-outcome` row for this sprint from the build ledger and rehydrate {{sprint_tip_sha}} from that row's `sprint_tip_sha` field (every `merge-gate-outcome` row, pending or terminal, carries it — see build-ledger.md). If no such row exists either (should not occur once any Phase 5 pass has run, since the checkpoint below always appends one first), fall back to `git rev-parse main` — main already contains the (now-deleted) sprint tip in this resume case, so its current head is an equally valid ancestor reference.
+        DELETED-BRANCH FALLBACK: if the ref no longer exists (a prior pass already merged and deleted it — the DEFENSIVE FALLBACK resume case documented in the merge action below), the branch itself can no longer supply this value. Instead, read the latest `merge-gate-outcome` row for this sprint from the build ledger and rehydrate {{sprint_tip_sha}} from the latest `merge-gate-outcome` row that carries a `sprint_tip_sha` field — that is the latest `pending` row; `merged` and `merge-gate-failed` rows do NOT carry it (see build-ledger.md), so skip past a terminal row to the pending row beneath it. If no such row exists either (should not occur once any Phase 5 pass has run, since the checkpoint below appends a pending row before the first ask), fall back to `git rev-parse main` — main already contains the (now-deleted) sprint tip in this resume case, so its current head is an equally valid ancestor reference.
         This is the reference SHA the post-execution read-back verification (below) confirms is an ancestor of `main`, and it is the evidence value carried on the `merge-gate-outcome` ledger row.
       Bind {{pending_commits}}: if `sprint/{{sprint_slug}}` still exists as a ref, output of `git log origin/main..sprint/{{sprint_slug}} --oneline` — the exact commits that will reach `origin/main` if the gate is approved (equivalent, pre-merge, to the post-merge `git log @{u}..HEAD --oneline` disclosure this story folds into the single approve control).
-        DELETED-BRANCH FALLBACK: if the branch ref no longer exists (same resume case as above), derive {{pending_commits}} = output of `git log origin/main..{{sprint_tip_sha}} --oneline` instead, using the rehydrated {{sprint_tip_sha}} — the commit range is identical even though the branch pointer is gone.
+        DELETED-BRANCH FALLBACK: if the branch ref no longer exists (same resume case as above — the merge to `main` already happened), derive {{pending_commits}} = output of `git log origin/main..main --oneline` instead. Do NOT derive it from the rehydrated {{sprint_tip_sha}}: that value comes from the latest `pending` row and can predate fixer commits added by a request-changes pass (terminal rows skip the pending stamp and do not carry a tip), so `origin/main..<old tip>` would understate what the push delivers. `main` already holds the merge, so `origin/main..main` is exactly what reaches origin.
         If `origin/main` cannot be resolved (no remote configured), bind {{pending_commits}} = the same `git log` output against local `main` (or {{sprint_tip_sha}} under the fallback) and note in the disclosure that no remote is configured — this is itself a condition the MERGE-GATE EXECUTION SEQUENCE below will surface as a `merge-gate-failed` push step if the developer approves anyway.
       {{pending_commits}} is rendered in the report's §07 section (per renderer §07 above) and is shown again immediately ahead of the gate `<ask>` below — the developer sees it twice: once while reading the report, once at the moment of deciding.
     </action>
 
-    <action>MERGE-GATE PENDING CHECKPOINT (AC 1, 8 — the gate has a durable record even before the developer answers, and even before the report itself is built or opened): Read the build ledger for the latest `merge-gate-outcome` row for this sprint (by `ts`; none may exist yet). If the latest such row already has `outcome == "merged"`, skip this checkpoint — a terminal success is never overwritten with `pending`. Otherwise (no row yet, or the latest is `pending` or `merge-gate-failed`): append { event: "merge-gate-outcome", outcome: "pending", sprint_tip_sha: {{sprint_tip_sha}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted). This runs BEFORE the report is built or opened so the pending outcome is durably recorded even if report rendering or the viewer open fails; a session that ends anywhere from here through the ask below still leaves a real recorded outcome — never silence.</action>
+    <action>MERGE-GATE PENDING CHECKPOINT (AC 1, 8 — the gate has a durable record even before the developer answers, and even before the report itself is built or opened): Read the build ledger for the latest `merge-gate-outcome` row for this sprint (by `ts`; none may exist yet). If the latest such row is ANY terminal outcome (`outcome == "merged"` OR `outcome == "merge-gate-failed"`), skip this checkpoint — a terminal outcome is never buried under a fresh `pending` row (readers take the latest row by `ts`, so a stamped-over `merge-gate-failed` would make its `failing_step`/`error_text` unreachable); a recorded `merge-gate-failed` is instead re-surfaced FIRST — by the PRIOR FAILURE RE-SURFACE check immediately before the gate `<ask>` below — so the developer sees the failure before answering, and the renewed approval they then give is what triggers the next state change. Otherwise (no row yet, or the latest is `pending`): append { event: "merge-gate-outcome", outcome: "pending", sprint_tip_sha: {{sprint_tip_sha}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted). This runs BEFORE the report is built or opened so the pending outcome is durably recorded even if report rendering or the viewer open fails; a session that ends anywhere from here through the ask below still leaves a real recorded outcome — never silence.</action>
 
-    <action>RESUME-CARD REFRESH (DEC-040 D5, AC 1, 3, per references/resume-card.md): write/overwrite
-      {{resume_card_path}} — status: "pending", phase: "end-gate", merged: { count: length of
-      {{merged}}, slugs: {{merged}} }, blocked: { count: length of {{blocked}}, slugs: {{blocked}} },
-      question: { text: "Approve merge to main and push to origin, or request changes?", gates: "the
-      tier-1 merge gate — merging this sprint's work to main and pushing to origin", options:
-      ["Approve", "Request changes"], report_path: ".momentum/handoffs/{{sprint_slug}}-endgate-report.html" }.
-      This question is NEW relative to the "Resume the sprint build" question written during Phase
-      2–4 — bind a fresh `waited_since = NOW()` here per the shared-write rule, since the developer
-      is now being asked a genuinely different thing. This write happens BEFORE the report is built
-      or opened, same as the MERGE-GATE PENDING CHECKPOINT above and for the same reason: a session
-      dying anywhere from here through the ask leaves a durable, already-current card.
-    </action>
+    <check if="the latest merge-gate-outcome row for this sprint (by ts) is NOT 'merged' (no row yet, pending, or merge-gate-failed)">
+      <note>MERGED-ON-RECORD GUARD: when a `merged` outcome is already on record (resume after the merge gate succeeded), this refresh is skipped entirely — the card then belongs to the tier-2 closure gate (or is already resolved "approved"), and re-writing the end-gate question would overwrite the closure question, re-pend a resolved card, and wipe its `resurface_count` / `waited_since` on every resume. Leave the card exactly as it stands.</note>
+      <action>RESUME-CARD REFRESH (DEC-040 D5, AC 1, 3, per references/resume-card.md): write/overwrite
+        {{resume_card_path}} — status: "pending", phase: "end-gate", merged: { count: length of
+        {{merged}}, slugs: {{merged}} }, blocked: { count: length of {{blocked}}, slugs: {{blocked}} },
+        question: { text: "Approve merge to main and push to origin, or request changes?", gates: "the
+        tier-1 merge gate — merging this sprint's work to main and pushing to origin", options:
+        ["Approve", "Request changes"], report_path: ".momentum/handoffs/{{sprint_slug}}-endgate-report.html" }.
+        Compare against the card on record (per references/resume-card.md and the RESUME-CARD WRITE
+        STANDING RULE): if the card's current `question.text` differs (coming from the "Resume the
+        sprint build" question written during Phase 2–4), this is a NEW question — bind a fresh
+        `waited_since = NOW()` per the shared-write rule and reset `resurface_count` to 0, do not
+        carry the prior question's count forward. If the card already holds this same end-gate
+        question (a resumed gate — the session died at the ask and Impetus has since surfaced it),
+        this is the SAME question: carry `waited_since` and `resurface_count` forward unchanged.
+        This write happens BEFORE the report is built
+        or opened, same as the MERGE-GATE PENDING CHECKPOINT above and for the same reason: a session
+        dying anywhere from here through the ask leaves a durable, already-current card.
+      </action>
+    </check>
 
     <!-- ── Build the self-contained HTML end-gate report ── -->
 
@@ -2698,32 +2713,42 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
     <critical>RENDER-THEN-ASK IS ATOMIC. The turn MUST NOT end between the report open above and the approval ask below — proceed directly from the open action to the ask in the same turn. The end-gate report must never be left open with no approval prompt on screen.</critical>
 
+    <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merge-gate-failed'">
+      <note>PRIOR FAILURE RE-SURFACE (AC 8) — a recorded failure is shown BEFORE the developer answers, so the approval they give is a renewed, informed one. It is never buried under a new `pending` row and never retried silently.</note>
+      <output>A prior merge-gate attempt failed and is on record: step `{{that row's failing_step}}` — {{that row's error_text}}. Nothing was announced as merged. Approving below is a renewed approval and re-attempts the execution sequence from the last completed checkpoint; requesting changes leaves the failure on record.</output>
+    </check>
+
     <ask>The end-gate report is open in the viewer. Review each section. The commits that will reach `origin/main` if you approve are: {{pending_commits}} (also shown in §07). Acknowledge any decision cards in §04. Then approve to merge to `main` AND push to origin — one decision, executed and verified together — or request changes.</ask>
 
     <check if="developer approves">
 
+      <action>CONTROL-FLOW BINDINGS (this workflow format has no subroutine construct, so every branch below is an explicit check element, never prose-only): initialize {{failing_step}} = unbound and {{error_text}} = unbound. A STOP point in the execution sequence "invokes MERGE-GATE-FAILED HANDLING" ONLY by binding {{failing_step}} and {{error_text}}; every later action in the sequence is guarded on {{failing_step}} being unbound, and the handler is guarded on it being bound — so the handler is unreachable from the success path. FIRST-FAILURE-WINS: once {{failing_step}} is bound, never rebind it or {{error_text}}, and skip every remaining numbered step or check in the current action — only the first failure is recorded.</action>
+
       <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merged'">
-        <note>TERMINAL SUCCESS ALREADY ON RECORD (AC 8). A prior pass already executed and verified the full transition. Do not re-merge, re-push, or re-transition anything, and do not announce this as a fresh merge — reflect the already-recorded outcome only.</note>
+        <note>TERMINAL SUCCESS ALREADY ON RECORD (AC 8). This check is TERMINAL: the execution sequence below sits inside a sibling check conditioned on NO merged row existing, so nothing after this check runs on this path. A prior pass already executed and verified the full transition. Do not re-merge, re-push, or re-transition anything, and do not announce this as a fresh merge — reflect the already-recorded outcome only.</note>
         <output>Sprint `{{sprint_slug}}` is already merged to `main` and pushed to origin — recorded outcome: merged (merge commit `{{that row's merge_commit_sha}}`, pushed head `{{that row's pushed_head_sha}}`). Nothing further to execute. The sprint's `sprints/index.json` `status` and its `closure.verdict` are set together by the same `sprint complete` call, so once that gate has run they read identical — what stays a separate decision is whether that gate has actually run and recorded a human-verified verdict on the sprint's own goal, which this merge succeeding does not by itself establish.</output>
       </check>
 
+      <check if="the latest merge-gate-outcome row for this sprint (by ts) does NOT have outcome == 'merged' (no row yet, pending, or merge-gate-failed)">
+
       <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merge-gate-failed'">
-        <note>PRIOR FAILURE ON RECORD (AC 8) — re-surface it before retrying; never silently retry into an unearned success claim. The developer approving again after seeing this is a retry request, so execution below still runs — the constraint is that it must be visibly acknowledged first, and it may only end in a "merged" claim if the full read-back verification passes again from scratch.</note>
-        <output>Re-surfacing a prior merge-gate failure before retrying: recorded outcome `merge-gate-failed` at step `{{that row's failing_step}}` — {{that row's error_text}}. Approving now re-attempts the execution sequence.</output>
+        <note>PRIOR FAILURE ON RECORD (AC 8) — the failure was already re-surfaced before the ask (PRIOR FAILURE RE-SURFACE above), so this approval is the renewed approval. Execution below runs as a retry, and may only end in a "merged" claim if the full read-back verification passes again from scratch.</note>
+        <output>Retrying after the recorded merge-gate failure at step `{{that row's failing_step}}` ({{that row's error_text}}) on your renewed approval — re-attempting the execution sequence now.</output>
       </check>
 
       <!-- ═══ MERGE-GATE EXECUTION SEQUENCE (runs when no terminal 'merged' row exists yet — i.e. first approval, or a retry after a recorded merge-gate-failed) ═══ -->
 
       <check if="NO row with event == 'end-gate-phase-complete' exists yet in the build ledger for this sprint (first time reaching the approve-side mutations, or retrying after a failure that occurred before this checkpoint was reached)">
         <action>Initialize {{merge_conflict_attempts}} = 0.</action>
-        <action>Merge sprint branch to main (bounded conflict retry — AC 4):
-          1. `git checkout main`. If this fails (dirty working tree, missing local `main`, or any other non-zero exit): invoke MERGE-GATE-FAILED HANDLING with failing_step: "checkout", error_text: the command's actual captured stderr and exit code. Do not proceed to step 2.
-          2. `git merge sprint/{{sprint_slug}}`
+        <action>Merge sprint branch to main (bounded conflict retry — AC 4; FIRST-FAILURE-WINS — the moment a numbered step below binds {{failing_step}}, skip every later step in this action):
+          1. `git checkout main`. If this fails (dirty working tree, missing local `main`, or any other non-zero exit): bind {{failing_step}} = "checkout" and {{error_text}} = the command's actual captured stderr and exit code. Do not proceed to step 2.
+          2. (Only if {{failing_step}} is still unbound.) `git merge sprint/{{sprint_slug}}`
           3. If conflicts: while {{merge_conflict_attempts}} < {{MAX_FIX_ATTEMPTS}}: the Conductor resolves them autonomously or fires a fixer subagent, then retries the merge (per spec §2 and decision #9 — "Conductor resolves conflicts; retry"; conflict-resolution engine delivered by conduct-merge-and-conflict-resolution), incrementing {{merge_conflict_attempts}} after each resolution attempt (i.e., after each retried merge that still conflicts) — NOT on the initial conflict detection. This ensures {{merge_conflict_attempts}} counts actual resolution attempts made, so the bound below is not exhausted one attempt early. Never HALT for developer resolution mid-attempt.
-             BOUND EXHAUSTED: if {{merge_conflict_attempts}} reaches {{MAX_FIX_ATTEMPTS}} and conflicts remain: run `git merge --abort` first to restore local `main` to its clean pre-merge state (an unresolved conflict must never be left sitting mid-merge on `main`). Do NOT attempt the transitions, sprint-complete, push, or verification steps below. Invoke MERGE-GATE-FAILED HANDLING (defined below) with failing_step: "merge", error_text: the conflicting file list and the merge tool's actual error output, noting that `git merge --abort` has already restored `main`.
-          4. After successful merge: `git branch -d sprint/{{sprint_slug}}`. If this fails for a reason other than the DEFENSIVE FALLBACK case below (e.g., the branch is not fully merged, or another local error): invoke MERGE-GATE-FAILED HANDLING with failing_step: "branch-delete", error_text: the command's actual captured stderr and exit code — `main` already has the merge at this point, so the failure output must say so plainly rather than implying nothing happened.
+             BOUND EXHAUSTED: if {{merge_conflict_attempts}} reaches {{MAX_FIX_ATTEMPTS}} and conflicts remain: run `git merge --abort` first to restore local `main` to its clean pre-merge state (an unresolved conflict must never be left sitting mid-merge on `main`). Do NOT attempt the transitions, push, or verification steps below. bind {{failing_step}} = "merge" and {{error_text}} = the conflicting file list and the merge tool's actual error output, noting that `git merge --abort` has already restored `main`.
+          4. (Only if {{failing_step}} is still unbound.) After successful merge: `git branch -d sprint/{{sprint_slug}}`. If this fails for a reason other than the DEFENSIVE FALLBACK case below (e.g., the branch is not fully merged, or another local error): bind {{failing_step}} = "branch-delete" and {{error_text}} = the command's actual captured stderr and exit code — `main` already has the merge at this point, so the failure output must say so plainly rather than implying nothing happened.
           DEFENSIVE FALLBACK: if step 2 fails because `sprint/{{sprint_slug}}` no longer exists as a ref, a prior session (or an earlier attempt within this same retry) already merged and deleted it — the narrow crash window inherent to any ledger checkpoint (per build-ledger.md's Crash-Loss Bound). Treat the merge as already complete rather than as an error, and proceed to the transitions step. This is a resume case, not a failure.
         </action>
+        <check if="{{failing_step}} is unbound (the merge action above did not hit a STOP point)">
         <action>Transition sprint stories to their correct terminal status (per spec §8; AC 4 — a rejected transition fails the gate loudly instead of continuing past it silently). CONTINUE-AND-COLLECT: attempt the terminal transition for every story in {{sprint_stories}} before deciding pass/fail — a rejection on one story does not stop the remaining stories from reaching their own terminal transition attempt. Initialize {{rejected_transitions}} = [].
           For each story in {{sprint_stories}}:
             IF slug is in {{merged}} (story completed-and-validated, work integrated):
@@ -2739,13 +2764,18 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
               DEFENSIVE FALLBACK: if the story's status is already a terminal state (the narrow-window case above), skip re-running this transition for the same reason.
               The same REJECTED-TRANSITION COLLECTION above applies to this call — append to {{rejected_transitions}} and continue; do not stop.
-          AFTER all stories in {{sprint_stories}} have been attempted: if {{rejected_transitions}} is non-empty, do NOT proceed to sprint-complete, the MAJOR-RESIDUAL guard, push, or verification. Invoke MERGE-GATE-FAILED HANDLING ONCE with failing_step: "story-transition", error_text: the full list of {{rejected_transitions}} (every rejected slug and its captured error, not just the first). This ends the execution sequence for this pass. If {{rejected_transitions}} is empty, every story reached its terminal status — proceed to sprint-complete below.
+          AFTER all stories in {{sprint_stories}} have been attempted: if {{rejected_transitions}} is non-empty, do NOT proceed to the END-GATE PHASE-COMPLETE CHECKPOINT, the MAJOR-RESIDUAL guard, push, or verification. bind {{failing_step}} = "story-transition" and {{error_text}} = the full list of {{rejected_transitions}} (every rejected slug and its captured error, not just the first). This ends the execution sequence for this pass. If {{rejected_transitions}} is empty, every story reached its terminal status — proceed to the END-GATE PHASE-COMPLETE CHECKPOINT below.
         </action>
-        <action>END-GATE PHASE-COMPLETE CHECKPOINT: append { event: "end-gate-phase-complete", phase: "end-gate-approve", stories_merged: count of {{merged}}, stories_closed_incomplete: count of stories transitioned to closed-incomplete above, ts: NOW() } to {{build_log}} and the build ledger, per references/build-ledger.md (Conductor-level, sprint-scoped row — story_slug omitted, see Conductor-Level Events). Its presence durably marks that the merge, branch delete, per-story terminal transitions, and sprint completion above are done; from this point forward, a resume skips re-attempting them (PHASE CHECKPOINT RULE, step 2.0). Push and the post-execution read-back verification below are NOT covered by this checkpoint — they always still run next in this same sequence, gated by the `merge-gate-outcome` row, not by this one.</action>
+        <check if="{{failing_step}} is unbound (no rejected transitions)">
+        <action>END-GATE PHASE-COMPLETE CHECKPOINT: append { event: "end-gate-phase-complete", phase: "end-gate-approve", stories_merged: count of {{merged}}, stories_closed_incomplete: count of stories transitioned to closed-incomplete above, ts: NOW() } to {{build_log}} and the build ledger, per references/build-ledger.md (Conductor-level, sprint-scoped row — story_slug omitted, see Conductor-Level Events). Its presence durably marks that the merge, branch delete, and per-story terminal transitions above are done (tier-2 sprint closure is a separate gate, not covered here, and is always (re-)attempted on resume); from this point forward, a resume skips re-attempting them (PHASE CHECKPOINT RULE, step 2.0). Push and the post-execution read-back verification below are NOT covered by this checkpoint — they always still run next in this same sequence, gated by the `merge-gate-outcome` row, not by this one.</action>
+        </check>
+        </check>
       </check>
       <check if="a row with event == 'end-gate-phase-complete' already exists in the build ledger for this sprint (resume after the approve-side mutations already completed in a prior session or attempt)">
-        <note>RESUME PAST APPROVAL-SIDE MUTATIONS. The merge, branch delete, per-story terminal transitions, and sprint completion above already completed and are durably checkpointed — per the PHASE CHECKPOINT RULE (step 2.0), they are not repeated: re-running them would error (the branch is already deleted; the state machine rejects re-transitioning stories already at a terminal status without --force; `momentum-tools sprint complete` reports no active sprint). The end-gate report opened above was re-rendered fresh from the ledger and is content-equivalent to what an uninterrupted run would show. Push and the post-execution read-back verification below still run from here — this is exactly the resume path for a prior merge-gate-failed outcome whose failing step was push or a read-back check, not the merge or transitions.</note>
+        <note>RESUME PAST APPROVAL-SIDE MUTATIONS. The merge, branch delete, and per-story terminal transitions above already completed and are durably checkpointed — per the PHASE CHECKPOINT RULE (step 2.0), they are not repeated: re-running them would error (the branch is already deleted; the state machine rejects re-transitioning stories already at a terminal status without --force). The end-gate report opened above was re-rendered fresh from the ledger and is content-equivalent to what an uninterrupted run would show. Push and the post-execution read-back verification below still run from here — this is exactly the resume path for a prior merge-gate-failed outcome whose failing step was push or a read-back check, not the merge or transitions.</note>
       </check>
+
+      <check if="{{failing_step}} is unbound (no STOP point was hit by the merge / transitions above)">
 
       <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
         Sources of residual findings to scan:
@@ -2776,18 +2806,21 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         INVARIANT: When this action completes, every finding in {{major_residuals}} has a corresponding backlog stub. No MAJOR-severity residual may leave this sprint without one.
       </action>
 
+      <check if="{{failing_step}} is unbound (nothing above failed)">
       <action>PUSH — folded into the single approve control (AC 5). No standalone "Push to origin/main?" ask exists anywhere in this sequence; the developer already confirmed this at the gate `<ask>` above, informed by {{pending_commits}}.
         Run: `git push origin main` (explicit remote and branch — never a bare `git push`, which pushes whatever the current branch happens to track and is not guaranteed to be `main`).
-        If the push command fails (rejected, unauthenticated, unreachable remote, or no remote configured): do NOT proceed to the verification step below with an assumed-successful push. Invoke MERGE-GATE-FAILED HANDLING with failing_step: "push", error_text: the captured stderr and exit code from the failed `git push origin main`.
+        If the push command fails (rejected, unauthenticated, unreachable remote, or no remote configured): do NOT proceed to the verification step below with an assumed-successful push. bind {{failing_step}} = "push" and {{error_text}} = the captured stderr and exit code from the failed `git push origin main`.
       </action>
 
-      <action>POST-EXECUTION READ-BACK VERIFICATION (AC 3) — confirm from the system itself, never from having merely issued the commands above:
-        1. Run `git merge-base --is-ancestor {{sprint_tip_sha}} main`. If this does not exit 0: invoke MERGE-GATE-FAILED HANDLING with failing_step: "verify:main-contains-sprint-tip", error_text: the command's actual exit code/output.
-        2. Run `git rev-parse main` and `git rev-parse origin/main`, binding the results as {{main_sha}} and {{origin_main_sha}} respectively (reused below by the MERGED outcome row rather than re-querying). If either command itself fails to resolve (non-zero exit — e.g. `origin/main` has no local tracking ref yet, even though the push above reported success): invoke MERGE-GATE-FAILED HANDLING with failing_step: "verify:origin-matches-local-main", error_text: the failing command's actual captured stderr and exit code (e.g. "git rev-parse origin/main: unknown revision or path not in the working tree") — never treat an unresolvable ref as a silent pass-through. If both resolve but differ: invoke MERGE-GATE-FAILED HANDLING with failing_step: "verify:origin-matches-local-main", error_text: "local main at {sha}, origin/main at {sha}".
-        3. For each story in {{merged}}: read its status fresh from `.momentum/stories/index.json`. If any does not read `"done"`: invoke MERGE-GATE-FAILED HANDLING with failing_step: "verify:story-status-{slug}", error_text: "expected done, found {actual status}".
+      <check if="{{failing_step}} is unbound (push succeeded)">
+      <action>POST-EXECUTION READ-BACK VERIFICATION (AC 3) — confirm from the system itself, never from having merely issued the commands above. FIRST-FAILURE-WINS: run the checks in order; the moment one binds {{failing_step}}/{{error_text}}, skip every remaining check below and never rebind (the root-cause failure is the one recorded, not a later symptom):
+        1. Run `git merge-base --is-ancestor {{sprint_tip_sha}} main`. If this does not exit 0: bind {{failing_step}} = "verify:main-contains-sprint-tip" and {{error_text}} = the command's actual exit code/output.
+        2. (Only if {{failing_step}} is still unbound.) Run `git rev-parse main` and `git rev-parse origin/main`, binding the results as {{main_sha}} and {{origin_main_sha}} respectively (reused below by the MERGED outcome row rather than re-querying). If either command itself fails to resolve (non-zero exit — e.g. `origin/main` has no local tracking ref yet, even though the push above reported success): bind {{failing_step}} = "verify:origin-matches-local-main" and {{error_text}} = the failing command's actual captured stderr and exit code (e.g. "git rev-parse origin/main: unknown revision or path not in the working tree") — never treat an unresolvable ref as a silent pass-through. If both resolve but differ: bind {{failing_step}} = "verify:origin-matches-local-main" and {{error_text}} = "local main at {sha}, origin/main at {sha}".
+        3. (Only if {{failing_step}} is still unbound.) For each story in {{merged}}, in order: read its status fresh from `.momentum/stories/index.json`. At the FIRST that does not read `"done"` (stop iterating there; later stories never overwrite it): bind {{failing_step}} = "verify:story-status-{slug}" and {{error_text}} = "expected done, found {actual status}".
         If all three checks hold, proceed to MERGE-GATE OUTCOME: MERGED below.
       </action>
 
+      <check if="{{failing_step}} is unbound (all three read-back checks held)">
       <action>MERGE-GATE OUTCOME: MERGED — reached only after every check above holds. Bind {{story_transitions}} from the verified end state read in read-back check 3 above, not from what this pass itself executed — on a resume where the transitions ran in a prior pass (RESUME PAST APPROVAL-SIDE MUTATIONS above), this pass performs no transitions at all, but the outcome row must still carry them: {story_slug, target_status: "done"} for every story in {{merged}} (confirmed `"done"` by check 3), plus {story_slug, target_status: "closed-incomplete"} for every story transitioned to that status (read fresh from `.momentum/stories/index.json` — this status is not covered by check 3, which verifies only {{merged}}). Append { event: "merge-gate-outcome", outcome: "merged", merge_commit_sha: {{main_sha}}, pushed_head_sha: {{origin_main_sha}}, story_transitions: {{story_transitions}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted, see Conductor-Level Events).</action>
       <output>Sprint `{{sprint_slug}}` merged to `main` and pushed to origin — verified: `main` contains the sprint tip, `origin/main` matches local `main`, and every merged story reads `done` in `.momentum/stories/index.json`. The sprint's own goal verdict (tier-2 closure — whether the sprint's goal was actually verified) is a separate decision, attempted next by the closure step below; the merge succeeding here does not close the sprint by itself.</output>
 
@@ -2800,13 +2833,24 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         resurface_count) exactly as it stood at the moment of approval — a historical record. From
         the next session onward Impetus stops surfacing this card.
       </action>
+      </check>
+      </check>
+      </check>
 
-      <action>MERGE-GATE-FAILED HANDLING (a named procedure invoked only from the STOP points above — it is never entered independently): given a `failing_step` and `error_text`, append { event: "merge-gate-outcome", outcome: "merge-gate-failed", failing_step: {{failing_step}}, error_text: {{error_text}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted). Then emit the failure output below in place of any completion claim, and end the execution sequence for this pass — do not continue to any step after the one that invoked this handling, and do not emit the MERGED output above.</action>
+      </check>
+
+      <check if="{{failing_step}} is bound (a STOP point above set it; on the success path it stays unbound and this whole block is skipped)">
+
+      <action>MERGE-GATE-FAILED HANDLING (entered only when a STOP point above has bound {{failing_step}} and {{error_text}} — never from the success path, never independently): given a `failing_step` and `error_text`, append { event: "merge-gate-outcome", outcome: "merge-gate-failed", failing_step: {{failing_step}}, error_text: {{error_text}}, ts: NOW() } to {{build_log}} and the build ledger (Conductor-level, sprint-scoped — story_slug omitted). Then emit the failure output below in place of any completion claim, and end the execution sequence for this pass — do not continue to any step after the one that invoked this handling, and do not emit the MERGED output above.</action>
       <output>MERGE GATE FAILED at step `{{failing_step}}`: {{error_text}}. Nothing in this run claims the sprint merged or completed. What's stranded: a plain-language statement of exactly where things stand right now — e.g. "the merge to local `main` and the story transitions to `done` completed, but `origin/main` does not yet have them — the work is stranded on this machine's local `main` until the push can be retried," or "the merge conflict could not be resolved within {{MAX_FIX_ATTEMPTS}} attempts — `git merge --abort` already restored local `main` to its pre-merge state; nothing merged; the sprint branch is untouched," or "story `{slug}` could not transition to `done` ({{error_text}}) — `main` already has the merge, but that story's status still needs manual attention before the gate can complete." If {{stubs_created_this_pass}} > 0 (the MAJOR-RESIDUAL GOVERNANCE GUARD above already ran before this failure): "{{stubs_created_this_pass}} MAJOR-severity residual(s) from this build already have linked backlog stubs — review via momentum:refine before next sprint; approving again does not re-create them." Approving again at this gate re-attempts the execution sequence from the last completed checkpoint: if `end-gate-phase-complete` is already recorded for this sprint, only push and the post-execution read-back verification are retried; otherwise the merge and per-story transitions are retried from the start of the execution sequence.</output>
 
-      <critical>REDISPATCH-ON-FAILURE. The turn MUST NOT end with the failure output above as the last thing on screen and no active prompt. The end-gate report already open in the viewer still reflects the pre-failure state accurately — nothing in it needs re-rendering, since the failure did not change any story outcome or finding disposition. Immediately re-present the same Phase 5 ask below in this same turn so the developer has an explicit, current control to act on.</critical>
+      <critical>REDISPATCH-ON-FAILURE. The turn MUST NOT end with the failure output above as the last thing on screen and no active prompt. The end-gate report already open in the viewer still reflects the pre-failure state accurately — nothing in it needs re-rendering, since the failure did not change any story outcome or finding disposition. Immediately re-issue the single Phase 5 gate ask (the `<ask>` above, after its PRIOR FAILURE RE-SURFACE check) in this same turn, and evaluate the "developer approves" / "developer requests changes" checks against the answer, so the developer has an explicit, current control to act on and the answer is acted on.</critical>
 
-      <ask>The end-gate report is open in the viewer. Review each section. The commits that will reach `origin/main` if you approve are: {{pending_commits}} (also shown in §07). Acknowledge any decision cards in §04. Then approve to merge to `main` AND push to origin — one decision, executed and verified together — or request changes.</ask>
+      <note>RETURN TO THE SINGLE PHASE 5 ASK. This handler has no ask of its own: control returns to the one Phase 5 gate `<ask>` above (preceded by its PRIOR FAILURE RE-SURFACE check, which now reads the `merge-gate-failed` row just appended). Answers map exactly as in the REDISPATCH note below: "approve" proceeds to the approve branch above, which re-initializes the CONTROL-FLOW BINDINGS and re-attempts the execution sequence (the latest row is `merge-gate-failed`, not `merged`, so the retry path runs); "request changes" proceeds to the request-changes branch below. The renewed approval is therefore always acted on — never dropped by a second, check-less ask.</note>
+
+      </check>
+
+      </check>
 
     </check>
 
@@ -3033,7 +3077,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
       <action>Re-bind {{sprint_tip_sha}} = `git rev-parse sprint/{{sprint_slug}}` (same DELETED-BRANCH FALLBACK as the initial binding above, though the branch is expected to still exist at this point in the request-changes path since no merge has happened yet). Re-bind {{pending_commits}} = output of `git log origin/main..sprint/{{sprint_slug}} --oneline` (or against local `main` with a no-remote note, per the initial binding above) — the change-workflow pass may have added fixer commits to the sprint branch, advancing its tip, so both the disclosure the developer sees before deciding and the reference SHA the post-execution read-back verification later confirms as an ancestor of `main` must reflect the current tip, not the pre-pass one.</action>
 
-      <action>MERGE-GATE PENDING CHECKPOINT (same rule as the initial ask above): if the latest `merge-gate-outcome` row for this sprint already has `outcome == "merged"`, skip. Otherwise append { event: "merge-gate-outcome", outcome: "pending", sprint_tip_sha: {{sprint_tip_sha}}, ts: NOW() } to {{build_log}} and the build ledger — a session ending here without an answer still leaves a recorded `pending` outcome.</action>
+      <action>MERGE-GATE PENDING CHECKPOINT (same rule as the initial ask above): if the latest `merge-gate-outcome` row for this sprint is ANY terminal outcome (`merged` or `merge-gate-failed`), skip (a recorded `merge-gate-failed` is re-surfaced first, in the PRIOR FAILURE RE-SURFACE check immediately before the redispatched ask, never buried under a new `pending`). Otherwise append { event: "merge-gate-outcome", outcome: "pending", sprint_tip_sha: {{sprint_tip_sha}}, ts: NOW() } to {{build_log}} and the build ledger — a session ending here without an answer still leaves a recorded `pending` outcome.</action>
 
       <action>RESUME-CARD REFRESH (DEC-040 D5, AC 1, 3, per references/resume-card.md): write a
         brand-new pending card at {{resume_card_path}} — status: "pending", phase: "end-gate",
@@ -3100,6 +3144,11 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 - Items carried forward as residuals: {{count of "residual" in endgate_fix_dispositions}}
 
 Review the updated report, acknowledge any decision cards in §04, then approve to merge to `main` AND push to origin — one decision, executed and verified together — or request further changes.</output>
+
+      <check if="the latest merge-gate-outcome row for this sprint (by ts) has outcome == 'merge-gate-failed'">
+        <note>PRIOR FAILURE RE-SURFACE (same rule as the initial ask above) — show the recorded failure before the redispatched ask.</note>
+        <output>A prior merge-gate attempt failed and is on record: step `{{that row's failing_step}}` — {{that row's error_text}}. Nothing was announced as merged. Approving below is a renewed approval and re-attempts the execution sequence from the last completed checkpoint.</output>
+      </check>
 
       <ask>The end-gate report is open in the viewer. Review each section. The commits that will reach `origin/main` if you approve are: {{pending_commits}} (also shown in §07). Acknowledge any decision cards in §04. Then approve to merge to `main` AND push to origin — one decision, executed and verified together — or request changes.</ask>
 
@@ -3172,11 +3221,14 @@ Review the updated report, acknowledge any decision cards in §04, then approve 
           whichever case applies; never the condition slugs or CLI-path text, which belong in
           `text` above (the sole statement of this separation rule, per resume-card.md's
           `question.options` contract), report_path:
-          ".momentum/handoffs/{{sprint_slug}}-endgate-report.html" }.
-          This question is NEW relative to the merge-gate-approval question already resolved above
-          (`resolution: "approved"`) — bind a fresh `waited_since = NOW()` on first refusal; a
-          repeat refusal on a later pass for the SAME unresolved closure question carries the
-          existing `waited_since` forward unchanged, per the shared-write rule. A closure decision
+          ".momentum/handoffs/{{sprint_slug}}-endgate-report.html" }. Compare against the card on
+          record (per references/resume-card.md): this question is NEW relative to the
+          merge-gate-approval question already resolved above (`resolution: "approved"`). On FIRST
+          refusal (the card's current `question.text` differs from this closure question) — bind a
+          fresh `waited_since = NOW()` and reset `resurface_count` to 0. On a REPEAT refusal on a
+          later pass for the SAME unresolved closure question (the card already holds it) — carry
+          BOTH the existing `waited_since` and `resurface_count` forward unchanged, per the
+          shared-write rule, so Impetus's accumulated wait history is not erased. A closure decision
           that waits days now re-surfaces at every session start exactly like a pending merge gate
           did.
         </action>
