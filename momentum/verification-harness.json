@@ -1,6 +1,6 @@
 {
   "_intent": "Shared verification harness for Momentum-managed projects. The 'defaults' block is the all-surfaces-skip posture — a deliberate carve-out for markdown/bash-only repos (like this one) that have no application to run. Skipping every surface is CORRECT for such repos and is not a silent verification gap. A real product repo (one with an app, API, or scripts to execute) MUST add an entry to the 'projects' array to activate real runners for the surfaces that apply. Leaving every surface skipped in a product repo is a silent gap — the 'projects' array is where that is fixed.",
-  "_surface_rekey_note": "Re-keyed 2026-08 (DEC-040 D7, amending DEC-029): 'execution_surfaces' is keyed by assembled-surface token (verification-standard.md §1) — chat-ui, application-ui, http-endpoint, cli, skill-invocation, hook-trigger, artifact — not by change_type. The legacy change_type-keyed 10-slug scheme (including the unconditional 'backend' -> curl mapping) is superseded; change_type now only supplies an inference fallback when a story declares no surface. 'driver_bindings' also appears at the document root (mirroring 'defaults.driver_bindings' verbatim) as an additive fix for a schema-location mismatch surfaced by this sprint's frozen verification contract, which reads driver_bindings at the root — see the story's cross_artifact_notes. The nested defaults.driver_bindings copy is unchanged and remains authoritative for existing consumers (e2e-validator, qa-reviewer); the two copies must be kept identical.",
+  "_surface_rekey_note": "Re-keyed 2026-08 (DEC-040 D7, amending DEC-029): 'execution_surfaces' is keyed by assembled-surface token (verification-standard.md §1) — chat-ui, application-ui, http-endpoint, cli, skill-invocation, hook-trigger, artifact — not by change_type. The legacy change_type-keyed 10-slug scheme (including the unconditional 'backend' -> curl mapping) is superseded; change_type now only supplies an inference fallback when a story declares no surface. 'driver_bindings' is a single canonical table at the document root (a root-level key, NOT under 'defaults'); the former defaults.driver_bindings copy was removed so there is exactly one authoritative table. Consumers (e2e-validator, qa-reviewer, verify-sprint-build-consumable.sh) read the root 'driver_bindings'. Override rule: a matching 'project' array entry's own 'driver_bindings' keys overlay (override) the root keys for the same token; tokens the entry does not mention fall through to the root table.",
   "driver_bindings": {
     "skill-invoke": {
       "driver": "Skill",
@@ -49,33 +49,6 @@
       "smoke": ".smoke.sh",
       "review": ".review.md",
       "gherkin": ".feature"
-    },
-    "driver_bindings": {
-      "skill-invoke": {
-        "driver": "Skill",
-        "description": "Invoke a skill directly in the agent context"
-      },
-      "behavioral-trigger": {
-        "driver": "cmux",
-        "description": "Trigger and observe rule/hook behavior via cmux terminal surface"
-      },
-      "bash": {
-        "driver": "cmux",
-        "description": "Execute scripts/CLI via cmux terminal surface"
-      },
-      "smoke": {
-        "driver": "Maestro",
-        "description": "UI smoke test via Maestro (mobile/web); falls back to Playwright for web-only targets",
-        "fallback": "Playwright"
-      },
-      "document-review": {
-        "driver": null,
-        "description": "Human document review — no automated driver"
-      },
-      "curl": {
-        "driver": "curl",
-        "description": "HTTP endpoint verification via curl"
-      }
     },
     "platform_matrix": {
       "default": ["host"],

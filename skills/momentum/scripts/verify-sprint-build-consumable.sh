@@ -105,7 +105,7 @@ VALID_VERIFICATION_METHODS="$(python3 - "$HARNESS_FILE" <<'PYEOF'
 import json, sys
 with open(sys.argv[1]) as f:
     h = json.load(f)
-keys = list(h.get("defaults", {}).get("driver_bindings", {}).keys())
+keys = list(h.get("driver_bindings", {}).keys())
 print(" ".join(keys))
 PYEOF
 )"

@@ -24,6 +24,10 @@ reported separately as human follow-up.
 
 ```json
 {
+  "driver_bindings": {
+    "skill-invoke": { "driver": "Skill", "description": "Invoke a skill directly" },
+    "document-review": { "driver": null, "description": "Human document review — no automated driver" }
+  },
   "defaults": {
     "env": { "startup": [], "readiness_probe": [] },
     "execution_surfaces": {
@@ -32,10 +36,6 @@ reported separately as human follow-up.
       "rule-hook": "behavioral-trigger",
       "research-spike": "document-review",
       "specification": "document-review"
-    },
-    "driver_bindings": {
-      "skill-invoke": { "driver": "Skill", "description": "Invoke a skill directly" },
-      "document-review": { "driver": null, "description": "Human document review — no automated driver" }
     },
     "human_review_carveouts": ["research-spike", "specification"],
     "trivial_smoke_escape": { "enabled": false, "change_types": [] }

@@ -11,7 +11,7 @@ hard-coding any tool, runtime, or stack assumption.
 When spawned with a sprint slug, the agent must:
 1. Read `momentum/verification-harness.json` before executing any story validation
 2. Look up the `change_type` in `defaults.execution_surfaces` to get the surface name
-3. Look up the surface name in `defaults.driver_bindings` to get the driver
+3. Look up the surface name in the root-level `driver_bindings` to get the driver
 4. Use that driver to execute the verification
 
 The agent must NOT assume Gherkin files, finch, PostgreSQL, FastAPI, or any specific
@@ -23,6 +23,33 @@ stack unless declared in `harness.json`.
 
 ```json
 {
+  "driver_bindings": {
+    "skill-invoke": {
+      "driver": "Skill",
+      "description": "Invoke a skill directly in the agent context"
+    },
+    "behavioral-trigger": {
+      "driver": "cmux",
+      "description": "Trigger and observe rule/hook behavior via cmux terminal surface"
+    },
+    "bash": {
+      "driver": "cmux",
+      "description": "Execute scripts/CLI via cmux terminal surface"
+    },
+    "smoke": {
+      "driver": "Maestro",
+      "description": "UI smoke test via Maestro (mobile/web); falls back to Playwright for web-only targets",
+      "fallback": "Playwright"
+    },
+    "document-review": {
+      "driver": null,
+      "description": "Human document review — no automated driver"
+    },
+    "curl": {
+      "driver": "curl",
+      "description": "HTTP endpoint verification via curl"
+    }
+  },
   "defaults": {
     "env": {
       "startup": [],
@@ -46,29 +73,6 @@ stack unless declared in `harness.json`.
       "smoke": ".smoke.sh",
       "review": ".review.md",
       "gherkin": ".feature"
-    },
-    "driver_bindings": {
-      "skill-invoke": {
-        "driver": "Skill",
-        "description": "Invoke a skill directly in the agent context"
-      },
-      "behavioral-trigger": {
-        "driver": "cmux",
-        "description": "Trigger and observe rule/hook behavior via cmux terminal surface"
-      },
-      "bash": {
-        "driver": "cmux",
-        "description": "Execute scripts/CLI via cmux terminal surface"
-      },
-      "smoke": {
-        "driver": "Maestro",
-        "description": "UI smoke test via Maestro (mobile/web); falls back to Playwright for web-only targets",
-        "fallback": "Playwright"
-      },
-      "document-review": {
-        "driver": null,
-        "description": "Human document review — no automated driver"
-      }
     },
     "human_review_carveouts": ["research-spike", "specification"],
     "trivial_smoke_escape": {

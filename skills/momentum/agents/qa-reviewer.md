@@ -82,9 +82,9 @@ You receive:
 
 ### 2. Resolve Driver + Environment
 
-- Read `momentum/verification-harness.json`. Resolve, in order: any `project` array entry matching this project/path, else `defaults`.
-  - `driver_bindings[{{verification_method}}]` → the driver you execute with (mirrors `e2e-validator.md` Environment Setup)
-  - `env.startup` / `env.readiness_probe` → commands to bring the environment up and confirm it is ready
+- Read `momentum/verification-harness.json`.
+  - `driver_bindings[{{verification_method}}]` → the driver you execute with (mirrors `e2e-validator.md` Environment Setup). Read it from the document-root `driver_bindings` (NOT under `defaults`); when a matching `project` array entry carries its own `driver_bindings`, that entry's keys overlay (override) the root keys for the same token.
+  - `env.startup` / `env.readiness_probe` → commands to bring the environment up and confirm it is ready. Resolve, in order: any `project` array entry matching this project/path, else `defaults`.
 - If `momentum/verification-harness.json` is absent, or it has no `driver_bindings` entry for the declared `verification_method`, return **BLOCKED** naming the missing file or the missing `driver_binding` entry — do not fall back to source inspection.
 - Run `startup` and poll `readiness_probe` for a bounded, good-faith interval before executing any verification. If startup or readiness fails after that attempt, return **BLOCKED** naming the specific missing or unreachable prerequisite (which device, emulator, simulator, or backend endpoint).
 

@@ -34,12 +34,12 @@ Before executing any verification, read `momentum/verification-harness.json`. Th
 - `defaults.env.startup` — commands to run to bring up the environment (empty if project has no services)
 - `defaults.env.readiness_probe` — probes to run to confirm readiness before verification
 - `defaults.execution_surfaces` — maps **assembled surface** (per `verification-standard.md` §1: `chat-ui`, `application-ui`, `http-endpoint`, `cli`, `skill-invocation`, `hook-trigger`, `artifact`) to the driver
-- `defaults.driver_bindings` — maps driver-binding tokens (`skill-invoke`, `behavioral-trigger`, `bash`, `smoke`, `curl`, `document-review`) to driver + description
+- `driver_bindings` (document root, not under `defaults`) — maps driver-binding tokens (`skill-invoke`, `behavioral-trigger`, `bash`, `smoke`, `curl`, `document-review`) to driver + description
 - `defaults.human_review_carveouts` — surfaces that require document review (no tool execution) — currently `artifact` only
 
 If `momentum/verification-harness.json` is absent from the project, report BLOCKED and halt.
 
-If the project has a path-scoped `verification-harness.json` entry for the stories being validated, use the project-level overrides in `verification-harness.json["project"]` array for matching stories. Otherwise use `defaults`.
+If the project has a path-scoped `verification-harness.json` entry for the stories being validated, use the project-level overrides in `verification-harness.json["project"]` array for matching stories. Otherwise use `defaults`. `driver_bindings` is the exception to the project-else-defaults rule: it always starts from the document-root `driver_bindings`, and a matching project entry's `driver_bindings` keys overlay (override) the root keys for the same token.
 
 Run `startup` commands and wait for `readiness_probe` to pass before executing verification. If startup fails, report BLOCKED.
 
