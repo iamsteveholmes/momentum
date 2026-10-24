@@ -19,8 +19,10 @@ Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent m
 
 Before responding to the developer's first message, run **one** Bash call that gathers cheap state.
 Read order below is presentation order for the common case (no pending gate) — the feature registry
-is read and reported first among that group. The one exception is a pending resume card, which
-leads the whole report whenever one exists, regardless of this list's order:
+is read and reported first among that group. The exceptions, in precedence order, are a pending
+resume card, which leads the whole report whenever one exists, and otherwise a `leading`-tier
+tasting nudge (see the tasting section below), which becomes the first sentence; both apply
+regardless of this list's order:
 
 - Pending resume cards (DEC-040 D5): scan `.momentum/sprints/*/resume-card.json` — every sprint
   directory, independent of which sprint (if any) `.momentum/sprints/index.json` marks active,
@@ -31,11 +33,13 @@ leads the whole report whenever one exists, regardless of this list's order:
   silently treating the session as clean. Only a file that passes this check is filtered on status:
   keep only cards whose `status` reads `"pending"`. If more than one is pending, the one with the most recent
   `waited_since` leads; name the rest in a single count line (e.g. "2 more gates also waiting").
+  Only the leading, fully-rendered card counts as "surfaced" for the increment rule below; cards
+  named only in the count line are not surfaced and are not rewritten.
   Full field shape, correlation key, and write semantics are the seam contract at
   `skills/momentum/skills/conductor/references/resume-card.md` — cite it rather than restating
   field names. **Narrowly read-and-write:** Impetus never creates, repairs, or backfills a card,
   and never changes any field except the two the contract declares shared-write. On every
-  surfacing of a still-pending card: increment its `resurface_count` by 1, leave `waited_since`
+  surfacing of a still-pending card (the leading, fully-rendered card only): increment its `resurface_count` by 1, leave `waited_since`
   unchanged, and rewrite the file (full JSON object, same serialize-and-overwrite mechanism the
   contract specifies) — a full read-modify-write folded into this same single Bash call, not a
   second round trip. Write nothing when no pending card is found.
@@ -87,8 +91,11 @@ adds nothing to a clean start.
 honest no-features-tracked-yet statement when the registry is absent or empty). This is the first
 fact the developer reads — ahead of ledger counts, sprint name, handoff context, and any story
 number. Story counts never lead any Impetus report surface; where they appear at all, they follow
-the feature number as supporting detail. The only exception: a pending gate card leads instead
-(per above), with N-of-M following immediately after it. Absent a pending card, N-of-M is first.
+the feature number as supporting detail. The exceptions, in precedence order: a pending gate card
+leads instead (per above), with N-of-M following it (behind a `leading` nudge's fallback
+placement, if one is also due); otherwise a `leading`-tier
+tasting nudge (below, which itself yields to a pending card) becomes the first sentence ahead of
+N-of-M. Absent both, N-of-M is first.
 
 The honest ledger counts — open entries, this week, older than 30 days, near auto-close — and any
 recurring-pattern signal still appear inline within the same budget — the feature headline joins

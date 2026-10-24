@@ -92,7 +92,9 @@ claim on "how stale is this decision":
 
 - **`resurface_count`** — the Conductor emits it at `0` when a question first begins waiting.
   **Impetus increments it by exactly 1** each time it surfaces this still-pending card in a session
-  greeting (read-modify-write the file). The Conductor never increments it and never resets it
+  greeting (read-modify-write the file). With several pending cards, only the leading,
+  fully-rendered card is "surfaced"; cards named only in Impetus's count line are not surfaced and
+  are not rewritten, so each card's count reflects only greetings that actually led with it. The Conductor never increments it and never resets it
   except by starting a brand-new question (see below).
 - **`waited_since`** — the Conductor sets it to `NOW()` whenever it writes a question that is **new**
   relative to the card's current `question.text` (first emission of a question, or a change in

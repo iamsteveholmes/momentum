@@ -90,8 +90,9 @@ are present, the nudge falls back to the `insistent` placement so the card keeps
 (`skills/momentum/skills/conductor/references/resume-card.md`), its cap above governs length but
 never trims the floor: the one pending question, its options, and the report link must survive
 inline regardless of the cap. The pending question leads ahead of the feature headline, ledger
-counts, and everything else in the situational report — it is the single exception to the
-N-of-M feature headline otherwise leading the situational report, per the Floor stated above. The
+counts, and everything else in the situational report — it is the first of two exceptions, in
+precedence order (pending card, then a `leading`-tier tasting nudge that itself yields to a pending
+card), to the N-of-M feature headline otherwise leading the situational report. The
 card's status never expires or auto-resolves (resume-card.md's Anti-Expiry Invariant) — rising
 prominence via the waited-for line is the only escalation path.
 

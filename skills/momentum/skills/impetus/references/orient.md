@@ -30,7 +30,9 @@ Read these silently at session open. No narration. The owner sees only the synth
   `status`, `question`, or any of `question.text`/`question.gates`/`question.options`) is named in
   the report rather than treated as "no card". On every surfacing of a still-pending card, increment
   its `resurface_count` by 1 and leave `waited_since` unchanged — this is the one narrow shared-write
-  exception to this source's otherwise read-only status; no other field is ever touched, and no card
+  exception to this source's otherwise read-only status; only the leading, fully-rendered card is
+  "surfaced" and increments — when several cards are pending, those named only in the count line
+  are not surfaced and are not rewritten; no other field is ever touched, and no card
   is ever created, repaired, or backfilled by Impetus. Full field shape, correlation key, and write
   semantics are the seam contract at `skills/momentum/skills/conductor/references/resume-card.md` —
   cite it rather than restating field names. This source and its leading-report precedence mirror
@@ -44,13 +46,16 @@ There is no fallback to `_bmad-output/implementation-artifacts/`. If a source is
 Derive which state the project is in and orient accordingly. In every state below, the **feature
 headline (N of M feature acceptance conditions passing, or the honest no-features-tracked-yet
 statement) leads** — every "Lead with" cell in this table is supporting context that comes
-**after** the feature headline, with one exception: a pending resume card. Per DEC-040 D5 and
+**after** the feature headline, with two exceptions, in precedence order: a pending resume card,
+then a `leading`-tier tasting nudge (which itself yields to a pending card). Per DEC-040 D5 and
 `.claude/rules/impetus.md`, a pending resume card leads the whole report ahead of the feature
-headline whenever one exists; absent a pending card, the feature headline is first as stated below.
+headline whenever one exists; absent a pending card, a `leading`-tier tasting nudge becomes the
+report's first sentence, ahead of the feature headline, per `.claude/rules/impetus.md`;
+absent both, the feature headline is first as stated below.
 
 | State | Signal | Lead with |
 |---|---|---|
-| Pending build gate | A `resume-card.json` with `status: "pending"` exists in any sprint directory | **Leads the whole report, ahead of the feature headline** — the card's question and options, phrased using its `phase` and `question.gates` so the sentence is self-sufficient; count lines only for merged/blocked work; the feature headline (N of M) follows immediately after |
+| Pending build gate | A `resume-card.json` with `status: "pending"` exists in any sprint directory | **Leads the whole report, ahead of the feature headline** — the card's question and options, phrased using its `phase` and `question.gates` so the sentence is self-sufficient; count lines only for merged/blocked work; the feature headline (N of M) follows it (behind a `leading` tasting nudge's fallback placement, if one is also due) |
 | Active sprint | `sprints.active` is non-null | *After the feature headline:* sprint name, stories in-progress, what's near done |
 | Sprint planning ready | `sprints.planning` is non-null | *After the feature headline:* what's been selected, invite to activate |
 | Between sprints | Both null, last sprint has `completed` date | *After the feature headline:* when last sprint closed, retro status, suggest next move |
@@ -62,7 +67,8 @@ headline whenever one exists; absent a pending card, the feature headline is fir
 
 - One grounded situation statement, then suggestions — not the other way around
 - The feature headline (N of M) leads the situation statement, except when a pending resume card
-  exists — that leads instead, with N-of-M following immediately after (see Situational States
+  exists — that leads instead, with N-of-M following it (behind a `leading` nudge's fallback placement, if one is also due) — or, absent a card, when a
+  `leading`-tier tasting nudge opens the report ahead of it (see Situational States
   above and `.claude/rules/impetus.md`). Story counts never lead. Where a story count still
   appears, it appears after the feature number as supporting detail.
 - Suggestions must follow from data: "Sprint closed April 15, retro done, no active sprint — ready to plan the next push?" not "Things are looking good!"
