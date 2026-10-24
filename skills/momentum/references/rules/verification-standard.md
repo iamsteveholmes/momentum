@@ -100,6 +100,18 @@ declared) is written into the frozen contract's Part-A header `surface:` field a
 contract-authoring time (see `contract-format-guide.md`), so a reader can always see,
 after the fact, which surface a story was actually verified against.
 
+**Interim note (no sanctioned write path yet):** the frontmatter/index declaration above is
+not yet writable or consumed end-to-end. No create-story elicitation or `--surface` flag exists
+(backlog follow-up), `stories/index.json` is sole-written by `momentum:sprint-manager` and must
+not be hand-edited, and contract routing (`momentum-tools sprint compute-verification-method`)
+reads only the index entry, so stories resolve through `change_type` inference. A hand-added
+frontmatter `surface:` is read by create-story Step 5 (advisory only), the e2e-validator (for
+routing, on both the contract and story-file paths) and the qa-reviewer (to scope evidence),
+but not by `compute-verification-method`. It diverges from the frozen contract's inferred
+surface whenever it differs from the `change_type`-inferred surface, so e2e-validator routing
+can disagree with the contract; where inference picks the wrong surface, use the §2 exception
+instead.
+
 Stories with multiple `change_type` values apply the precedence-resolved type's method to
 the task(s) of that type, per the table above.
 
@@ -218,8 +230,8 @@ path:    .claude/rules/<path-scoped>/verification-standard.md
 
 - Harness-profile reference (Section 3) — project and path scopes may specify a
   different default harness profile for their context.
-- Method override justification (Section 2) — project scope may declare standing
-  justifications for recurring override patterns.
+- Method override (Section 2) — the single per-story three-field exception (surface,
+  reason, substitute) is the only override mechanism; scope cascade does not add another.
 
 **What cannot be overridden at any lower scope:**
 
