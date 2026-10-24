@@ -567,6 +567,34 @@ def test_sprint_complete_punt_decision_unresolvable_ref_rejected():
     assert_eq("rejected", code, 1)
 
 
+def test_resolve_punt_decision_containment():
+    """endgate-fix-6: --punt-decision refs must resolve under the decisions dir; traversal,
+    absolute, and symlink escapes are rejected; legitimate refs still resolve."""
+    print("\n[sprint complete] _resolve_punt_decision containment (endgate-fix-6)")
+    spec = importlib.util.spec_from_file_location("momentum_tools_punt", str(SCRIPT))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    proj = setup_project()
+    decisions_dir = proj / "_bmad-output" / "planning-artifacts" / "decisions"
+    decisions_dir.mkdir(parents=True)
+    (decisions_dir / "dec-1.md").write_text("# d\n")
+    outside = proj / "outside.md"
+    outside.write_text("secret\n")
+    (decisions_dir / "escape-link.md").symlink_to(outside)
+    rp = mod._resolve_punt_decision
+    prefix = "_bmad-output/planning-artifacts/decisions/"
+    assert_eq("bare ref with .md", rp(proj, "dec-1.md") is not None, True)
+    assert_eq("bare ref without .md", rp(proj, "dec-1") is not None, True)
+    assert_eq("dir-prefixed ref with .md", rp(proj, prefix + "dec-1.md") is not None, True)
+    assert_eq("dir-prefixed ref without .md", rp(proj, prefix + "dec-1") is not None, True)
+    assert_eq("dotdot to real file outside rejected", rp(proj, "../../../outside.md"), None)
+    assert_eq("dotdot to real file outside (no .md) rejected", rp(proj, "../../../outside"), None)
+    assert_eq("dotdot to /etc/hosts rejected", rp(proj, "../../../../../../../../../etc/hosts"), None)
+    assert_eq("absolute ref rejected", rp(proj, str(outside)), None)
+    assert_eq("symlink escape rejected", rp(proj, "escape-link"), None)
+    assert_eq("empty ref rejected", rp(proj, ""), None)
+
+
 def _import_parse_verified_fix_list():
     """Import _parse_verified_fix_list from momentum-tools.py via importlib."""
     spec = importlib.util.spec_from_file_location("momentum_tools", str(SCRIPT))
@@ -3566,6 +3594,7 @@ def main():
     test_sprint_complete_punt_decision_required_on_failed_path()
     test_sprint_complete_punt_decision_not_required_when_all_verified_pass()
     test_sprint_complete_punt_decision_unresolvable_ref_rejected()
+    test_resolve_punt_decision_containment()
     test_parse_verified_fix_list_strips_exactly_one_bullet_marker()
     test_sprint_complete_refusal_echoes_active_sprint_slug()
     test_sprint_complete_success_output_includes_closure_block()

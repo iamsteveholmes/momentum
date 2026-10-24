@@ -426,8 +426,20 @@ def _resolve_punt_decision(project_dir: Path, ref: str) -> Path | None:
     prefix = f"{_DECISIONS_DIR_REL}/"
     if rel.startswith(prefix):
         rel = rel[len(prefix):]
+    if not rel or Path(rel).is_absolute():
+        return None
+    try:
+        root = decisions_dir.resolve()
+    except (OSError, RuntimeError):
+        return None
     for candidate in (decisions_dir / rel, decisions_dir / f"{rel}.md"):
-        if candidate.is_file():
+        try:
+            resolved = candidate.resolve()
+        except (OSError, RuntimeError):
+            continue
+        # Containment: the resolved target (symlinks and ".." collapsed) must live
+        # strictly under the decisions directory.
+        if resolved != root and resolved.is_relative_to(root) and resolved.is_file():
             return candidate
     return None
 
