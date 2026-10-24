@@ -21,7 +21,7 @@ so that surface-keyed verification routing (DEC-040 D7) stops falling through to
 
 ## Description
 
-From sprint-2026-08-03 end-gate (Option A). Consumers prefer a declared surface, but create-story Step 5 only reads frontmatter (no elicitation), story-add has no --surface flag, and sprint-tracking-schema.md omits surface. Every story falls through to change_type inference, the routing that caused the backend-to-curl misroute. An interim hand-declaration note exists in verification-standard.md.
+From sprint-2026-08-03 end-gate (Option A). Consumers prefer a declared surface, but create-story Step 5 only reads frontmatter (no elicitation), story-add has no --surface flag, and sprint-tracking-schema.md omits surface. Every story falls through to change_type inference, the routing that caused the backend-to-curl misroute. An interim note in verification-standard.md (§1, after the Visibility paragraph) documents that a hand-added frontmatter `surface:` is not consumed by contract routing (`compute-verification-method` reads only the index entry) and points to the §2 per-story exception meanwhile.
 
 **Pain context:** Every story silently uses change_type inference.
 

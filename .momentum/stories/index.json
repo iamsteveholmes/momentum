@@ -6692,5 +6692,15 @@
     "touches": [],
     "priority": "medium",
     "story_type": "maintenance"
+  },
+  "close-two-residual-redispatch-path-wording-gaps-in-the": {
+    "status": "backlog",
+    "title": "Close two residual redispatch-path wording gaps in the conductor merge gate (end-gate D2 residual)",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "defect"
   }
 }
