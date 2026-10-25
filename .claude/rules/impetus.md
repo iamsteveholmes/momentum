@@ -51,8 +51,9 @@ regardless of this list's order:
   entries missing the expected structure), that is the same honest state "no features tracked yet"
   — not an error, not an omitted slot, and never rendered as `0 of 0` (which would read as a
   healthy, complete registry). **Read-only:** Impetus never creates, repairs, or backfills
-  `.momentum/features.json` under any condition, including when it is missing — `momentum-tools
-  feature verify` is the sole writer.
+  `.momentum/features.json` under any condition, including when it is missing, and never runs
+  `feature register` (registering is the developer's call) — `momentum-tools feature register` is the
+  sole creator of entries and `momentum-tools feature verify` the sole writer of `status`/`last_verified`.
 - Honest ledger counts via `momentum-tools practice-ledger summary` — returns "N open entries (X this week, Y older than 30 days, Z near auto-close)" and any recurring-pattern signals (e.g., a topic closed_stale 4 times in 60 days)
 - Tasting due-ness via `momentum-tools tasting status --json` (DEC-040 D4) — a **read-only** signal
   reporting whether a daily tasting walkthrough is due, the days-since count, and a prominence tier
@@ -130,7 +131,7 @@ If the developer asks about practice state, here is where to look. Read on deman
 
 | Question | Where to look |
 |---|---|
-| How much of the product verifiably works | `.momentum/features.json` (read-only; sole writer is `momentum-tools feature verify`) |
+| How much of the product verifiably works | `.momentum/features.json` (read-only; entries created only by `momentum-tools feature register`, status written only by `momentum-tools feature verify`) |
 | Whether a tasting walkthrough is due, and how urgently | `momentum-tools tasting status --json` (DEC-040 D4; read-only) |
 | Today's expected-vs-reality tasting brief | Generate with `momentum-tools tasting brief`; writes `.momentum/tasting/brief-<date>.md` (read-only against the feature registry) |
 | Is a build gate pending a decision | `.momentum/sprints/*/resume-card.json` (scanned at every session start regardless of active sprint; shape at `skills/momentum/skills/conductor/references/resume-card.md`; Impetus writes only `resurface_count`) |

@@ -83,7 +83,7 @@ Sprint lifecycle index. Tracks active, planning, and completed sprints.
 | `waves` | object[] | Execution wave plan (see below) |
 | `team_composition` | object | Per-story role assignments (see below) |
 | `goal` | string | Plain-language sprint purpose, declared at planning (`sprint plan --goal`). For a maintenance sprint (no `goal_conditions`), this string also carries the verified-fix list as `- ` bullet lines following a `Verified fixes:` lead-in line — there is no separate structured fix-list field. |
-| `goal_conditions` | string[] | Feature slugs (keys into `.momentum/features.json`) whose acceptance conditions this sprint intends to flip to passing, declared at planning (`sprint plan --goal-conditions`). `[]` (or the key absent) means a maintenance sprint — its equivalent gate is the verified-fix list inside `goal` instead. Missing key and `null` are both treated as `[]` everywhere this field is read. |
+| `goal_conditions` | string[] | Feature slugs (keys into `.momentum/features.json`; each must already be registered via `momentum-tools feature register` — today a developer act done before planning; wiring register into planning is a follow-up) whose acceptance conditions this sprint intends to flip to passing, declared at planning (`sprint plan --goal-conditions`). `[]` (or the key absent) means a maintenance sprint — its equivalent gate is the verified-fix list inside `goal` instead. Missing key and `null` are both treated as `[]` everywhere this field is read. |
 | `started` | string | ISO date sprint started |
 | `completed` | string or null | ISO date sprint completed |
 | `retro_run_at` | string or null | ISO date retrospective was run |
@@ -119,12 +119,20 @@ Per-story entry keyed by story slug:
 
 `momentum-tools sprint complete` is a **gate**, not an unconditional closer. It refuses (non-zero
 exit, `active` left untouched, nothing appended to `completed[]`) unless every entry in the
-sprint's `goal_conditions` carries a recorded human verdict in `.momentum/features.json` — or, for
+sprint's `goal_conditions` carries a recorded human verdict in `.momentum/features.json` (written only by `momentum-tools feature verify`; `feature register` creates entries at status `absent` and never writes a verdict) — or, for
 a maintenance sprint declaring no conditions, its verified-fix list (parsed from `goal`) is
 confirmed via repeatable `--fix-confirmed` plus `--build`. This is tier 2 of the two-tier gate;
 tier 1 (`conduct-merge-gate-completes-by-executing-merge-push-story`) is the separate question of
 whether the code is safe to keep on trunk, and completes independently via merge + push + story
 status transitions — a successful merge never implies the sprint is closed.
+
+**Registry write authority (split).** `.momentum/features.json` has exactly two write paths, both
+in `momentum-tools feature`: `register` is the sole creator of registry entries (it writes the
+entry with status `absent`, `last_verified` null; it never writes `status` or `last_verified` of an
+existing entry, and refuses — file byte-identical — on a duplicate slug, non-kebab-case slug, empty
+name/acceptance condition, or an invalid/non-object registry), and `verify` remains the sole
+writer of `status` and `last_verified`. No skill, agent, or hand edit writes the registry except by invoking one of these two subcommands. Every
+other consumer (sprint planning, sprint closure, Impetus N-of-M, tasting) reads it only.
 
 `--verdict {done,failed}` (default `done`) selects the terminal state. `failed` requires a
 non-empty `--reason` and bypasses the verdict requirement above — an honest FAILED closure records

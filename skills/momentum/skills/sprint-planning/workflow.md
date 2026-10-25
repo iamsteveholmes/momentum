@@ -275,7 +275,10 @@ These stories may be blocked during execution. Adjust the selection later via
     ever elicited; every later step (Step 7's capability fork, Step 8's build handoff) reads the
     values persisted here. -->
     <action>Read `.momentum/features.json` (a plain file Read — this is a read-only consumer;
-      sprint planning never writes this registry). Handle four cases:
+      sprint planning does not write this registry. Today, registering a new feature is a
+      developer-invoked act (`momentum-tools feature register`); wiring register into sprint
+      planning is a follow-up. An empty registry still routes to the maintenance (verified-fix)
+      path; an `absent` entry is listed as a candidate). Handle four cases:
         1. File does not exist → set {{feature_candidates}} = [] and {{registry_absent}} = true
         2. File exists but its feature list is empty → set {{feature_candidates}} = [] and
            {{registry_absent}} = false (present but empty — same downstream path as case 1)
@@ -293,7 +296,8 @@ These stories may be blocked during execution. Adjust the selection later via
     <check if="{{feature_candidates}} is empty">
       <output>{{if registry_absent: No feature registry found at .momentum/features.json — this sprint
 will declare a verified-fix goal instead. | The feature registry has no entries yet — this
-sprint will declare a verified-fix goal instead.}}</output>
+sprint will declare a verified-fix goal instead.}} To add candidates for a future sprint, use
+`momentum-tools feature register`.</output>
       <action>Set {{goal_conditions}} = [] — the maintenance path is the only path when there are
       no candidates to select from.</action>
     </check>

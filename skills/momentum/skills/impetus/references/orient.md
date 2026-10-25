@@ -23,7 +23,7 @@ Read these silently at session open. No narration. The owner sees only the synth
   entries, or a malformed/unexpected-shape file (invalid JSON, not an object, entries missing the
   expected structure) is the same honest "no features tracked yet" state, reported the same way as
   any other missing source below — never an error, never a fabricated count. This source is never written by Impetus;
-  `momentum-tools feature verify` is the sole writer.
+  `momentum-tools feature register` is the sole creator of entries and `momentum-tools feature verify` the sole writer of status/last_verified.
 - `{project-root}/.momentum/sprints/*/resume-card.json` (DEC-040 D5) — pending build-gate cards,
   scanned across every sprint directory regardless of which sprint (if any) is `active`. Keep only
   cards whose `status` reads `"pending"`; a card whose shape fails the check (missing or renamed
