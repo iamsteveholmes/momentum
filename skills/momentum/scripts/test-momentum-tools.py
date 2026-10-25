@@ -356,15 +356,15 @@ def test_sprint_complete_missing_entry_absent_registry():
     assert_eq("active untouched", read_sprints(proj)["active"] is not None, True)
 
 
-def test_sprint_complete_missing_entry_status_absent():
-    """AC 2: status 'absent' (registered but never assessed) is also missing-entry."""
-    print("\n[sprint complete] Refuses on missing-entry — status absent")
+def test_sprint_complete_no_verdict_status_absent():
+    """AC 2: status 'absent' (registered, never verified) is unverified/no-verdict, distinct from missing-entry."""
+    print("\n[sprint complete] Refuses on no-verdict — status absent")
     proj = setup_project(sprints={"active": _condition_sprint(), "planning": None, "completed": []})
     features_path_of(proj).write_text(json.dumps(
         {"demo-feature": {"status": "absent"}}, indent=2) + "\n", encoding="utf-8")
     code, out = run_tool(proj, "sprint", "complete")
     assert_eq("rejected", code, 1)
-    assert_eq("reason token missing-entry", out["blocking_conditions"][0]["reason"], "missing-entry")
+    assert_eq("reason token no-verdict", out["blocking_conditions"][0]["reason"], "no-verdict")
 
 
 def test_sprint_complete_no_verdict():
@@ -3579,7 +3579,7 @@ def main():
 
     # Sprint closure gate tests (DEC-040 D2/D3)
     test_sprint_complete_missing_entry_absent_registry()
-    test_sprint_complete_missing_entry_status_absent()
+    test_sprint_complete_no_verdict_status_absent()
     test_sprint_complete_no_verdict()
     test_sprint_complete_no_build_shas()
     test_sprint_complete_recorded_fail_blocks_done()
@@ -3900,6 +3900,25 @@ def main():
     test_feature_verify_epic_slugs_never_validated()
     test_feature_verify_no_fourth_seam()
     test_feature_verify_failure_envelope_matches_success_shape()
+    test_feature_register_help_registered()
+    test_feature_register_success_exact_shape()
+    test_feature_register_optional_fields()
+    test_feature_register_text_persisted_as_supplied()
+    test_feature_register_creates_absent_registry()
+    test_feature_register_refuses_reregistration()
+    test_feature_register_rejects_invalid_slug()
+    test_feature_register_rejects_empty_text()
+    test_feature_register_rejects_corrupt_registry()
+    test_feature_register_rejects_non_utf8_bytes()
+    test_feature_register_bare_dash_slug_refused()
+    test_feature_register_trailing_newline_no_phantom_duplicate()
+    test_feature_verify_rejects_trailing_newline_build()
+    test_feature_register_rejects_missing_required_flags()
+    test_feature_register_then_verify_round_trip()
+    test_feature_register_consumers_compatible()
+    test_feature_register_rejects_duplicate_keys()
+    test_feature_register_nonexistent_project_dir_refused()
+    test_feature_register_no_fourth_seam()
 
     # tasting brief + status (DEC-040 D4)
     test_tasting_brief_help_registered()
@@ -5710,6 +5729,399 @@ def test_feature_verify_failure_envelope_matches_success_shape():
     assert_eq("has action field", "action" in out, True)
     assert_eq("has success field", "success" in out, True)
     assert_eq("success is False", out.get("success"), False)
+
+
+# --- Feature Register Tests (DEC-040 D1: sole creator of registry entries) ---
+
+FR_SLUG = "weave-export"
+FR_NAME = "Weave export"
+FR_AC = "A GM can export a tapestry and open it on a second machine."
+
+
+def _fr_register(proj: Path, slug: str = FR_SLUG, *extra: str):
+    return run_tool(proj, "feature", "register", slug,
+                    "--name", FR_NAME, "--acceptance-condition", FR_AC, *extra)
+
+
+def test_feature_register_help_registered():
+    """AC12: feature --help lists both subcommands; register --help documents every flag."""
+    print("\n[feature register] Discoverable (AC12)")
+    proj = setup_features_project()
+    code, out = run_tool(proj, "feature", "--help")
+    text = out.get("raw_stdout", "")
+    assert_eq("feature help exit 0", code, 0)
+    assert_eq("lists verify", "verify" in text, True)
+    assert_eq("lists register", "register" in text, True)
+    code, out = run_tool(proj, "feature", "register", "--help")
+    text = out.get("raw_stdout", "")
+    assert_eq("register help exit 0", code, 0)
+    for flag in ("--name", "--acceptance-condition", "--design-ref", "--epic-slugs"):
+        assert_eq(f"help documents {flag}", flag in text, True)
+    src = SCRIPT.read_text(encoding="utf-8")
+    assert_eq("usage docstring lists register", "momentum-tools.py feature register" in src.split('"""')[1], True)
+
+
+def test_feature_register_success_exact_shape():
+    """AC1, AC10: exact entry, envelope, neighbors untouched, entry appended."""
+    print("\n[feature register] Registers new entry (AC1, AC10)")
+    proj = setup_features_project()
+    before = read_features(proj)
+    code, out = _fr_register(proj)
+    assert_eq("exit 0", code, 0)
+    assert_eq("action", out.get("action"), "feature_register")
+    assert_eq("success", out.get("success"), True)
+    assert_eq("slug", out.get("slug"), FR_SLUG)
+    assert_eq("status", out.get("status"), "absent")
+    assert_eq("path", out.get("path"), str(features_path_of(proj)))
+    after = read_features(proj)
+    assert_eq("entry exact", after[FR_SLUG], {
+        "slug": FR_SLUG, "name": FR_NAME, "acceptance_condition": FR_AC,
+        "status": "absent", "last_verified": None, "design_ref": None})
+    assert_eq("entry key order", list(after[FR_SLUG]),
+              ["slug", "name", "acceptance_condition", "status", "last_verified", "design_ref"])
+    assert_eq("neighbors preserved with order", list(after)[:-1], list(before))
+    for k in before:
+        assert_eq(f"neighbor {k} unchanged", after[k], before[k])
+    assert_eq("new entry appended last", list(after)[-1], FR_SLUG)
+
+
+def test_feature_register_optional_fields():
+    """AC2: design-ref verbatim; epic-slugs trimmed, empties dropped, never validated."""
+    print("\n[feature register] Optional fields (AC2)")
+    proj = setup_features_project()
+    code, out = _fr_register(proj, FR_SLUG, "--design-ref", "docs/design/x.md",
+                             "--epic-slugs", " a , ,b,no-such-epic ,")
+    assert_eq("exit 0", code, 0)
+    entry = read_features(proj)[FR_SLUG]
+    assert_eq("design_ref verbatim", entry["design_ref"], "docs/design/x.md")
+    assert_eq("epic_slugs list", entry["epic_slugs"], ["a", "b", "no-such-epic"])
+    assert_eq("epic_slugs last key", list(entry)[-1], "epic_slugs")
+    proj2 = setup_features_project()
+    _fr_register(proj2)
+    assert_eq("epic_slugs absent when omitted", "epic_slugs" in read_features(proj2)[FR_SLUG], False)
+
+
+def test_feature_register_text_persisted_as_supplied():
+    """AC6: valid text is not stripped or altered."""
+    print("\n[feature register] Text persisted as supplied (AC6)")
+    proj = setup_features_project()
+    code, _ = run_tool(proj, "feature", "register", FR_SLUG,
+                       "--name", "  Padded name ", "--acceptance-condition", "  Padded ac. ")
+    assert_eq("exit 0", code, 0)
+    entry = read_features(proj)[FR_SLUG]
+    assert_eq("name verbatim", entry["name"], "  Padded name ")
+    assert_eq("ac verbatim", entry["acceptance_condition"], "  Padded ac. ")
+
+
+def test_feature_register_creates_absent_registry():
+    """AC3: register is the only path that creates the file; others do not."""
+    print("\n[feature register] Creates absent registry (AC3)")
+    proj = setup_project()
+    reg = features_path_of(proj)
+    assert_eq("precondition absent", reg.exists(), False)
+    code, out = run_tool(proj, "feature", "verify", FR_SLUG, "--verdict", "pass",
+                         "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("verify refuses", code != 0, True)
+    assert_eq("verify does not create", reg.exists(), False)
+    run_tool(proj, "tasting", "status", "--json")
+    run_tool(proj, "tasting", "brief")
+    assert_eq("tasting does not create", reg.exists(), False)
+    code, out = _fr_register(proj)
+    assert_eq("register exit 0", code, 0)
+    data = read_features(proj)
+    assert_eq("only the new entry", list(data), [FR_SLUG])
+    assert_eq("status absent", data[FR_SLUG]["status"], "absent")
+
+
+def test_feature_register_refuses_reregistration():
+    """AC4: any existing status refused; named in error; byte-identical."""
+    print("\n[feature register] Never overwrites (AC4)")
+    for status in ("absent", "failing", "passing"):
+        proj = setup_features_project({FR_SLUG: {
+            "slug": FR_SLUG, "name": "Old", "acceptance_condition": "Old ac.", "status": status}})
+        reg = features_path_of(proj)
+        before = reg.read_bytes()
+        code, out = _fr_register(proj)
+        assert_eq(f"{status}: non-zero", code != 0, True)
+        assert_eq(f"{status}: success false", out.get("success"), False)
+        err = out.get("error", "")
+        assert_eq(f"{status}: names slug", FR_SLUG in err, True)
+        assert_eq(f"{status}: names status", status in err, True)
+        assert_eq(f"{status}: byte-identical", reg.read_bytes(), before)
+
+
+def _assert_refused_untouched(label: str, slug: str, name: str, ac: str, expect_in_error: str):
+    # existing registry: byte-identical
+    proj = setup_features_project()
+    reg = features_path_of(proj)
+    before = reg.read_bytes()
+    # A leading-dash slug must follow "--" or argparse treats it as an option.
+    argv = ["--name", name, "--acceptance-condition", ac] + (["--", slug] if slug.startswith("-") else [slug])
+    code, out = run_tool(proj, "feature", "register", *argv)
+    assert_eq(f"{label}: non-zero", code != 0, True)
+    assert_eq(f"{label}: success false", out.get("success"), False)
+    assert_eq(f"{label}: error mentions {expect_in_error!r}", expect_in_error in out.get("error", ""), True)
+    assert_eq(f"{label}: byte-identical", reg.read_bytes(), before)
+    # absent registry: not created
+    proj2 = setup_project()
+    code, out = run_tool(proj2, "feature", "register", *argv)
+    assert_eq(f"{label}: absent non-zero", code != 0, True)
+    assert_eq(f"{label}: absent not created", features_path_of(proj2).exists(), False)
+
+
+def test_feature_register_rejects_invalid_slug():
+    """AC5."""
+    print("\n[feature register] Rejects invalid slug (AC5)")
+    for bad in ("Loom_Export", "loom--export", "-loom", "loom-", "loom export", "loom-export\n", "\nloom"):
+        _assert_refused_untouched(f"slug {bad!r}", bad, FR_NAME, FR_AC, bad)
+    _assert_refused_untouched("empty slug", "", FR_NAME, FR_AC, "slug")
+
+
+def test_feature_register_rejects_empty_text():
+    """AC6."""
+    print("\n[feature register] Rejects empty text (AC6)")
+    for bad in ("", "   ", "\t\n"):
+        _assert_refused_untouched(f"name {bad!r}", FR_SLUG, bad, FR_AC, "--name")
+        _assert_refused_untouched(f"ac {bad!r}", FR_SLUG, FR_NAME, bad, "--acceptance-condition")
+
+
+def test_feature_register_rejects_non_utf8_bytes():
+    """qf-r2-1/2: non-UTF-8 argv bytes never truncate or create the registry."""
+    print("\n[feature register] Rejects non-UTF-8 bytes (qf-r2-1, qf-r2-2)")
+    bad = "bad\udcff"  # what a stray 0xff argv byte decodes to (surrogateescape)
+    variants = {
+        "--name": ["--name", bad, "--acceptance-condition", FR_AC],
+        "--acceptance-condition": ["--name", FR_NAME, "--acceptance-condition", bad],
+        "--design-ref": ["--name", FR_NAME, "--acceptance-condition", FR_AC, "--design-ref", bad],
+        "--epic-slugs": ["--name", FR_NAME, "--acceptance-condition", FR_AC, "--epic-slugs", bad],
+    }
+    for flag, argv in variants.items():
+        proj = setup_features_project()
+        reg = features_path_of(proj)
+        before = reg.read_bytes()
+        code, out = run_tool(proj, "feature", "register", "f-two", *argv)
+        assert_eq(f"{flag}: non-zero", code != 0, True)
+        assert_eq(f"{flag}: JSON envelope", out.get("success"), False)
+        assert_eq(f"{flag}: names flag", flag in out.get("error", ""), True)
+        assert_eq(f"{flag}: byte-identical", reg.read_bytes(), before)
+        proj2 = setup_project()
+        code, out = run_tool(proj2, "feature", "register", "f-two", *argv)
+        assert_eq(f"{flag}: absent non-zero", code != 0, True)
+        assert_eq(f"{flag}: absent not created", features_path_of(proj2).exists(), False)
+    # feature verify --evidence shares write_json; same guarantee.
+    proj = setup_features_project({FR_SLUG: {
+        "slug": FR_SLUG, "name": "N", "acceptance_condition": "A.", "status": "passing"}})
+    reg = features_path_of(proj)
+    before = reg.read_bytes()
+    code, out = run_tool(proj, "feature", "verify", FR_SLUG, "--verdict", "pass",
+                         "--evidence", bad, "--build", FV_BUILD_PAIR)
+    assert_eq("verify: non-zero", code != 0, True)
+    assert_eq("verify: JSON envelope", out.get("success"), False)
+    assert_eq("verify: byte-identical", reg.read_bytes(), before)
+
+
+def test_feature_register_bare_dash_slug_refused():
+    """qf-r2-3: a dash-leading slug typed without `--` is refused by argparse
+    (non-zero, nothing written). A dash-leading slug needs `--` to reach the
+    kebab-case validation message."""
+    print("\n[feature register] Bare dash-leading slug refused (qf-r2-3)")
+    proj = setup_features_project()
+    reg = features_path_of(proj)
+    before = reg.read_bytes()
+    code, _ = run_tool(proj, "feature", "register", "-loom",
+                       "--name", FR_NAME, "--acceptance-condition", FR_AC)
+    assert_eq("existing: non-zero", code != 0, True)
+    assert_eq("existing: byte-identical", reg.read_bytes(), before)
+    proj2 = setup_project()
+    code, _ = run_tool(proj2, "feature", "register", "-loom",
+                       "--name", FR_NAME, "--acceptance-condition", FR_AC)
+    assert_eq("absent: non-zero", code != 0, True)
+    assert_eq("absent: not created", features_path_of(proj2).exists(), False)
+
+
+def test_feature_register_rejects_corrupt_registry():
+    """AC7: invalid JSON and non-object both refused, path named, byte-identical."""
+    print("\n[feature register] Rejects corrupt registry (AC7)")
+    for label, content in (("invalid json", "{not json"), ("array", '["a"]\n'), ("string", '"x"')):
+        proj = setup_project()
+        reg = features_path_of(proj)
+        reg.write_text(content)
+        before = reg.read_bytes()
+        code, out = _fr_register(proj)
+        assert_eq(f"{label}: non-zero", code != 0, True)
+        assert_eq(f"{label}: success false", out.get("success"), False)
+        assert_eq(f"{label}: names path", str(reg) in out.get("error", ""), True)
+        assert_eq(f"{label}: byte-identical", reg.read_bytes(), before)
+    # Unreadable variants must also yield the JSON envelope, not a traceback.
+    proj = setup_project()
+    reg = features_path_of(proj)
+    reg.write_bytes(b'\xff\xfe{}')
+    before = reg.read_bytes()
+    code, out = _fr_register(proj)
+    assert_eq("non-utf8: non-zero", code != 0, True)
+    assert_eq("non-utf8: envelope success false", out.get("success"), False)
+    assert_eq("non-utf8: names path", str(reg) in out.get("error", ""), True)
+    assert_eq("non-utf8: byte-identical", reg.read_bytes(), before)
+    proj = setup_project()
+    reg = features_path_of(proj)
+    reg.mkdir()
+    code, out = _fr_register(proj)
+    assert_eq("dir registry: envelope", out.get("success"), False)
+    proj = setup_project()
+    mom = features_path_of(proj).parent
+    import shutil
+    shutil.rmtree(mom)
+    mom.write_text("x")
+    code, out = _fr_register(proj)
+    assert_eq("file .momentum: envelope", out.get("success"), False)
+
+
+def test_feature_register_trailing_newline_no_phantom_duplicate():
+    """qf-r1-1/3/5: trailing-newline slug refused; no near-duplicate entry created."""
+    print("\n[feature register] Trailing-newline slug refused")
+    proj = setup_project()
+    code, out = _fr_register(proj)
+    assert_eq("first register ok", code, 0)
+    before = features_path_of(proj).read_bytes()
+    code, out = run_tool(proj, "feature", "register", FR_SLUG + "\n", "--name", FR_NAME,
+                         "--acceptance-condition", FR_AC)
+    assert_eq("newline slug refused", code != 0, True)
+    assert_eq("registry unchanged", features_path_of(proj).read_bytes(), before)
+
+
+def test_feature_verify_rejects_trailing_newline_build():
+    """_BUILD_SHA_RE fullmatch: --build with trailing newline refused."""
+    print("\n[feature verify] Rejects trailing-newline build SHA")
+    proj = setup_project()
+    _fr_register(proj)
+    before = features_path_of(proj).read_bytes()
+    code, out = run_tool(proj, "feature", "verify", FR_SLUG, "--verdict", "pass",
+                         "--evidence", FV_EVIDENCE, "--build", "aa:bb\n")
+    assert_eq("refused", code != 0, True)
+    assert_eq("unchanged", features_path_of(proj).read_bytes(), before)
+
+
+def test_feature_register_rejects_missing_required_flags():
+    """AC8: argparse-level refusal writes nothing."""
+    print("\n[feature register] Missing required flags (AC8)")
+    proj = setup_features_project()
+    reg = features_path_of(proj)
+    before = reg.read_bytes()
+    code, _ = run_tool(proj, "feature", "register", FR_SLUG, "--acceptance-condition", FR_AC)
+    assert_eq("missing --name non-zero", code != 0, True)
+    code, _ = run_tool(proj, "feature", "register", FR_SLUG, "--name", FR_NAME)
+    assert_eq("missing --acceptance-condition non-zero", code != 0, True)
+    assert_eq("byte-identical", reg.read_bytes(), before)
+    proj2 = setup_project()
+    run_tool(proj2, "feature", "register", FR_SLUG, "--name", FR_NAME)
+    assert_eq("absent not created", features_path_of(proj2).exists(), False)
+
+
+def test_feature_register_then_verify_round_trip():
+    """AC9: verify is sole verdict writer; unregistered still rejected."""
+    print("\n[feature register] Register then verify (AC9)")
+    proj = setup_features_project()
+    _fr_register(proj, FR_SLUG, "--design-ref", "d.md", "--epic-slugs", "e1")
+    entry = read_features(proj)[FR_SLUG]
+    assert_eq("last_verified null after register", entry["last_verified"], None)
+    assert_eq("status absent after register", entry["status"], "absent")
+    code, out = run_tool(proj, "feature", "verify", FR_SLUG, "--verdict", "pass",
+                         "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("verify exit 0", code, 0)
+    entry = read_features(proj)[FR_SLUG]
+    assert_eq("passing", entry["status"], "passing")
+    assert_eq("last_verified verdict", entry["last_verified"]["verdict"], "pass")
+    assert_eq("backend sha", entry["last_verified"]["backend_sha"], FV_BACKEND_SHA)
+    assert_eq("client sha", entry["last_verified"]["client_sha"], FV_CLIENT_SHA)
+    assert_eq("name preserved", entry["name"], FR_NAME)
+    assert_eq("ac preserved", entry["acceptance_condition"], FR_AC)
+    assert_eq("design_ref preserved", entry["design_ref"], "d.md")
+    assert_eq("epic_slugs preserved", entry["epic_slugs"], ["e1"])
+    reg = features_path_of(proj)
+    before = reg.read_bytes()
+    code, _ = run_tool(proj, "feature", "verify", "never-registered", "--verdict", "pass",
+                       "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("verify unknown still rejected", code != 0, True)
+    assert_eq("registry untouched", reg.read_bytes(), before)
+
+
+def test_feature_register_consumers_compatible():
+    """AC11: absent entry counts toward M not N; tasting runs; sprint complete refuses
+    with no-verdict until verify records a pass."""
+    print("\n[feature register] Consumer compatibility (AC11)")
+    proj = setup_project(sprints={"active": _condition_sprint(goal_conditions=(FR_SLUG,)),
+                                  "planning": None, "completed": []})
+    _seed = {"other-done": {"slug": "other-done", "name": "Other", "acceptance_condition": "Works.",
+                            "status": "passing"}}
+    features_path_of(proj).write_text(json.dumps(_seed, indent=2) + "\n")
+    _fr_register(proj)
+    reg = read_features(proj)
+    assert_eq("total entries (M)", len(reg), 2)
+    assert_eq("passing entries (N)", sum(1 for e in reg.values() if e.get("status") == "passing"), 1)
+    assert_eq("new entry absent", reg[FR_SLUG]["status"], "absent")
+    for sub in (("tasting", "status", "--json"), ("tasting", "brief")):
+        before = features_path_of(proj).read_bytes()
+        code, out = run_tool(proj, *sub)
+        assert_eq(f"{sub[1]} exit 0", code, 0)
+        assert_eq(f"{sub[1]} registry unchanged", features_path_of(proj).read_bytes(), before)
+    brief = tasting_brief_path(proj)
+    if brief.exists():
+        assert_eq("brief does not claim absent feature", FR_SLUG in brief.read_text(), False)
+    before = features_path_of(proj).read_bytes()
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("sprint complete refused", code, 1)
+    assert_eq("reason no-verdict", out["blocking_conditions"][0]["reason"], "no-verdict")
+    assert_eq("names slug", out["blocking_conditions"][0]["slug"], FR_SLUG)
+    assert_eq("registry unchanged by refusal", features_path_of(proj).read_bytes(), before)
+    run_tool(proj, "feature", "verify", FR_SLUG, "--verdict", "pass",
+             "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    code, out = run_tool(proj, "sprint", "complete")
+    assert_eq("sprint complete passes after verify", code, 0)
+
+
+def test_feature_register_rejects_duplicate_keys():
+    """qf-r3-1: a registry with a repeated slug key is refused by register and verify, byte-identical."""
+    print("\n[feature register] Duplicate-key registry refused (qf-r3-1)")
+    proj = setup_features_project()
+    raw = ('{"x":{"slug":"x","status":"passing","last_verified":{"verdict":"pass"}},'
+           '"x":{"slug":"x","status":"absent","last_verified":null}}')
+    fp = features_path_of(proj)
+    fp.write_text(raw, encoding="utf-8")
+    before = fp.read_bytes()
+    code, out = _fr_register(proj, "y")
+    assert_eq("register rc 1", code, 1)
+    assert_eq("register names unreadable", "not readable valid JSON" in out.get("error", ""), True)
+    assert_eq("register leaves file identical", fp.read_bytes(), before)
+    code, out = run_tool(proj, "feature", "verify", "x", "--verdict", "pass",
+                         "--evidence", FV_EVIDENCE, "--build", FV_BUILD_PAIR)
+    assert_eq("verify rc 1", code, 1)
+    assert_eq("verify leaves file identical", fp.read_bytes(), before)
+
+
+def test_feature_register_nonexistent_project_dir_refused():
+    """qf-r3-3: a missing project dir is refused and nothing is created."""
+    print("\n[feature register] Nonexistent project dir refused (qf-r3-3)")
+    proj = setup_features_project()
+    ghost = proj / "does" / "not" / "exist"
+    code, out = run_tool(ghost, "feature", "register", FR_SLUG,
+                         "--name", FR_NAME, "--acceptance-condition", FR_AC)
+    assert_eq("rc 1", code, 1)
+    assert_eq("names project dir", "Project directory not found" in out.get("error", ""), True)
+    assert_eq("nothing created", (proj / "does").exists(), False)
+
+
+def test_feature_register_no_fourth_seam():
+    """Only features.json is touched."""
+    print("\n[feature register] Touches only features.json")
+    proj = setup_features_project()
+    md = proj / ".momentum"
+    snap = lambda: {p.relative_to(md): p.read_bytes() for p in md.rglob("*") if p.is_file()}
+    before = snap()
+    _fr_register(proj)
+    after = snap()
+    assert_eq("no new files", set(after) - set(before), set())
+    assert_eq("only features.json modified",
+              {f for f in before if before[f] != after[f]}, {Path("features.json")})
 
 
 # --- Tasting Tests (DEC-040 D4) ---

@@ -6,7 +6,8 @@
 momentum-tools — Deterministic CLI for Momentum sprint and story operations.
 
 Sole writer of stories/index.json and sprints/index.json. Also the sole writer of
-feature status and last_verified in features.json (DEC-040 D1 — `feature verify`).
+feature status and last_verified in features.json (DEC-040 D1 — `feature verify`); `feature register`
+is the sole creator of registry entries (initial status absent) and of the file itself.
 All operations are deterministic state machine validations + JSON mutations.
 
 Usage:
@@ -36,6 +37,7 @@ Usage:
     momentum-tools.py practice-ledger by-source SOURCE
     momentum-tools.py practice-ledger close-stale [--age-days N]
     momentum-tools.py version check
+    momentum-tools.py feature register FEATURE_SLUG --name TEXT --acceptance-condition TEXT [--design-ref REF] [--epic-slugs a,b]  (sole creator of registry entries; status absent; creates features.json if missing)
     momentum-tools.py feature verify FEATURE_SLUG --verdict pass|fail --evidence TEXT --build BACKEND_SHA:CLIENT_SHA
     momentum-tools.py tasting brief [--json]  (writes .momentum/tasting/brief-<date>.md; read-only against features.json)
     momentum-tools.py tasting status [--json]  (due-ness, days-since, prominence tier: quiet/insistent/leading)
@@ -117,7 +119,10 @@ def read_json(path: Path) -> dict:
 
 
 def write_json(path: Path, data: dict) -> None:
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # Encode fully in memory first: a UnicodeEncodeError (e.g. lone surrogates
+    # from non-UTF-8 argv bytes) must fire before the file is opened/truncated.
+    payload = (json.dumps(data, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    path.write_bytes(payload)
 
 
 def result(action: str, success: bool, **kwargs) -> NoReturn:
@@ -321,8 +326,8 @@ def _read_json_object(path: Path) -> dict | None:
 
 def _load_features_registry(project_dir: Path) -> dict | None:
     """Read .momentum/features.json. Returns None (never an implicit pass) when the
-    registry is absent, unreadable, or not a JSON object. Read-only — `feature verify`
-    is the sole writer (DEC-040 D1)."""
+    registry is absent, unreadable, or not a JSON object. Read-only — `feature verify` is the
+    sole writer of status/last_verified and `feature register` the sole creator of entries (DEC-040 D1)."""
     return _read_json_object(features_path(project_dir))
 
 
@@ -347,13 +352,15 @@ def _unverified_condition(slug: str, reason: str, *, status=None, verdict=None,
 
 def _classify_goal_condition(registry: dict | None, slug: str) -> dict:
     """Classify one goal_conditions feature slug into verified-pass, recorded-fail, or
-    unverified with a closed-set reason token (missing-entry|no-verdict|no-build-shas).
+    unverified with a closed-set reason token (missing-entry = slug not in the registry;
+    no-verdict = registered but status absent / last_verified null; no-build-shas).
     Read-only — never writes .momentum/features.json (AC 1, 2)."""
     entry = (registry or {}).get(slug)
-    if not isinstance(entry, dict) or entry.get("status") == "absent":
-        return _unverified_condition(
-            slug, "missing-entry",
-            status=entry.get("status") if isinstance(entry, dict) else None)
+    if not isinstance(entry, dict):
+        return _unverified_condition(slug, "missing-entry")
+    if entry.get("status") == "absent":
+        # Registered but never verified: needs `feature verify`, not `feature register`.
+        return _unverified_condition(slug, "no-verdict", status="absent")
 
     status = entry.get("status")
     last_verified = entry.get("last_verified")
@@ -2351,12 +2358,13 @@ def cmd_feature_status_hash(args: argparse.Namespace) -> None:
 
 # --- Feature Verify Command (DEC-040 D1) ---
 #
-# Sole write path for `status` and `last_verified` in .momentum/features.json.
+# Sole write path for `status` and `last_verified` in .momentum/features.json
+# (`feature register` is the sole creator of entries, always with status absent).
 # Failing-by-default: a feature only reaches `passing` through a recorded human
 # `pass` verdict against a named build. No agent, skill, or workflow may write
 # feature status by any other route (architecture.md Read/Write Authority).
 
-_BUILD_SHA_RE = re.compile(r"^[0-9a-fA-F]+$")
+_BUILD_SHA_RE = re.compile(r"[0-9a-fA-F]+")
 
 
 def _parse_build_pair(build_value: str):
@@ -2376,11 +2384,21 @@ def _parse_build_pair(build_value: str):
             f"Invalid --build value '{build_value}': both the backend and client SHA "
             "must be non-empty"
         )
-    if not _BUILD_SHA_RE.match(backend_sha) or not _BUILD_SHA_RE.match(client_sha):
+    if not _BUILD_SHA_RE.fullmatch(backend_sha) or not _BUILD_SHA_RE.fullmatch(client_sha):
         return None, None, (
             f"Invalid --build value '{build_value}': SHAs must be hexadecimal commit SHAs"
         )
     return backend_sha, client_sha, None
+
+
+def _reject_duplicate_keys(pairs: list) -> dict:
+    """json object_pairs_hook: a repeated key raises instead of silently last-key-wins."""
+    obj: dict = {}
+    for key, value in pairs:
+        if key in obj:
+            raise ValueError(f"duplicate key '{key}'")
+        obj[key] = value
+    return obj
 
 
 def cmd_feature_verify(args: argparse.Namespace) -> None:
@@ -2398,6 +2416,13 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
         error_result("feature_verify", build_error)
 
     evidence = args.evidence
+    try:
+        evidence.encode("utf-8")
+    except UnicodeEncodeError:
+        error_result(
+            "feature_verify",
+            "Invalid --evidence: contains bytes that are not valid UTF-8"
+        )
     if not evidence.strip():
         error_result(
             "feature_verify",
@@ -2409,11 +2434,12 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
         error_result("feature_verify", f"Feature registry not found: {path}")
 
     try:
-        registry = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+        registry = json.loads(path.read_text(encoding="utf-8"),
+                                  object_pairs_hook=_reject_duplicate_keys)
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError, ValueError) as exc:
         error_result(
             "feature_verify",
-            f"Feature registry at {path} is not valid JSON: {exc}"
+            f"Feature registry at {path} is not readable valid JSON: {exc}"
         )
 
     if not isinstance(registry, dict):
@@ -2453,13 +2479,113 @@ def cmd_feature_verify(args: argparse.Namespace) -> None:
     result("feature_verify", success=True, slug=slug, status=status, path=str(path))
 
 
+# --- Feature Register Command (DEC-040 D1) ---
+#
+# Sole creator of registry entries in .momentum/features.json, and the only code
+# path that creates the file. Always writes status "absent" / last_verified null;
+# verdicts remain `feature verify`'s alone. Never overwrites an existing entry.
+
+_FEATURE_SLUG_RE = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
+
+
+def cmd_feature_register(args: argparse.Namespace) -> None:
+    """Register a new feature (status absent) in .momentum/features.json.
+
+    Validates every input before touching the file; any refusal leaves the
+    registry byte-identical (and an absent registry uncreated).
+    """
+    project_dir = resolve_project_dir()
+    path = features_path(project_dir)
+
+    slug = args.feature_slug
+    for flag, val in (
+        ("<feature-slug>", slug),
+        ("--name", args.name),
+        ("--acceptance-condition", args.acceptance_condition),
+        ("--design-ref", args.design_ref),
+        ("--epic-slugs", args.epic_slugs),
+    ):
+        if val is None:
+            continue
+        try:
+            val.encode("utf-8")
+        except UnicodeEncodeError:
+            error_result(
+                "feature_register",
+                f"Invalid {flag}: contains bytes that are not valid UTF-8"
+            )
+    if not _FEATURE_SLUG_RE.fullmatch(slug):
+        error_result(
+            "feature_register",
+            f"Invalid feature slug '{slug}': must be kebab-case (lowercase letters and "
+            "digits in hyphen-separated groups)"
+        )
+    if not args.name.strip():
+        error_result("feature_register", "Missing or empty --name: a feature needs a name")
+    if not args.acceptance_condition.strip():
+        error_result(
+            "feature_register",
+            "Missing or empty --acceptance-condition: a feature needs a testable acceptance condition"
+        )
+
+    if not project_dir.is_dir():
+        error_result("feature_register", f"Project directory not found: {project_dir}")
+
+    if path.exists():
+        try:
+            registry = json.loads(path.read_text(encoding="utf-8"),
+                                      object_pairs_hook=_reject_duplicate_keys)
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError, ValueError) as exc:
+            error_result(
+                "feature_register",
+                f"Feature registry at {path} is not readable valid JSON: {exc}"
+            )
+        if not isinstance(registry, dict):
+            error_result(
+                "feature_register",
+                f"Feature registry at {path} must be a JSON object keyed by feature slug"
+            )
+    else:
+        registry = {}
+
+    if slug in registry:
+        existing = registry[slug]
+        existing_status = existing.get("status") if isinstance(existing, dict) else None
+        error_result(
+            "feature_register",
+            f"Feature '{slug}' is already registered with status '{existing_status}' in {path}; "
+            "re-registration is refused (use `feature verify` to record a verdict)"
+        )
+
+    entry = {
+        "slug": slug,
+        "name": args.name,
+        "acceptance_condition": args.acceptance_condition,
+        "status": "absent",
+        "last_verified": None,
+        "design_ref": args.design_ref,
+    }
+    if args.epic_slugs is not None:
+        entry["epic_slugs"] = [e.strip() for e in args.epic_slugs.split(",") if e.strip()]
+    registry[slug] = entry
+
+    try:
+        path.parent.mkdir(exist_ok=True)
+        write_json(path, registry)
+    except (OSError, UnicodeEncodeError) as exc:
+        error_result("feature_register", f"Cannot write feature registry at {path}: {exc}")
+
+    result("feature_register", success=True, slug=slug, status="absent", path=str(path))
+
+
 # --- Tasting Commands (DEC-040 D4) ---
 #
 # `tasting brief` and `tasting status` are read-only consumers of
 # .momentum/features.json. Neither command opens the registry for writing,
 # creates it, or repairs it under any code path — including when it is
 # absent, empty, or unparseable. `momentum-tools feature verify` remains the
-# sole writer (DEC-040 D1).
+# sole writer of status/last_verified and `feature register` the sole creator of
+# entries (DEC-040 D1).
 
 TASTING_WINDOW_MAX_DAYS = 14
 TASTING_CLAIMS_CAP = 7
@@ -4062,7 +4188,8 @@ def build_parser() -> argparse.ArgumentParser:
     vc = version_sub.add_parser("check", help="Check version hash")
     vc.set_defaults(func=cmd_version_check)
 
-    # feature command group (DEC-040 D1) — sole writer of feature status/last_verified
+    # feature command group (DEC-040 D1) — verify = sole writer of feature status/last_verified;
+    # register = sole creator of registry entries (initial status absent; never writes status/last_verified of an existing entry)
     feature = subparsers.add_parser("feature", help="Feature acceptance-registry operations (DEC-040 D1)")
     feature_sub = feature.add_subparsers(dest="feature_action", required=True)
 
@@ -4080,6 +4207,22 @@ def build_parser() -> argparse.ArgumentParser:
     fv.add_argument("--build", required=True,
                     help="Paired build SHAs the verdict was observed against: backendSha:clientSha")
     fv.set_defaults(func=cmd_feature_verify)
+
+    # feature register
+    fr = feature_sub.add_parser(
+        "register",
+        help="Register a new feature (status absent) in .momentum/features.json; creates the registry if missing"
+    )
+    fr.add_argument("feature_slug", metavar="feature-slug",
+                    help="Kebab-case slug for the new feature (must not already be registered)")
+    fr.add_argument("--name", required=True, help="Human-readable feature name (non-empty)")
+    fr.add_argument("--acceptance-condition", required=True,
+                    help="One-sentence testable acceptance condition (non-empty)")
+    fr.add_argument("--design-ref", default=None,
+                    help="Optional path or reference to the feature's design (stored verbatim)")
+    fr.add_argument("--epic-slugs", default=None,
+                    help="Optional comma-separated epic slugs (informational; never validated)")
+    fr.set_defaults(func=cmd_feature_register)
 
     # feature-status-hash command (older, separate artifact — not part of the feature group)
     fsh = subparsers.add_parser("feature-status-hash",
