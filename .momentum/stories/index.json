@@ -6674,7 +6674,7 @@
     "story_type": "maintenance"
   },
   "add-momentum-tools-feature-register-subcommand": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Add momentum-tools feature register so features can enter the registry via the sole-writer path",
     "epic_slug": "ad-hoc",
     "story_file": true,

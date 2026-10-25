@@ -4247,7 +4247,8 @@
     {
       "slug": "quickfix-2026-10-24",
       "story": "add-momentum-tools-feature-register-subcommand",
-      "started": "2026-10-24"
+      "started": "2026-10-24",
+      "completed": "2026-10-25"
     }
   ]
 }
