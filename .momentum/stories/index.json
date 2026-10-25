@@ -6674,14 +6674,20 @@
     "story_type": "maintenance"
   },
   "add-momentum-tools-feature-register-subcommand": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Add momentum-tools feature register so features can enter the registry via the sole-writer path",
     "epic_slug": "ad-hoc",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "_bmad-output/planning-artifacts/prd.md",
+      ".claude/rules/impetus.md"
+    ],
     "priority": "medium",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": "script-code + specification + rule-hook"
   },
   "give-story-surface-field-a-sanctioned-write-path": {
     "status": "backlog",
