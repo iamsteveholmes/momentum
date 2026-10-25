@@ -6702,5 +6702,15 @@
     "touches": [],
     "priority": "low",
     "story_type": "defect"
+  },
+  "write-interim-pending-resume-card-during-end-gate-fix-pass": {
+    "status": "backlog",
+    "title": "Write an interim pending resume card during the end-gate request-changes fix pass",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "defect"
   }
 }
