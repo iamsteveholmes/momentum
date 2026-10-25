@@ -6405,7 +6405,7 @@
     "retro_source": "sprint-2026-07-13"
   },
   "momentum-tools-feature-verify-human-verdict-recorder-and": {
-    "status": "review",
+    "status": "done",
     "title": "momentum-tools feature verify — human verdict recorder and sole writer of features.json",
     "epic_slug": "momentum-quality-gates-enforced",
     "story_file": true,
@@ -6420,7 +6420,7 @@
     "change_type": "script-cli"
   },
   "sprint-closure-refusal-recorded-human-verdicts-per-goal": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint closure refusal — recorded human verdicts per goal_conditions, honest FAILED terminal state",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -6443,7 +6443,7 @@
     "change_type": "script-code + skill-instruction"
   },
   "sprint-planning-goal-conditions-declaration-plan-gate-leads": {
-    "status": "review",
+    "status": "done",
     "title": "sprint-planning goal_conditions declaration + plan-gate leads with the capability fork",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "story_file": true,
@@ -6460,7 +6460,7 @@
     "change_type": "skill-instruction + script-cli"
   },
   "conduct-merge-gate-completes-by-executing-merge-push-story": {
-    "status": "review",
+    "status": "done",
     "title": "Conduct merge-gate completes by executing — merge + push + story transitions, never a report",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -6476,7 +6476,7 @@
     "change_type": "skill-instruction"
   },
   "conduct-resume-card-impetus-pending-gate-agenda-session": {
-    "status": "review",
+    "status": "done",
     "title": "Conduct resume card + Impetus pending-gate agenda — session-start re-surfacing, never expiry-FAIL",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -6494,7 +6494,7 @@
     "change_type": "skill-instruction + rule-hook"
   },
   "impetus-session-greeting-leads-with-n-of-m-feature": {
-    "status": "review",
+    "status": "done",
     "title": "Impetus session greeting leads with N-of-M feature conditions passing",
     "epic_slug": "momentum-impetus-session-orientation",
     "story_file": true,
@@ -6513,7 +6513,7 @@
     "change_type": "rule-hook + skill-instruction"
   },
   "verification-routing-re-key-to-assembled-surface-dod": {
-    "status": "review",
+    "status": "done",
     "title": "Verification routing re-key to assembled surface + DoD reachability item",
     "epic_slug": "momentum-quality-gates-enforced",
     "story_file": true,
@@ -6537,7 +6537,7 @@
     "change_type": "skill-instruction + agent-definition + script-code + config-structure"
   },
   "daily-tasting-reminder-expected-vs-reality-brief-generator": {
-    "status": "review",
+    "status": "done",
     "title": "Daily tasting reminder + expected-vs-reality brief generator",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
