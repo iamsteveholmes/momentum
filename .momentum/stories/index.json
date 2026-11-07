@@ -6718,5 +6718,15 @@
     "touches": [],
     "priority": "medium",
     "story_type": "defect"
+  },
+  "rebenchmark-avfl-model-tiers-on-claude-5-5-family": {
+    "status": "backlog",
+    "title": "Re-benchmark AVFL model tiers on Claude 5.5 family",
+    "epic_slug": "momentum-quality-gates-enforced",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
   }
 }
