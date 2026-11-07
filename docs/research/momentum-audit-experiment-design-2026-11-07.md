@@ -1,6 +1,20 @@
 # Experiment Design v2 — Momentum vs Bare Claude Code: Outcome-Based, Full Loop
 
-**Status:** awaiting Steve's approval (nothing has run). **Date:** 2026-11-07. **Version:** 2 (supersedes the development-only v1). **Part of:** the Momentum pivot audit (phases 01-03 in this folder). Phase 4 (Opus verdict) waits for this experiment's results.
+**Status:** APPROVED by Steve 2026-11-07. Harness build is next; nothing has run yet. **Date:** 2026-11-07. **Version:** 2 (supersedes the development-only v1). **Part of:** the Momentum pivot audit (phases 01-03 in this folder). Phase 4 (Opus verdict) waits for this experiment's results.
+
+## Decisions (Steve, 2026-11-07). These override the fork recommendations in §6.
+
+| Fork | Decision |
+|---|---|
+| F1 Feature | **Skuld creature design**: conversational PF2e stat block, no Foundry export. Base: backend `0e36288`, client `b83fa62`. |
+| F2 Model pins | **Resolved upstream.** Plugin 0.35.0+ has no model pins (commits `2c9e6930`, `10433aa8`), and the model-routing rule was removed (`1aede010`, plugin 0.35.1). In both arms the orchestrator chooses models. The Momentum arm uses the real plugin, not a modified copy. |
+| F3 Planning location | Momentum's shared planning runs in the **Momentum-arm experiment clone**. The stories can be ported to live Nornspun afterwards if wanted. |
+| F4 Scheduling | **Concurrent**: two cmux tabs, separate HOMEs and ports. |
+| F5 Replicates | **N=1 per arm.** Replicate only if the results are close. |
+| F6 Tool parity | **Identical explicit MCP set in both arms: Maestro + cmux-cua.** No claude.ai connectors in either. compose-expert is disabled in Steve's environment, so neither arm has it. Steve's `frontend-dev` skill (in `nornspun-client/.claude/skills`) counts as part of his practice environment: the Momentum arm keeps it and the bare arm's strip removes it. |
+| F7 Timebox & cap | Each arm ends at Steve-verified done plus its next-cycle plan, or at **3 calendar days / ~$500 list-price-equivalent tokens**, whichever comes first. On Steve's Max subscription the extra cash cost is ~$0 unless extra usage/credits are enabled. The cap is a consumption yardstick. **Pre-flight:** Steve checks `/usage` for weekly headroom and whether extra usage is on. If headroom is tight, start right after a limit reset. |
+| Leanness | Lean where it is obviously free; never artificially lean. (1) Token, cost and time measurement uses the tested DuckDB transcript query plus `/usage` snapshots. The OTel collector is optional: add it only if the dry run shows it is cheap to stand up. Without it, Steve's active time comes from the transcript gap method (300 s cap). (2) Judging uses one independent Sonnet judge pass per arm for the sub-capability scorecard, plus the hidden suite and the PF2e grader, not multi-judge panels. All outcome measures in §5 are retained. |
+| Auth (bare arm) | One-time `/login` inside the bare arm's fresh `CLAUDE_CONFIG_DIR`. No `setup-token` unless headless runs are added later. |
 
 ## 1. Question
 
