@@ -79,13 +79,6 @@
           "target": "~/.claude/rules/anti-patterns.md"
         },
         {
-          "action": "add",
-          "group": "rules",
-          "scope": "global",
-          "source": "references/rules/model-routing.md",
-          "target": "~/.claude/rules/model-routing.md"
-        },
-        {
           "action": "migration",
           "group": "hooks",
           "scope": "project",
