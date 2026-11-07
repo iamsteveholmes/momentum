@@ -70,7 +70,7 @@ changes via momentum-tools CLI.
   </step>
 
   <step n="2" goal="Planning artifact discovery — wave 1">
-    <action>Spawn two discovery subagents in parallel (model: sonnet, effort: medium):
+    <action>Spawn two discovery subagents in parallel (effort: medium):
 
     **PRD coverage agent:**
       Read `{planning_artifacts}/prd.md` and `.momentum/stories/index.json`.

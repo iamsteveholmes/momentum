@@ -204,7 +204,7 @@ After SDR is committed, the skill must:
 
 Read `skills/momentum/skills/decision/SKILL.md` and verify:
 
-- [ ] Valid frontmatter with name, description, model, effort
+- [ ] Valid frontmatter with name, description, effort
 - [ ] description is under 150 characters
 - [ ] Body delegates to `./workflow.md`
 - [ ] No inline workflow logic in SKILL.md body (delegation only)

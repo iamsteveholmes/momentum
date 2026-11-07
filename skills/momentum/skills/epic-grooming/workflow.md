@@ -71,7 +71,7 @@ orphaned `epic_slug` values in `stories/index.json` so every slug maps to a regi
   <step n="2" goal="Parallel discovery — spawn exactly 2 subagents in one message">
     <action>Spawn both subagents in a single message (fan-out — do NOT use TeamCreate):
 
-      Agent A (model: haiku, effort: quick):
+      Agent A (effort: quick):
         Read `_bmad-output/planning-artifacts/prd.md` (use offset/limit for large files) and
         `_bmad-output/planning-artifacts/epics.md`.
         Extract all functional requirement (FR) clusters grouped by user-facing theme.
@@ -83,7 +83,7 @@ orphaned `epic_slug` values in `stories/index.json` so every slug maps to a regi
           - suggested type: flow / connection / quality
         Return a structured list of epic candidates.
 
-      Agent B (model: haiku, effort: quick):
+      Agent B (effort: quick):
         Read `_bmad-output/planning-artifacts/architecture.md` (use offset/limit — commonly large),
         `.momentum/stories/index.json` (use offset/limit — commonly large), and
         `_bmad-output/planning-artifacts/epics.json` if it exists.

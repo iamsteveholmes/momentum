@@ -1,7 +1,6 @@
 ---
 name: researcher
 description: Universal researcher base body. Owns research docs, synthesis briefings, and investigation reports. Unconditioned — agent-composition-pipeline layers project context on top. Spawned by orchestrators for research and knowledge-investigation tasks.
-model: sonnet
 effort: high
 tools:
   - Read

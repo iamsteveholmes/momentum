@@ -1,19 +1,23 @@
 # Momentum Model Routing Guide
 
-## Current Assignments
+**Principle: nothing in Momentum hard-codes a model.** Skills, agents, workflows, and `framework.json` carry no model pins. The orchestrator chooses a model per task at spawn time. A skill or agent with no `model:` runs on the session model unless the orchestrator passes one.
 
-Pin model families (opus/sonnet/haiku), never versioned IDs — versioned pins silently go stale as models advance.
+## How to choose (at spawn time)
 
-| Skill | Model | Effort | Rationale |
-|---|---|---|---|
-| momentum (Impetus) | sonnet | high | Orchestrator; elevated effort for unvalidated outputs |
-| momentum:vfl | opus | high | Complex parallel validation orchestration |
-| momentum:code-reviewer | opus | high | Cognitive hazard rule — verifier |
-| momentum:architecture-guard | opus | high | Cognitive hazard rule — verifier |
-| momentum:upstream-fix | opus | high | High-stakes root cause analysis |
-| momentum:create-story | sonnet | medium | Story authoring — well-validated by downstream AVFL |
-| momentum:dev | sonnet | medium | Story orchestration — validated by AVFL gate |
-| momentum:plan-audit | sonnet | medium | Plan classification + story creation |
-| momentum:triage | sonnet | high | Multi-item orchestrator; matches refine/sprint-planning effort level |
+| Work type | Choice |
+|---|---|
+| Judgment work: planning, retro, assessment, review synthesis, decisions, adversarial validation | Session model (do not pass `model`) |
+| Mechanical, extraction, audit scans, or high-volume worker steps where cost matters | Sonnet 5.5 or Haiku 5.5 (pass a family alias, e.g. `sonnet`, `haiku`) |
 
-Story 3.5 will elaborate this guide with the full decision framework.
+Effort is separate from model. Skills still declare `effort:` in frontmatter and workflows may state an effort level per step.
+
+## Rules
+
+- Never pin versioned model IDs anywhere in skills, agents, workflows, or generated agent files; they go stale silently.
+- Do not add `model:` to frontmatter. Generated agents (agent-builder, build-guidelines) omit it too.
+- Tier hints in workflows (for example AVFL's "mid-tier worker" / "strongest judgment model") are guidance for the orchestrator, not pins.
+- **Caveat, `[1m]` sessions:** if the session model is a `[1m]` long-context variant, pass an explicit model on subagent spawns. Inheriting `[1m]` can fail with an entitlement error.
+
+## Superseded
+
+The earlier per-component assignment table (opus/sonnet/haiku per skill) is historical and superseded by this guide.

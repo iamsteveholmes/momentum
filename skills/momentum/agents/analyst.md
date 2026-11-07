@@ -1,7 +1,6 @@
 ---
 name: analyst
 description: Universal analyst base body. Owns assessment records, analysis docs, and requirements analysis. Composed with project-specific context by agent-composition-pipeline.
-model: sonnet
 effort: medium
 tools:
   - Read

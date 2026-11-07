@@ -180,30 +180,30 @@ Read `references/framework.json` → `prompts` for the exact prompt templates to
 
 ### Role Configuration (Benchmarked Defaults)
 
-Each role has a prescribed model and effort level derived from Phase 4 benchmarking (36 runs across 3 models × 3 effort levels × all roles). Use these — they represent measured optima, not guesses.
+Each role has a prescribed effort level and a model *tier hint* derived from Phase 4 benchmarking (36 runs across 3 models × 3 effort levels × all roles). Models are not pinned: the orchestrator chooses the concrete model at spawn time (see `references/model-routing-guide.md`), using the tier hint as guidance.
 
-| Role | Model | Effort | Spawning | Concurrency | Sub-skill path | Rationale |
+| Role | Model tier hint | Effort | Spawning | Concurrency | Sub-skill path | Rationale |
 |---|---|---|---|---|---|---|
-| Enumerator validator | `sonnet` | `medium` | `individual-agent` | parallel | `sub-skills/validator-enum` | Reliable recall; no false-pass risk |
-| Adversary validator | `opus` | `high` | `individual-agent` | parallel | `sub-skills/validator-adv` | Best severity calibration; critical findings correctly classified |
-| Consolidator | `haiku` | `low` | `individual-agent` | sequential (after all validators) | `sub-skills/consolidator` | Fully invariant across all model/effort combos — cheapest is sufficient |
-| Fixer | `sonnet` | `medium` | `individual-agent` | sequential (after consolidator) | `sub-skills/fixer` | Handles both mechanical and generative fixes |
+| Enumerator validator | mid-tier worker | `medium` | `individual-agent` | parallel | `sub-skills/validator-enum` | Reliable recall; no false-pass risk |
+| Adversary validator | strongest judgment model (session model) | `high` | `individual-agent` | parallel | `sub-skills/validator-adv` | Best severity calibration; critical findings correctly classified |
+| Consolidator | cheapest tier | `low` | `individual-agent` | sequential (after all validators) | `sub-skills/consolidator` | Fully invariant across all model/effort combos — cheapest is sufficient |
+| Fixer | mid-tier worker | `medium` | `individual-agent` | sequential (after consolidator) | `sub-skills/fixer` | Handles both mechanical and generative fixes |
 
-**How to apply:** When spawning subagents via the Agent tool, set the `model` parameter explicitly (`"sonnet"`, `"opus"`, `"haiku"`). Point the subagent at the appropriate sub-skill path — the skill carries the `effort` frontmatter that overrides the session level.
+**How to apply:** When spawning subagents via the Agent tool, choose the `model` parameter per the tier hints above and the model-routing guide (never a versioned ID). Point the subagent at the appropriate sub-skill path — the skill carries the `effort` frontmatter that overrides the session level.
 
-**Do not use Haiku for Enumerator validators.** Benchmarking showed Haiku enum-medium produces false-pass scores (92/100 while missing a critical architectural contradiction) — the most dangerous failure mode.
+**Avoid the cheapest tier for Enumerator validators.** Benchmarking showed a Haiku-class enum-medium produces false-pass scores (92/100 while missing a critical architectural contradiction) — the most dangerous failure mode.
 
-**Do not use Sonnet for Adversary validators.** Benchmarking showed Sonnet Adversary systematically downgrades critical findings to major severity across all effort levels — a calibration defect that causes the pipeline to underreport severity.
+**Avoid mid-tier models for Adversary validators.** Benchmarking showed a Sonnet-class Adversary systematically downgrades critical findings to major severity across all effort levels — a calibration defect that causes the pipeline to underreport severity.
 
 ---
 
 ### Phase 1: VALIDATE
 
-Spawn validator subagents **in parallel** based on the profile. Set `model` and skill path per the Role Configuration table above.
+Spawn validator subagents **in parallel** based on the profile. Choose model per the tier hints and set the skill path per the Role Configuration table above.
 
-- **gate:** 1 subagent — Enumerator framing, structural lens only. Model: `sonnet`.
-- **checkpoint:** 1 subagent per active lens (2–3 lenses relevant to the step). Enumerator framing. Model: `sonnet`.
-- **full:** 8 subagents total — 1 Enumerator + 1 Adversary per lens × 4 lenses, all in one turn. Enumerator: `sonnet`/medium. Adversary: `opus`/high.
+- **gate:** 1 subagent — Enumerator framing, structural lens only. Model: orchestrator's choice (mid-tier worker).
+- **checkpoint:** 1 subagent per active lens (2–3 lenses relevant to the step). Enumerator framing. Model: orchestrator's choice (mid-tier worker).
+- **full:** 8 subagents total — 1 Enumerator + 1 Adversary per lens × 4 lenses, all in one turn. Enumerator: mid-tier worker/medium. Adversary: strongest judgment model/high.
 - **scan:** Identical to full — 8 subagents total, same model/effort configuration. The difference is downstream: scan never enters Phase 4.
 
 Pass the current skepticism value explicitly in each subagent prompt: `high` (3) on iteration 1, `low` (2) on all subsequent iterations.
@@ -216,7 +216,7 @@ All findings: id, severity, dimension, location, description, evidence (mandator
 
 ### Phase 2: CONSOLIDATE
 
-Run sequentially after all validators complete. Model: `haiku`. Sub-skill: `sub-skills/consolidator`.
+Run sequentially after all validators complete. Model: orchestrator's choice (cheapest tier suffices). Sub-skill: `sub-skills/consolidator`.
 
 **Single-document mode:** Use `prompts.consolidator` from `references/framework.json`.
 **Corpus mode (`corpus: true`):** Use `prompts.consolidator_corpus` — includes cross-document deduplication rules (same contradiction across N file pairs = one finding, not N).
@@ -246,7 +246,7 @@ Check exit conditions based on the profile:
 
 **Note:** Gate (`fix_loop: false`): pipeline halts with GATE_FAILED — Phase 4 is never entered. Scan (`fix_loop: false`): pipeline exits from Phase 3 with SCAN_COMPLETE — Phase 4 is never entered.
 
-Model: `sonnet`. Sub-skill: `sub-skills/fixer`. Run as the `domain_expert` role.
+Model: orchestrator's choice (mid-tier worker). Sub-skill: `sub-skills/fixer`. Run as the `domain_expert` role.
 
 **Single-document mode (`corpus: false`):** Use `prompts.fixer` from `references/framework.json`. Produce the complete corrected output as a single document.
 

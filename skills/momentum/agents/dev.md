@@ -1,7 +1,6 @@
 ---
 name: dev
 description: Implements a single story per its spec. Pure implementer spawned by the Conductor — delegates implementation to bmad-dev-story and returns implementation-complete output with files changed.
-model: sonnet
 effort: medium
 tools:
   - Read

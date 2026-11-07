@@ -33,7 +33,7 @@
 
     <action>Generate a story slug from the description: lowercase, hyphenated, max 50 chars. Store as {{story_slug}}</action>
 
-    <action>Spawn `momentum:create-story` (model: sonnet, effort: medium) with:
+    <action>Spawn `momentum:create-story` (effort: medium) with:
       - The developer's description
       - epic_slug: {{epic_slug}}
       - Single-story context: no dependencies, no backlog integration
@@ -72,7 +72,7 @@ Options:
   <step n="2" goal="Specify — Gherkin, spec impact, specialist classification, guidelines, AVFL">
 
     <!-- 2a: Spec impact discovery -->
-    <action>Spawn two parallel discovery subagents (model: sonnet, effort: medium):
+    <action>Spawn two parallel discovery subagents (effort: medium):
 
     **Architecture discovery agent:**
       Read the project's architecture doc and the approved story file.
@@ -106,7 +106,7 @@ Options:
 
 Updating specs now.</output>
 
-      <action>Spawn two parallel update subagents (model: sonnet, effort: medium):
+      <action>Spawn two parallel update subagents (effort: medium):
 
       **Architecture update agent:**
         Read the architecture doc. Apply each architecture impact item:
@@ -124,7 +124,7 @@ Updating specs now.</output>
     </check>
 
     <!-- 2b: Generate Gherkin spec (AFTER spec updates so Gherkin can reference new decisions/FRs) -->
-    <action>Spawn a Gherkin generation subagent (model: sonnet, effort: medium).
+    <action>Spawn a Gherkin generation subagent (effort: medium).
 
     Read the story's acceptance criteria from {{story_file}} — read ALL ACs
     holistically to understand the system's intended behavior, then write Gherkin
@@ -307,7 +307,7 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
       - Read {{agent_file}} (e.g., `skills/momentum/agents/dev.md`, or a composed
         `.claude/guidelines/agents/{role}-{domain}.md` path when the resolver returned a project entry)
       - If the file does not exist, fall back to `skills/momentum/agents/dev.md`
-      - Use the model and effort from the agent definition's frontmatter
+      - Use the effort from the agent definition's frontmatter; the orchestrator chooses the model at spawn time
 
     Spawn the specialist dev agent with:
       - Story key: {{story_slug}}
@@ -410,8 +410,8 @@ All findings will be addressed in the collaborative fix loop.</output>
     <action>Read the story's `change_type` field from {{story_file}} frontmatter.
 
     Determine which validators join the team:
-      - `skill-instruction` in change_type → E2E Validator (model: sonnet, effort: medium)
-      - `script-code` in change_type → QA (model: sonnet, effort: medium)
+      - `skill-instruction` in change_type → E2E Validator (effort: medium)
+      - `script-code` in change_type → QA (effort: medium)
       - Both present → both validators join the team
     </action>
 
@@ -430,12 +430,12 @@ All findings will be addressed in the collaborative fix loop.</output>
       If `skill-instruction`:
         **E2E Validator** — agent definition: `skills/momentum/agents/e2e-validator.md`
         Provide: story slug, Gherkin spec path, {{all_findings}} list
-        Model: sonnet, effort: medium
+        Effort: medium
 
       If `script-code`:
         **QA Reviewer** — agent definition: `skills/momentum/agents/qa-reviewer.md`
         Provide: story slug, story file path, {{all_findings}} list
-        Model: sonnet, effort: medium
+        Effort: medium
 
       If both change types present: include both validators.
     </action>

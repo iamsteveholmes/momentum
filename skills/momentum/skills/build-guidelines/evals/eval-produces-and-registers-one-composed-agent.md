@@ -19,7 +19,7 @@
 **Then** (observable behavior — all must hold):
 
 1. A composed agent file exists on disk at `.claude/guidelines/agents/dev-kotlin-compose.md`
-2. The composed file has YAML frontmatter with `name`, `model`, and `tools` fields
+2. The composed file has YAML frontmatter with `name` and `tools` fields (no `model` pin)
 3. The composed file has a project-guidelines block containing the diagnostic table **above** a `---` separator
 4. The full unmodified base role body appears **below** the `---` separator
 5. No sprint identifier and no story identifier appears anywhere in the composed file

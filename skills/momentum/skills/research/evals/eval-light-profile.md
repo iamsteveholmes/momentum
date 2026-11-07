@@ -33,7 +33,7 @@ Given: User invokes momentum:research and provides:
 11. Light profile skips Phase 4 entirely — no practitioner-notes.md
 
 ### Phase 5 (SYNTHESIZE)
-12. A single Opus subagent runs in the foreground
+12. A single synthesis subagent runs in the foreground
 13. Subagent reads all `raw/*.md` files and `scope.md` from disk
 14. Writes `final/{topic-slug}-final-{YYYY-MM-DD}.md`
 15. Final doc frontmatter includes `content_origin: claude-code-synthesis`,

@@ -1,7 +1,6 @@
 ---
 name: architecture-guard
 description: "Detects pattern drift against architecture decisions. Read-only enforcer. Invoked by Impetus — do not invoke directly."
-model: sonnet
 context: fork
 allowed-tools: Read, Glob, Grep, Bash
 effort: medium

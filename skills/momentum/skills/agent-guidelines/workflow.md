@@ -39,7 +39,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       3. **test-config-scanner** — sub-skills/test-config-scanner: detect testing frameworks and patterns
       4. **source-pattern-scanner** — sub-skills/source-pattern-scanner: analyze source code for frameworks and conventions
 
-    Each subagent receives the project root path. All run as Sonnet/medium.</action>
+    Each subagent receives the project root path. All run at medium effort (orchestrator chooses the model).</action>
 
     <action>Wait for all 4 subagents to complete. Merge their outputs into a unified technology profile:
       - Languages and versions (from build-scanner + source-pattern-scanner)
@@ -91,7 +91,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="2" goal="Research current state of detected technologies">
-    <action>For each technology with MEDIUM or HIGH staleness risk, spawn a parallel research subagent (Sonnet/medium with WebSearch access). Each agent performs 2-3 focused web searches:
+    <action>For each technology with MEDIUM or HIGH staleness risk, spawn a parallel research subagent (medium effort, with WebSearch access). Each agent performs 2-3 focused web searches:
       - Current stable version and release date
       - Breaking changes from the previous major version
       - Deprecated APIs and their replacements
@@ -186,7 +186,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="4" goal="Generate guidelines artifacts">
-    <action>For each approved technology, spawn parallel generation subagents (Sonnet/high):
+    <action>For each approved technology, spawn parallel generation subagents (high effort):
 
     **For each Layer 1 rules file:**
       - Use references/rule-template.md as the structural template

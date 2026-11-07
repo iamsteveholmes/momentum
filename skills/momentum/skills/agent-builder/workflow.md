@@ -88,9 +88,9 @@ The skill accepts these inputs (via invocation arguments or interactive elicitat
 ---
 name: {{agent_slug}}
 description: {{role_description}} — specialized for {{domain}} domain. Spawned by sprint-dev for {{domain}}-related work.
-model: sonnet
 effort: medium
 tools: [Read, Grep, Glob, Bash, Edit, Write]
+# no model: line — the orchestrator chooses the model at spawn time (see references/model-routing-guide.md)
 ---
 
 {{base_body_content}}
@@ -154,7 +154,7 @@ these strategies:
     <check if="skill-creator invocation not available">
       <action>Log: "skill-creator not available — performing manual validation checklist."</action>
       <action>Verify manually:
-        - [ ] Frontmatter has: name, description, model, effort, tools
+        - [ ] Frontmatter has: name, description, effort, tools (no model pin)
         - [ ] description is under 250 chars and front-loaded
         - [ ] Base body content present and unmodified
         - [ ] Domain Specialization section is specific and actionable

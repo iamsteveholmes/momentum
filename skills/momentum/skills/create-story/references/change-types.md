@@ -89,7 +89,7 @@ Include when any task involves SKILL.md, workflow.md, or other skill instruction
 
 **NFR compliance — mandatory for every skill-instruction task:**
 - SKILL.md `description` field must be ≤150 characters (NFR1) — count precisely
-- `model:` and `effort:` frontmatter fields must be present (model routing per FR23)
+- `effort:` frontmatter field must be present; `model:` must be omitted (orchestrators choose models at spawn time)
 - SKILL.md body must stay under 500 lines / 5000 tokens; overflow content goes in `references/` with clear load instructions (NFR3)
 - Skill names use `momentum:` namespace prefix (NFR12 — no naming collision with BMAD skills)
 
@@ -97,7 +97,7 @@ Include when any task involves SKILL.md, workflow.md, or other skill instruction
 - [ ] 2+ behavioral evals written in `skills/{{SKILL_DIR}}/evals/`
 - [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
 - [ ] SKILL.md description ≤150 characters confirmed (count the actual characters)
-- [ ] `model:` and `effort:` frontmatter present and correct
+- [ ] `effort:` frontmatter present and correct; no `model:` pin
 - [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed (overflow in `references/` if needed)
 - [ ] AVFL checkpoint on produced artifact documented (momentum:dev runs this automatically — validates the implemented SKILL.md against story ACs)
 ```

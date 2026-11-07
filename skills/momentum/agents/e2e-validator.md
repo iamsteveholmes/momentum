@@ -1,7 +1,6 @@
 ---
 name: e2e-validator
 description: Behavioral validator for Momentum Team Review. Reads verification-harness.json and assembled-surface routing (change_type as inference fallback) to execute the correct verification method per story. Replaces Gherkin-only validation with method-polymorphic contracts. Spawned during Team Review phase.
-model: sonnet
 effort: medium
 tools:
   - Read

@@ -1,7 +1,6 @@
 ---
 name: validator-enum
 description: AVFL Enumerator validator. Systematic, section-by-section quality validation.
-model: sonnet
 effort: medium
 internal: true
 ---

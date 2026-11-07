@@ -1,5 +1,3 @@
 # Model Routing
 
-<!-- Placeholder — full content implemented in Story 3.5 -->
-
-Route tasks to models based on cognitive requirements declared in skill frontmatter.
+Orchestrators choose subagent models per task at spawn time; skills and agents do not hard-code model pins. See references/model-routing-guide.md.

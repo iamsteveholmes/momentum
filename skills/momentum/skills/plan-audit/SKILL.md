@@ -1,7 +1,6 @@
 ---
 name: plan-audit
 description: Audits the active plan for spec impact, classifies trivial vs. substantive, and writes a Spec Impact section before plan mode exits.
-model: sonnet
 effort: medium
 ---
 

@@ -60,7 +60,7 @@ For each file in `files_to_check`:
 
 For each file, verify that only the Large File Handling section was added:
 
-1. Check that frontmatter (name, description, model, effort, tools) is unchanged
+1. Check that frontmatter (name, description, effort, tools) is unchanged
 2. Check that no existing section headings were removed or renamed
 3. Check that the section appears in the correct position per the story spec:
    - `dev.md` — after "What NOT to Do"

@@ -1,7 +1,6 @@
 ---
 name: build-guidelines
 description: "Builds gen-2 composed specialist agent files (base body + manifesto) and Tier 1 constitution. Run before sprint to bake guidelines in."
-model: sonnet
 effort: medium
 ---
 

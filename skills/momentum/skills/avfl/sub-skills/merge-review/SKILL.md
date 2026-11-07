@@ -1,7 +1,6 @@
 ---
 name: avfl-merge-review
 description: "AVFL merge-review sub-skill — invoked by the avfl-merge-review Workflow. Do not invoke directly."
-model: sonnet
 effort: medium
 user-invocable: false
 ---

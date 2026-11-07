@@ -1,7 +1,6 @@
 ---
 name: source-pattern-scanner
 description: Analyzes source code patterns to identify languages, frameworks, and conventions.
-model: sonnet
 effort: medium
 internal: true
 ---

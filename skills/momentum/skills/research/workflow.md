@@ -415,7 +415,7 @@ topic: "{{topic}}"
     <action>Load ./references/synthesis-briefing-template.md</action>
     <action>Generate the synthesis briefing by substituting: {{topic}}, {{goals}}, {{profile}}, {{date}}, {{project_dir}}, {{topic_slug}}, the list of raw file paths, and {{human_verified}}</action>
 
-    <action>Spawn a SINGLE Opus subagent in the FOREGROUND (not background). Pass the generated synthesis briefing as the agent prompt.</action>
+    <action>Spawn a SINGLE synthesis subagent (orchestrator chooses the model; judgment-grade work, default to the session model) in the FOREGROUND (not background). Pass the generated synthesis briefing as the agent prompt.</action>
 
     <critical>The synthesis agent must read ALL input files from disk — it receives file paths, not inline content. This gives it a clean 200K context window for synthesis, not polluted by the orchestrator's conversation history.</critical>
 

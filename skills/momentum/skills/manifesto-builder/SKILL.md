@@ -1,7 +1,6 @@
 ---
 name: manifesto-builder
 description: Drafts an agent's diagnostic-table manifesto from the project KB, then requires human curation of symptom wording before writing it to disk.
-model: sonnet
 effort: medium
 user-invocable: true
 allowed-tools: Read Grep Glob Bash Write Skill

@@ -1,7 +1,6 @@
 ---
 name: consolidator
 description: AVFL consolidator. Merges, cross-checks, deduplicates, and scores validator findings.
-model: haiku
 effort: low
 internal: true
 ---

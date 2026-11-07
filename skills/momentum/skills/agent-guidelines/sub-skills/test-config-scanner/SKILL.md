@@ -1,7 +1,6 @@
 ---
 name: test-config-scanner
 description: Detects testing frameworks, configuration, and test patterns in the project.
-model: sonnet
 effort: medium
 internal: true
 ---

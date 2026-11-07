@@ -29,7 +29,7 @@ Check ONLY the items that apply to the story's change types. Skip sections for t
 - [ ] **Evals exist:** `skills/[name]/evals/` directory contains 2 or more `.md` eval files
 - [ ] **EDD cycle completed:** Dev Agent Record documents that evals were run and results (pass/partial/fail with notes)
 - [ ] **Description length:** SKILL.md `description` field is ≤150 characters — count the actual characters in the frontmatter value
-- [ ] **Model routing frontmatter:** `model:` and `effort:` fields present in SKILL.md frontmatter
+- [ ] **Effort frontmatter:** `effort:` field present in SKILL.md frontmatter; no `model:` pin (orchestrators choose models at spawn time)
 - [ ] **Size compliance:** SKILL.md body is under 500 lines; if longer, overflow is in `references/` with load instructions
 - [ ] **Skill name prefix:** Skill name starts with `momentum-` (prevents BMAD naming collision per NFR12)
 - [ ] **AVFL result noted:** AVFL checkpoint result (CLEAN or CHECKPOINT_WARNING with summary) is recorded in Dev Agent Record

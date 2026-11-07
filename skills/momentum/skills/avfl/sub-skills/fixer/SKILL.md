@@ -1,7 +1,6 @@
 ---
 name: fixer
 description: AVFL fixer. Applies validated findings as corrections and produces a complete fixed artifact.
-model: sonnet
 effort: medium
 internal: true
 ---

@@ -1,7 +1,6 @@
 ---
 name: retro
 description: "Sprint retrospective — transcript audit engine (dynamic Workflow), story verification, findings document, and sprint closure."
-model: sonnet
 effort: high
 ---
 

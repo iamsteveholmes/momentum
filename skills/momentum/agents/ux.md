@@ -1,7 +1,6 @@
 ---
 name: ux
 description: UX designer base body — owns UX specs, wireframes, design docs, and UX requirements. Spawned by orchestrators for UX-related document creation and review work.
-model: sonnet
 effort: medium
 tools:
   - Read

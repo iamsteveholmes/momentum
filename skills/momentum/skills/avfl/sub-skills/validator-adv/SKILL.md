@@ -1,7 +1,6 @@
 ---
 name: validator-adv
 description: AVFL Adversary validator. Intuitive, holistic, pattern-aware quality validation.
-model: opus
 effort: high
 internal: true
 ---

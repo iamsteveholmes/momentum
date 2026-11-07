@@ -74,7 +74,7 @@
 
   <step n="2" goal="Parallel dual-reviewer validation over all four lenses">
 
-    <note>This step repeats each iteration. All 8 subagents are launched in a single message turn (fan-out). Each receives the current diff (updated after each fix pass), the merge context, and the current skepticism level. Model and effort per Role Configuration in the AVFL SKILL.md (Enumerator=sonnet/medium, Adversary=opus/high).</note>
+    <note>This step repeats each iteration. All 8 subagents are launched in a single message turn (fan-out). Each receives the current diff (updated after each fix pass), the merge context, and the current skepticism level. Model and effort per Role Configuration in the AVFL SKILL.md (Enumerator=mid-tier worker/medium, Adversary=strongest judgment model/high).</note>
 
     <action>Bind skepticism for this iteration:
       {{skepticism}} = SKEPTICISM[{{iteration}} - 1]
@@ -125,10 +125,10 @@
 
   <step n="3" goal="Consolidate, deduplicate, score, and classify findings across all lenses">
 
-    <note>Consolidator runs sequentially after all validators complete. Model: haiku/low. Sub-skill: sub-skills/consolidator. Use `prompts.consolidator` from framework.json verbatim.</note>
+    <note>Consolidator runs sequentially after all validators complete. Model: orchestrator's choice (cheapest tier suffices). Effort: low. Sub-skill: sub-skills/consolidator. Use `prompts.consolidator` from framework.json verbatim.</note>
 
     <action>Spawn the consolidator subagent (individual-agent, NOT TeamCreate):
-      Model: haiku. Sub-skill: sub-skills/consolidator.
+      Model: orchestrator's choice. Sub-skill: sub-skills/consolidator.
       Inputs:
         - validator_outputs: {{all_validator_outputs}}
         - integration_surface: {{integration_surface}}
@@ -288,7 +288,7 @@
 
     <check if="{{doc_findings}} is non-empty">
       <action>Spawn the AVFL internal fixer (sub-skills/fixer) as a subagent (individual-agent, NOT TeamCreate):
-        Model: sonnet. Sub-skill: sub-skills/fixer.
+        Model: orchestrator's choice. Sub-skill: sub-skills/fixer.
         Inputs:
           - findings: {{doc_findings}}
           - output_to_validate: {{current_diff}}

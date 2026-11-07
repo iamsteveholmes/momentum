@@ -7,7 +7,7 @@
 ---
 name: agent-name                    # Required: kebab-case, max 64 chars
 description: What + when to use     # Recommended: <250 chars, front-load use case
-model: sonnet|haiku|opus            # Optional: model override
+model: sonnet|haiku|opus            # Optional: model override (Momentum convention: omit; orchestrators choose models at spawn time)
 effort: low|medium|high|max         # Optional: effort level
 maxTurns: N                         # Optional: max turns before stopping
 tools: Read Grep Glob               # Optional: space-separated or YAML list
@@ -72,7 +72,7 @@ agent's tool list and are appropriate for all agents — read-only or read-write
 ---
 name: skill-name                    # Optional: defaults to directory name
 description: What + when to use     # Recommended: <250 chars
-model: haiku|sonnet|opus            # Optional: model override
+model: haiku|sonnet|opus            # Optional: model override (Momentum convention: omit; orchestrators choose models at spawn time)
 effort: low|medium|high|max         # Optional: effort override
 context: fork                       # Optional: isolated execution
 allowed-tools: Read Grep Bash       # Optional: restrict tools

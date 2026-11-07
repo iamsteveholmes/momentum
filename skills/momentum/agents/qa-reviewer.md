@@ -1,7 +1,6 @@
 ---
 name: qa-reviewer
 description: Per-story QA verifier spawned during stage 2 of the conduct build phase. Routes on the story's frozen verification contract (verification_method, harness_profile) and EXECUTES it — invoking, triggering, running, driving, or (document-review only) inspecting — never degrading to diff-only review. Classifies each AC as VERIFIED/PARTIAL/MISSING/BLOCKED with stakes_class. Read-only — never modifies code. Runs concurrently alongside other stage-2 reviewers.
-model: sonnet
 effort: medium
 tools:
   - Read

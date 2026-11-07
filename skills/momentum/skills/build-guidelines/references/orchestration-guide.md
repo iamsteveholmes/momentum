@@ -46,9 +46,9 @@ Every composed file must match this structure (validated in Phase 6):
 ```markdown
 ---
 name: {role}-{domain}
-model: sonnet
 effort: medium
 tools: [Read, Glob, Grep, Bash, Edit, Write, Agent, Skill]
+# no model: line — the orchestrator chooses the model at spawn time
 ---
 
 ## Project Guidelines — {Stack} ({Date})
@@ -69,7 +69,7 @@ tools: [Read, Glob, Grep, Bash, Edit, Write, Agent, Skill]
 ```
 
 **Shape invariants:**
-- Frontmatter: `name`, `model`, `tools` required
+- Frontmatter: `name`, `tools` required (`model` omitted — orchestrator chooses at spawn time)
 - Guidelines block (critical rules + diagnostic table) ABOVE the `---` separator
 - Full unmodified base body BELOW the `---` separator
 - No sprint identifier, no story identifier, anywhere in the file

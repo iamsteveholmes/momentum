@@ -391,7 +391,7 @@ Handoff record: momentum/build-guidelines-last-run.json
     <action>Exemplar-shape conformance check (DEC-038 G1 criterion):
       For each composed agent file, verify against cmp-dev exemplar shape
       (reference: docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md — format reference ONLY, never a Momentum agent):
-        ✓ YAML frontmatter with name, model, tools fields
+        ✓ YAML frontmatter with name, tools fields (no model pin)
         ✓ ## Project Guidelines (or equivalent guidelines section) ABOVE the --- separator
         ✓ Diagnostic table entries in the guidelines section (symptom → wiki-query format)
         ✓ A --- separator line present

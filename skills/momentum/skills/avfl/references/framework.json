@@ -410,7 +410,6 @@
       "max_fix_attempts": 0,
       "on_fail": "return_findings_to_developer",
       "scope": "changed_files_only",
-      "model": "sonnet",
       "effort": "medium-low",
       "when_to_use": [
         "Post-change validation for practice artifact distillation — changed files only, no multi-lens parallelism, findings surfaced to developer for correction-or-commit choice"

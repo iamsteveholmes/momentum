@@ -24,7 +24,6 @@ We need a code review skill that runs adversarial review on git diffs before mer
 ### SKILL.md
 name: momentum:code-reviewer
 description: Runs adversarial code review on staged changes before merge.
-model: opus
 effort: high
 
 ### Workflow
