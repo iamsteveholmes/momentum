@@ -44,7 +44,7 @@ During runs, Steve answers questions and makes product decisions. He does not di
 | Models | Opus 5.5, effort high; Momentum's own subagent tiering (pins per F2) | Opus 5.5, effort high; Claude Code defaults |
 | Product inputs | PRD, architecture, UX spec, product research | Identical copies of the same product docs |
 | Base | backend `0e36288` + client `b83fa62` (last human-verified pairing) | same |
-| Runtime | own HOME `~/exp/m-home`, Postgres 5432, API 8001 | own HOME `~/exp/b-home`, Postgres 5433, API 8011 |
+| Runtime | Steve's real HOME and `~/.claude`; clones in `~/exp/m`; Postgres 5434, API 8022 (8021 is held by a launchd job) | real HOME with fresh `CLAUDE_CONFIG_DIR=~/exp/b-config` and `env -i`; archived single-commit repos in `~/exp/b`; Postgres 5433, API 8011 |
 | Location | clones under `~/exp`, outside `~/projects` | same |
 
 **Proof-of-bareness gate (every B session):** `/context`, `/memory`, `/hooks`, `/skills`, `/agents`, `/mcp`, `/output-style` show defaults only. A canary question finds no Momentum or Impetus instructions. `/context` token counts are recorded for both arms. A failed gate voids the session.
