@@ -151,7 +151,7 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
     Per ~/.claude/rules/spawning-patterns.md: "Can each agent complete its work without
     talking to any other agent? Yes → Fan-out (individual Agent spawns)."</critical>
 
-    <action>Spawn Agent A — Acceptance-first (model: claude-sonnet-4-6, effort: medium):
+    <action>Spawn Agent A — Acceptance-first (model: sonnet, effort: medium):
 
       System prompt:
       ```
@@ -187,7 +187,7 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
       ```
     </action>
 
-    <action>Spawn Agent B — Value-gap-first (model: claude-sonnet-4-6, effort: medium):
+    <action>Spawn Agent B — Value-gap-first (model: sonnet, effort: medium):
 
       System prompt:
       ```

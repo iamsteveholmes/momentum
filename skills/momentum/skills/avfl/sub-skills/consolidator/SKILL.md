@@ -1,7 +1,7 @@
 ---
 name: consolidator
 description: AVFL consolidator. Merges, cross-checks, deduplicates, and scores validator findings.
-model: claude-haiku-4-5-20251001
+model: haiku
 effort: low
 internal: true
 ---

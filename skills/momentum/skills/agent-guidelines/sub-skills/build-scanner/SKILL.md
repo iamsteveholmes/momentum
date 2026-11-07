@@ -1,7 +1,7 @@
 ---
 name: build-scanner
 description: Scans project build files to detect technology stack, versions, and dependencies.
-model: claude-sonnet-4-6
+model: sonnet
 effort: medium
 internal: true
 ---

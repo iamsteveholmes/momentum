@@ -1,7 +1,7 @@
 ---
 name: rules-auditor
 description: Audits existing .claude/rules/ and CLAUDE.md for current technology guideline coverage.
-model: claude-sonnet-4-6
+model: sonnet
 effort: medium
 internal: true
 ---
